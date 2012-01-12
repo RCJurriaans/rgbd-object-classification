@@ -9,7 +9,7 @@
 //used for compilation
 #include "stdafx.h" 
 
-//include the openCV libraries
+//include the openCV libraries -> moved to stdafx
 //#include <cv.h>
 //#include <cxcore.h>
 //#include <highgui.h>
@@ -18,24 +18,31 @@
 //#include "ImageWrapper.h" // used for directly accessing ipl images
 #include "FeatureVector.h" //feature vector contains SIFT features
 #include <string>
-//#include <boost\lexical_cast.hpp> //to quickly lexical cast integers
+//#include <boost\lexical_cast.hpp> //to quickly lexical cast integers //moved to stdafx
 
 #include "Winbase.h"
 
 using namespace std;
 using namespace cv; //opencv namespace
 
+
+
+
+//settings
 enum classes {AIRPLANES, CARS, FACES, MOTORBIKES}; //names of the classes
-enum colorsettings {NORMAL, HUE, OPPONENT};
+enum colorsettings {NORMAL, HUE, OPPONENT}; //name of the color modes
 string classNames[4] = {"airplanes", "cars", "faces", "motorbikes"}; //strings of names of the classes
-const int amountOfClasses = 4;
+const int amountOfClasses = 4; 
 const int cookBookNumImg = 250; //number of images used to create the dictionary. The first 'this amount' images are used from the folders
-#define IMGEXTENSION ".jpg";
-const int SIFTThreshScale = 4;
-const int dicsize = 500;
-#define _CRTDBG_MAP_ALLOC
+const int SIFTThreshScale = 4; //Threshold for the amount of points that sift finds for each image, 4 gives around 450 points...
+const int dicsize = 500; //size of the codebook to use for SIFT features
+#define _CRTDBG_MAP_ALLOC //used for memory leak checking in debug mode, just leave it on
+#define IMGEXTENSION ".jpg" //extension that is used of the images
+
+
 //converts a number to a fixed length string, adding zeros in front
 string convertNumberToFLString(int length, int number){
+
 	int tempnum = number;
 	length--;
 	string returnvalue;
@@ -50,32 +57,33 @@ string convertNumberToFLString(int length, int number){
 	return returnvalue;
 }
 
+//generate the codebook for SIFT features, mode specifies which color scheme is used
 void createCookbook(const int mode){
-	string imagePath;
-	string filePath;
-	Mat tempinput;
-	vector<Mat> input;
-	vector<Mat> planes;
-	FeatureVector* fv = new FeatureVector;
+	string imagePath; //path where the images are
+	string filePath; //filepath for each image
+	Mat tempinput; //temp
+	vector<Mat> input; //stores the image data
+	vector<Mat> planes; //temp file for splitting the image data
+	FeatureVector* fv = new FeatureVector; //this contains all features taht are extacted
 	SIFT detector(SIFTThreshScale*(0.04 / SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS), 10,
           SIFT::CommonParams::DEFAULT_NOCTAVES,
           SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS,
           SIFT::CommonParams::DEFAULT_FIRST_OCTAVE,
-          SIFT::CommonParams::FIRST_ANGLE );
-    vector<KeyPoint> keypoints;
-	Mat descriptors;
-	SiftDescriptorExtractor SDE;
-	OpponentColorDescriptorExtractor des(&SDE);
-	Mat grayimg;
+          SIFT::CommonParams::FIRST_ANGLE ); //sift class, ugly initialization of all parameters...
+    vector<KeyPoint> keypoints; //temp variable that contains the keypoints found for each img
+	Mat descriptors; //temp variable used to store the extracted SIFT descriptors for every image
+	SiftDescriptorExtractor SDE; //Sift descriptor extraction class
+	OpponentColorDescriptorExtractor des(&SDE); //written by van de Sande... extracts the opponent SIFT data
+	Mat grayimg; //temp used to store the grayimg in for Opponent color 
 
 	for(int i = 0; i < amountOfClasses; i++){
-		filePath = getenv("RGBDDATA_DIR");
-		filePath += "\\" + classNames[i] + "_train\\";
+		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
+		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
 		cout << "class: " << i << endl;
-		for(int j = 1; j <= cookBookNumImg; j++){
-			imagePath = filePath + "img" + convertNumberToFLString(3,j) + IMGEXTENSION;
+		for(int j = 1; j <= cookBookNumImg; j++){ //for each image
+			imagePath = filePath + "img" + convertNumberToFLString(3,j) + IMGEXTENSION; //get the proper filename
 			cout << "image: " << j << endl;
-			if(mode == NORMAL){
+			if(mode == NORMAL){ //every step cleans up all the matrices, and adds new image data
 				input.clear();
 				input.push_back(cv::imread(imagePath,0)); //Load as grayscale image
 			}else if (mode == HUE){
@@ -91,8 +99,8 @@ void createCookbook(const int mode){
 				tempinput = cv::imread(imagePath);
 				//convertBGRImageToOpponentColorSpace(tempinput,input);
 			}
-			if (mode == NORMAL){
-				descriptors.release();
+			if (mode == NORMAL){ //use the gotten image data to compute the features, and add them to the feature vector
+				descriptors.release(); //still clear all data before reinitializing
 				detector(input[0],Mat(),vector<KeyPoint>(),descriptors);
 				fv->AddFeatures(descriptors);
 			} else if(mode == HUE){
@@ -113,11 +121,11 @@ void createCookbook(const int mode){
 		}
 	}
 	cout << "Running kmeans" << endl;
-	Mat* codebook = fv->kmeans(dicsize);
-	FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE);
+	Mat* codebook = fv->kmeans(dicsize); //run kmeans on the data for dicsize clusters
+	FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE); //store the codebook to a yaml file
 	fs << "codebook" + boost::lexical_cast<string>(mode) << *codebook;
 	
-
+	//delete all data... just for security :/
 	fv->~FeatureVector();
 	tempinput.release();
 	for(unsigned int i = 0; i < input.size(); i++)
@@ -141,14 +149,70 @@ void createCookbook(const int mode){
 	_CrtDumpMemoryLeaks();
 }
 
+void generateTrainingData(FeatureVector codebook, int mode){
+		string imagePath; //path where the images are
+	string filePath; //filepath for each image
+	vector<Mat> input; //stores the image data
+	for(int i = 0; i < amountOfClasses; i++){
+		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
+		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
+		cout << "class: " << i << endl;
+		for(int j = 251; j <= cookBookNumImg+250; j++){ //for each image
+			imagePath = filePath + "img" + convertNumberToFLString(3,j) + IMGEXTENSION; //get the proper filename
+			cout << "image: " << j << endl;
+			if(mode == NORMAL){ //every step cleans up all the matrices, and adds new image data
+				input.clear();
+				input.push_back(cv::imread(imagePath,0)); //Load as grayscale image
+			}else if (mode == HUE){
+				input.clear();
+				tempinput.release();
+				tempinput = cv::imread(imagePath);
+				cvtColor(tempinput,tempinput,CV_BGR2HSV);
+				split(tempinput,planes);
+				input.push_back(planes[0]);
+				input.push_back(planes[2]);
+			}else if (mode == OPPONENT){
+				tempinput.release();
+				tempinput = cv::imread(imagePath);
+				//convertBGRImageToOpponentColorSpace(tempinput,input);
+			}
+			if (mode == NORMAL){ //use the gotten image data to compute the features, and add them to the feature vector
+				descriptors.release(); //still clear all data before reinitializing
+				detector(input[0],Mat(),vector<KeyPoint>(),descriptors);
+				fv->AddFeatures(descriptors);
+			} else if(mode == HUE){
+				descriptors.release();
+				keypoints.clear();
+				detector(input[1],Mat(),keypoints,Mat());
+				detector(input[0],Mat(),keypoints,descriptors,true);
+				fv->AddFeatures(descriptors);
+			} else if(mode == OPPONENT){
+				descriptors.release();
+				keypoints.clear();
+				grayimg.release();
+				cvtColor(tempinput,grayimg,CV_RGB2GRAY);
+				detector(grayimg,Mat(),keypoints,Mat());
+				des.compute(tempinput,keypoints,descriptors);
+				fv->AddFeatures(descriptors);
+			}
+		}
+	}
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-	int mode = NORMAL;
+	int mode = NORMAL; //specify the color mode used, either NORMAL, HUE or OPPONENT
 
-	createCookbook(mode);
+	//createCookbook(mode);
+
+	//load the codebook data
 	FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::READ);
 	Mat M; fs["codebook" + boost::lexical_cast<string>(mode)] >> M;
+	FeatureVector codebook;
+	codebook.AddFeatures(M);
 
-	_CrtDumpMemoryLeaks();
+	generateTrainingData(codebook, mode);
+
+	_CrtDumpMemoryLeaks(); //used to check memory leakages in debug mode, will output to the output screen in msvc2010
 	return 0;
 }
