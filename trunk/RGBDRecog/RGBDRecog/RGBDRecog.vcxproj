@@ -61,7 +61,8 @@
       <AdditionalDependencies>opencv_video231d.lib;opencv_ts231d.lib;opencv_objdetect231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;opencv_highgui231d.lib;opencv_haartraining_engined.lib;opencv_gpu231d.lib;opencv_flann231d.lib;opencv_features2d231d.lib;opencv_contrib231d.lib;opencv_core231d.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(VLFEATROOT)\bin\win32\vl.dll $(SolutionDir)$(ConfigurationName)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>
