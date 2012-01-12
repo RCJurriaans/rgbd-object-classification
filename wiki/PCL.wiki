@@ -1,0 +1,16 @@
+#summary How to get PCL working
+
+= Install =
+ * download the all in one installer from [http://pointclouds.org/downloads/windows.html here]
+ * add the path to the variables as PCL_ROOT
+ * In Visual Studio add the following
+  * c++ Include Directories:
+   * $(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\Boost\include;%(AdditionalIncludeDirectories)
+   * Eventueel extra 3rd party includes
+  * Linker General Additional Lib Directories
+   * $(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\Eigen\bin;$(PCL_ROOT)\3rdParty\Boost\lib;%(AdditionalLibraryDirectories)
+   * Eventueel extra 3rd party libs
+  * Linker Input Additional Dependencies
+   * pcl_io.lib;pcl_common.lib;pcl_sample_consensus.lib;pcl_segmentation.lib;%(AdditionalDependencies)
+   * Eventueel extra libs zoals bijv. search
+   
