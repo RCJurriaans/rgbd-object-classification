@@ -3,29 +3,10 @@
 //---------------------------------------------------------------------------
 // Includes
 //---------------------------------------------------------------------------
-//#include <XnOS.h>
-//#include <GL/glut.h>
-//#include <math.h>
-//#include <XnCppWrapper.h>
-//using namespace xn;
+#include <StdAfx.h>
 
-//#include <iostream>
-//#include <fstream>
-//#include <string>
-//#include <sstream>
-//using namespace std;
-
-//#include <cv.h>
-//#include <cxcore.h>
-//#include <highgui.h>
-
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/io/openni_grabber.h>
-//#include <pcl/common/time.h>
-
-#include <pcl/visualization/cloud_viewer.h>
-
+using namespace xn;
+using namespace std;
 
 //---------------------------------------------------------------------------
 // Defines
@@ -45,7 +26,7 @@
 //---------------------------------------------------------------------------
 // Globals
 //---------------------------------------------------------------------------
-/*float g_pDepthHist[MAX_DEPTH];
+float g_pDepthHist[MAX_DEPTH];
 XnRGB24Pixel* g_pTexMap = NULL;
 unsigned int g_nTexMapX = 0;
 unsigned int g_nTexMapY = 0;
@@ -61,11 +42,16 @@ ImageMetaData g_imageMD;
 
 bool g_spacePressed = false;
 unsigned int g_numSaves = 0;
-*/
+
+string outFolder = ".\\saves\\";
+
+IplImage *g_outFrameRGB;
+pcl::PointCloud<pcl::PointXYZ>* g_cloud;
+
 //---------------------------------------------------------------------------
 // Code
 //---------------------------------------------------------------------------
-/*
+
 void glutIdle (void)
 {
 	// Display the frame
@@ -74,10 +60,37 @@ void glutIdle (void)
 
 void saveBuffers(const XnDepthPixel* pDepth, const XnUInt8* pImage)
 {
+	// The frame number
 	char number[10] = "";
 	sprintf(number, "%d", g_numSaves);
 
+	// Save the RGB image
+	stringstream  rgb_filename;
+	rgb_filename << outFolder << "rgb_" << number << ".bmp";
+	memcpy(g_outFrameRGB->imageData, pImage, sizeof(XnUInt8) * 3 * g_imageMD.XRes() * g_imageMD.YRes());
+	cvCvtColor( g_outFrameRGB, g_outFrameRGB, CV_BGR2RGB );
+	//cvCvtColor( g_outFrameRGB, g_outFrameRGB, CV_BayerBG2BGR); // TODO: Fix bayer aliasing. Maybe possible with Mat instead of ILP?
+	if(!cvSaveImage(rgb_filename.str().c_str(), g_outFrameRGB)) printf("Could not save: %s\n", rgb_filename.str().c_str());
 
+	// Save depth image
+	stringstream depth_filename;
+	depth_filename << outFolder << "depth_" << number << ".pld";
+	unsigned int i = 0;
+	for (XnUInt y = 0; y < g_depthMD.YRes(); y++)
+	{
+		for (XnUInt x = 0; x < g_depthMD.XRes(); i++, x++, ++pDepth)
+		{
+			g_cloud->points[i].x = x;
+			g_cloud->points[i].y = y;
+			g_cloud->points[i].z = *pDepth;
+		}
+	}
+
+	//pcl::io::savePCDFileASCII(depth_filename.str(), *g_cloud);
+	pcl::io::savePCDFile(depth_filename.str(), *g_cloud, true);
+	cout << "Saved " << g_cloud->points.size() << " data points to " << depth_filename.str() << std::endl;
+
+	/* Old csv writeout
 	ofstream depthFile;
 	stringstream  filename_depth;
 	filename_depth << ".\\saves\\depth_" << number << ".txt";
@@ -95,14 +108,7 @@ void saveBuffers(const XnDepthPixel* pDepth, const XnUInt8* pImage)
 		depthFile << "\n";
 	}
 	depthFile.close();
-
-
-	//IplImage* img=cvCreateImage(cvSize(640,480),IPL_DEPTH_8U,3);
-	//((uchar *)(img->imageData + i*img->widthStep))[j*img->nChannels + 0]=111; // B
-	//((uchar *)(img->imageData + i*img->widthStep))[j*img->nChannels + 1]=112; // G
-	//((uchar *)(img->imageData + i*img->widthStep))[j*img->nChannels + 2]=113; // R
-
-	
+	*/	
 }
 
 void glutDisplay (void)
@@ -308,36 +314,27 @@ void glutKeyboard (unsigned char key, int x, int y)
 		printf("%s failed: %s\n", what, xnGetStatusString(nRetVal));\
 		return nRetVal;												\
 }
-*/
 
-/*
-int main()
-{
-        // Open the file.
-        IplImage *img = cvLoadImage("Desert.jpg");
-        if (!img) {
-                printf("Error: Couldn't open the image file.\n");
-                return 1;
-        }
 
-        // Display the image.
-        cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Image:", img);
-
-        // Wait for the user to press a key in the GUI window.
-        cvWaitKey(0);
-
-        // Free the resources.
-        cvDestroyWindow("Image:");
-        cvReleaseImage(&img);
-        
-        return 0;
-}
-*/
-/*
 int main(int argc, char* argv[])
 {
+	// Analyze commandline
+	if (argc > 1) {
+		//cout << argc << argv[0];
+		// Args also used below..
+	}
+
+
+	g_outFrameRGB = cvCreateImage(cvSize(640, 480), IPL_DEPTH_8U, 3);
 	
+	pcl::PointCloud<pcl::PointXYZ> cloud;
+	g_cloud = &cloud;
+	cloud.width    = 640;
+	cloud.height   = 480;
+	cloud.is_dense = true;
+	cloud.points.resize(cloud.width * cloud.height);
+
+
 	XnStatus rc;
 
 	EnumerationErrors errors;
@@ -369,27 +366,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	//DepthGenerator depth; 
-    //rc = g_depth.Create(g_context); 
-    //CHECK_RC(rc, "Create depth generator"); 
-    //ImageGenerator image; 
-    //rc = g_image.Create(g_context); 
-    //CHECK_RC(rc, "Create image generator"); 
-	
-	//XnMapOutputMode mapModeVGA; 
-    //mapModeVGA.nXRes = 640; 
-    //mapModeVGA.nYRes = 480; 
-    //mapModeVGA.nFPS = 30; 
-    
-	//rc = g_depth.SetMapOutputMode(mapModeVGA); 
-    //CHECK_RC(rc, "SetMapOutputMode for depth generator"); 
-    //rc = g_image.SetMapOutputMode(mapModeVGA); 
-    //CHECK_RC(rc, "SetMapOutputMode for image generator"); 
-    
-	//nRetVal = context.StartGeneratingAll(); 
-    //CHECK_RC(nRetVal, "StartGeneratingAll"); 
-
-
 	// Align the rgb and depth data
 	if (g_depth.IsCapabilitySupported("AlternativeViewPoint"))
 	{
@@ -405,14 +381,6 @@ int main(int argc, char* argv[])
 		printf("Alternative Viewpoint capability not supported.");
 		return 1;
 	}
-	
-	//rc = g_context.StartGeneratingAll();
-	//if (rc != XN_STATUS_OK)
-	//{
-	//	printf("Start generating failed");
-	//	return 1;
-	//}
-
 
 
 	g_depth.GetMetaData(g_depthMD);
@@ -454,12 +422,38 @@ int main(int argc, char* argv[])
 
 	// Per frame code is in glutDisplay
 	glutMainLoop();
+	
+	cvReleaseImage(&g_outFrameRGB);
 
 	return 0;
 }
+
+/*
+int main()
+{
+        // Open the file.
+        IplImage *img = cvLoadImage("Desert.jpg");
+        if (!img) {
+                printf("Error: Couldn't open the image file.\n");
+                return 1;
+        }
+
+        // Display the image.
+        cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
+        cvShowImage("Image:", img);
+
+        // Wait for the user to press a key in the GUI window.
+        cvWaitKey(0);
+
+        // Free the resources.
+        cvDestroyWindow("Image:");
+        cvReleaseImage(&img);
+        
+        return 0;
+}
 */
 
-
+/*
 #ifdef WIN32
 # define sleep(x) Sleep((x)*1000) 
 #endif
@@ -502,4 +496,4 @@ int main ()
 	SimpleOpenNIViewer v;
 	v.run ();
 	return 0;
-}
+}*/
