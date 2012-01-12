@@ -3,21 +3,29 @@
 //---------------------------------------------------------------------------
 // Includes
 //---------------------------------------------------------------------------
-#include <XnOS.h>
-#include <GL/glut.h>
-#include <math.h>
-#include <XnCppWrapper.h>
-using namespace xn;
+//#include <XnOS.h>
+//#include <GL/glut.h>
+//#include <math.h>
+//#include <XnCppWrapper.h>
+//using namespace xn;
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-using namespace std;
+//#include <iostream>
+//#include <fstream>
+//#include <string>
+//#include <sstream>
+//using namespace std;
 
-#include <cv.h>
-#include <cxcore.h>
-#include <highgui.h>
+//#include <cv.h>
+//#include <cxcore.h>
+//#include <highgui.h>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/openni_grabber.h>
+//#include <pcl/common/time.h>
+
+#include <pcl/visualization/cloud_viewer.h>
+
 
 //---------------------------------------------------------------------------
 // Defines
@@ -37,7 +45,7 @@ using namespace std;
 //---------------------------------------------------------------------------
 // Globals
 //---------------------------------------------------------------------------
-float g_pDepthHist[MAX_DEPTH];
+/*float g_pDepthHist[MAX_DEPTH];
 XnRGB24Pixel* g_pTexMap = NULL;
 unsigned int g_nTexMapX = 0;
 unsigned int g_nTexMapY = 0;
@@ -53,11 +61,11 @@ ImageMetaData g_imageMD;
 
 bool g_spacePressed = false;
 unsigned int g_numSaves = 0;
-
+*/
 //---------------------------------------------------------------------------
 // Code
 //---------------------------------------------------------------------------
-
+/*
 void glutIdle (void)
 {
 	// Display the frame
@@ -94,29 +102,7 @@ void saveBuffers(const XnDepthPixel* pDepth, const XnUInt8* pImage)
 	//((uchar *)(img->imageData + i*img->widthStep))[j*img->nChannels + 1]=112; // G
 	//((uchar *)(img->imageData + i*img->widthStep))[j*img->nChannels + 2]=113; // R
 
-	/*ofstream redFile, blueFile, greenFile;
-	stringstream  filename_red, filename_blue, filename_green;
-	filename_red << ".\\saves\\red_" << number << ".txt";
-	filename_green << ".\\saves\\green_" << number << ".txt";
-	filename_blue << ".\\saves\\blue_" << number << ".txt";
-	redFile.open(filename_red.str());
-	greenFile.open(filename_green.str());
-	blueFile.open(filename_blue.str());
-	for (XnUInt y = 0; y < g_imageMD.YRes(); y++)
-	{
-		for (XnUInt x = 0; x < g_imageMD.XRes(); x++, ++pImage)
-		{
-			redFile << *;
-			if (x < g_depthMD.XRes() - 1 || y < g_depthMD.YRes() - 1)
-			{
-				redFile << ",";
-			}
-		}
-		redFile << "\n";
-	}
-	redFile.close();
-	greenFile.close();
-	blueFile.close()*/
+	
 }
 
 void glutDisplay (void)
@@ -322,6 +308,8 @@ void glutKeyboard (unsigned char key, int x, int y)
 		printf("%s failed: %s\n", what, xnGetStatusString(nRetVal));\
 		return nRetVal;												\
 }
+*/
+
 /*
 int main()
 {
@@ -346,31 +334,10 @@ int main()
         return 0;
 }
 */
-
+/*
 int main(int argc, char* argv[])
 {
-	IplImage *img = cvLoadImage("desert.jpg");
-    if (!img) {
-                printf("Error: Couldn't open the image file.\n");
-               // return 1;
-        }
-
-        // Display the image.
-        cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Image:", img);
-
-        // Wait for the user to press a key in the GUI window.
-        //cvWaitKey(0);
-
-        // Free the resources.
-        //cvDestroyWindow("Image:");
-        //cvReleaseImage(&img);
-        
-
-
-
-
-
+	
 	XnStatus rc;
 
 	EnumerationErrors errors;
@@ -488,5 +455,51 @@ int main(int argc, char* argv[])
 	// Per frame code is in glutDisplay
 	glutMainLoop();
 
+	return 0;
+}
+*/
+
+
+#ifdef WIN32
+# define sleep(x) Sleep((x)*1000) 
+#endif
+
+class SimpleOpenNIViewer
+{
+  public:
+    SimpleOpenNIViewer () : viewer ("PCL OpenNI Viewer") {}
+
+	void cloud_cb_ (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
+    {
+      if (!viewer.wasStopped())
+        viewer.showCloud (cloud);
+    }
+
+    void run ()
+    {
+        pcl::Grabber* interface = new pcl::OpenNIGrabber();
+
+        boost::function<void (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&)> f =
+        boost::bind (&SimpleOpenNIViewer::cloud_cb_, this, _1);
+
+        interface->registerCallback (f);
+
+        interface->start ();
+
+        while (!viewer.wasStopped())
+        {
+          sleep (1);
+        }
+
+        interface->stop ();
+    }
+
+    pcl::visualization::CloudViewer viewer;
+};
+ 
+int main ()
+{
+	SimpleOpenNIViewer v;
+	v.run ();
 	return 0;
 }
