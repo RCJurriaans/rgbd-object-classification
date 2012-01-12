@@ -13,3 +13,9 @@
 
 
 // TODO: reference additional headers your program requires here
+#include <cv.h>
+#include <cxcore.h>
+#include <highgui.h>
+#include <boost\lexical_cast.hpp>
+#include "Winbase.h"
+#include <string>
