@@ -19,7 +19,7 @@ using namespace std;
 #define DISPLAY_MODE_OVERLAY	1
 #define DISPLAY_MODE_DEPTH		2
 #define DISPLAY_MODE_IMAGE		3
-#define DEFAULT_DISPLAY_MODE	DISPLAY_MODE_DEPTH
+#define DEFAULT_DISPLAY_MODE	DISPLAY_MODE_IMAGE
 
 #define MAX_DEPTH 10000
 
@@ -47,6 +47,7 @@ string outFolder = ".\\saves\\";
 
 IplImage *g_outFrameRGB;
 pcl::PointCloud<pcl::PointXYZ>* g_cloud;
+vector<XnDepthPixel*> depthHistory;
 
 //---------------------------------------------------------------------------
 // Code
@@ -149,7 +150,7 @@ void glutDisplay (void)
 	glOrtho(0, GL_WIN_SIZE_X, GL_WIN_SIZE_Y, 0, -1.0, 1.0);
 
 	// Calculate the accumulative histogram (the yellow display...)
-	xnOSMemSet(g_pDepthHist, 0, MAX_DEPTH*sizeof(float));
+	/*xnOSMemSet(g_pDepthHist, 0, MAX_DEPTH*sizeof(float));
 
 	unsigned int nNumberOfPoints = 0;
 	for (XnUInt y = 0; y < g_depthMD.YRes(); ++y)
@@ -174,7 +175,7 @@ void glutDisplay (void)
 			g_pDepthHist[nIndex] = (unsigned int)(256 * (1.0f - (g_pDepthHist[nIndex] / nNumberOfPoints)));
 		}
 	}
-
+	*/
 	xnOSMemSet(g_pTexMap, 0, g_nTexMapX*g_nTexMapY*sizeof(XnRGB24Pixel));
 
 	// check if we need to draw image frame to texture
@@ -215,8 +216,8 @@ void glutDisplay (void)
 			{
 				if (*pDepth != 0)
 				{
-					int nHistValue = g_pDepthHist[*pDepth];
-					//nHistValue = (*pDepth * 256) / 10000;
+					//int nHistValue = g_pDepthHist[*pDepth];
+					int nHistValue = 255 - (*pDepth * 255) / 10000;
 					pTex->nRed = nHistValue;
 					pTex->nGreen = nHistValue;
 					pTex->nBlue = 0;
@@ -270,25 +271,18 @@ void glutKeyboard (unsigned char key, int x, int y)
 			exit (1);
 		case '1':
 			g_nViewState = DISPLAY_MODE_OVERLAY;
-
 			if (g_depth.IsCapabilitySupported("AlternativeViewPoint"))
 			{
-				printf("AlternativeViewPoint supported\n");
 				rc = g_depth.GetAlternativeViewPointCap().SetViewPoint(g_image); 
 				if (rc != XN_STATUS_OK)
 				{
 					printf("Failed to set viewpoint location");
-				}
-				else
-				{
-					printf("Alternative viewpoint set\n");
 				}
 			}
 			else
 			{
 				printf("Alternative Viewpoint capability not supported.");
 			} 
-			//g_depth.GetAlternativeViewPointCap().SetViewPoint(g_image);
 			break;
 		case '2':
 			g_nViewState = DISPLAY_MODE_DEPTH;
@@ -333,6 +327,10 @@ int main(int argc, char* argv[])
 	cloud.is_dense = true;
 	cloud.points.resize(cloud.width * cloud.height);
 
+	// Create maps for storing the depth history
+	for (int i = 0; i < 8; i++)
+		depthHistory.push_back(new XnDepthPixel[640*480]);
+	
 	// Initialize OpenNI
 	XnStatus rc;
 
@@ -421,9 +419,12 @@ int main(int argc, char* argv[])
 	glEnable(GL_TEXTURE_2D);
 
 	// Per frame code is in glutDisplay
+	cout << "Ready. Press space to save a screenshot." << endl;
 	glutMainLoop();
 	
 	cvReleaseImage(&g_outFrameRGB);
+	for (int i=0; i < 8; i++)
+		delete depthHistory[i];
 
 	return 0;
 }
