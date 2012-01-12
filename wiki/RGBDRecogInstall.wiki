@@ -19,3 +19,6 @@ WARNING: Reset visual studio every time you set environment variables.
 == Boost Install ==
  * Download and extract boost 1.48.0 to any location (http://www.boost.org/)
  * Set system or user variable BOOST_ROOT to the folder's root (e.g. C:\boost_1_48_0)
+
+== Data path ==
+ * Set system or user variable RGBDDATA_DIR to the folder containing the training data.
