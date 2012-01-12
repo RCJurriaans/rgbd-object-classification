@@ -88,7 +88,7 @@ void saveBuffers(const XnDepthPixel* pDepth, const XnUInt8* pImage)
 
 	//pcl::io::savePCDFileASCII(depth_filename.str(), *g_cloud);
 	pcl::io::savePCDFile(depth_filename.str(), *g_cloud, true);
-	cout << "Saved " << g_cloud->points.size() << " data points to " << depth_filename.str() << std::endl;
+	cout << "Saved depth and RGB data. Index: " << g_numSaves << std::endl;
 
 	/* Old csv writeout
 	ofstream depthFile;
@@ -313,20 +313,19 @@ void glutKeyboard (unsigned char key, int x, int y)
 	{																\
 		printf("%s failed: %s\n", what, xnGetStatusString(nRetVal));\
 		return nRetVal;												\
-}
+	}
 
 
 int main(int argc, char* argv[])
 {
-	// Analyze commandline
-	if (argc > 1) {
-		//cout << argc << argv[0];
-		// Args also used below..
-	}
+	cout << "Please enter the frame-index to begin with." << endl;
+	cin >> g_numSaves;
+	cout << "Initializing.." << endl;
 
-
+	// Create the image that stores the frame (RGB)
 	g_outFrameRGB = cvCreateImage(cvSize(640, 480), IPL_DEPTH_8U, 3);
 	
+	// Initialize the point cloud for storing the depth of the frame:
 	pcl::PointCloud<pcl::PointXYZ> cloud;
 	g_cloud = &cloud;
 	cloud.width    = 640;
@@ -334,7 +333,7 @@ int main(int argc, char* argv[])
 	cloud.is_dense = true;
 	cloud.points.resize(cloud.width * cloud.height);
 
-
+	// Initialize OpenNI
 	XnStatus rc;
 
 	EnumerationErrors errors;
@@ -352,16 +351,14 @@ int main(int argc, char* argv[])
 		return (rc);
 	}
 
+	// Find existing nodes (they where initialized from the xml)
 	rc = g_context.FindExistingNode(XN_NODE_TYPE_DEPTH, g_depth);
-	if (rc != XN_STATUS_OK)
-	{
+	if (rc != XN_STATUS_OK) {
 		printf("No depth node exists! Check your XML.");
 		return 1;
 	}
-
 	rc = g_context.FindExistingNode(XN_NODE_TYPE_IMAGE, g_image);
-	if (rc != XN_STATUS_OK)
-	{
+	if (rc != XN_STATUS_OK) {
 		printf("No image node exists! Check your XML.");
 		return 1;
 	}
@@ -408,9 +405,12 @@ int main(int argc, char* argv[])
 	// OpenGL init
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-	glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
-	glutCreateWindow ("OpenNI Simple Viewer");
+	//glutInitWindowSize(GL_WIN_SIZE_X, GL_WIN_SIZE_Y);
+	glutInitWindowSize(640, 480 );
+	glutInitWindowPosition(640, 0 );
+	glutCreateWindow ("Kinect Data Collector");
 	//glutFullScreen();
+	
 	glutSetCursor(GLUT_CURSOR_NONE);
 
 	glutKeyboardFunc(glutKeyboard);
@@ -427,73 +427,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
-/*
-int main()
-{
-        // Open the file.
-        IplImage *img = cvLoadImage("Desert.jpg");
-        if (!img) {
-                printf("Error: Couldn't open the image file.\n");
-                return 1;
-        }
-
-        // Display the image.
-        cvNamedWindow("Image:", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Image:", img);
-
-        // Wait for the user to press a key in the GUI window.
-        cvWaitKey(0);
-
-        // Free the resources.
-        cvDestroyWindow("Image:");
-        cvReleaseImage(&img);
-        
-        return 0;
-}
-*/
-
-/*
-#ifdef WIN32
-# define sleep(x) Sleep((x)*1000) 
-#endif
-
-class SimpleOpenNIViewer
-{
-  public:
-    SimpleOpenNIViewer () : viewer ("PCL OpenNI Viewer") {}
-
-	void cloud_cb_ (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
-    {
-      if (!viewer.wasStopped())
-        viewer.showCloud (cloud);
-    }
-
-    void run ()
-    {
-        pcl::Grabber* interface = new pcl::OpenNIGrabber();
-
-        boost::function<void (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&)> f =
-        boost::bind (&SimpleOpenNIViewer::cloud_cb_, this, _1);
-
-        interface->registerCallback (f);
-
-        interface->start ();
-
-        while (!viewer.wasStopped())
-        {
-          sleep (1);
-        }
-
-        interface->stop ();
-    }
-
-    pcl::visualization::CloudViewer viewer;
-};
- 
-int main ()
-{
-	SimpleOpenNIViewer v;
-	v.run ();
-	return 0;
-}*/
