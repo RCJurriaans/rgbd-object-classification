@@ -7,10 +7,11 @@ class FeatureVector
 public:
 	FeatureVector(void);
 	~FeatureVector(void);
-	Mat features;
+	Mat* features;
 	int numFeatures;
 
 	void AddFeatures(Mat keypoints);
+	Mat* kmeans(int dicsize);
 private:
 	
 };
