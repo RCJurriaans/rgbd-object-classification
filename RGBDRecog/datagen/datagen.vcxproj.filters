@@ -21,6 +21,12 @@
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="openni_exception.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="openni_image_bayer_grbg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GL\gl.h">
@@ -84,6 +90,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openni_exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openni_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openni_image_bayer_grbg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

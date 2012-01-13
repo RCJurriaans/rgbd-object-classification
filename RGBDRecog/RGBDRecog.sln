@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCL_segmentation", "PCL_seg
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGBDRecog", "RGBDRecog\RGBDRecog.vcxproj", "{EF316420-0177-46E6-BB45-98AA8C4BA99B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PointCloudViewer", "PointCloudViewer\PointCloudViewer.vcxproj", "{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -43,6 +45,12 @@ Global
 		{EF316420-0177-46E6-BB45-98AA8C4BA99B}.Release|Win32.ActiveCfg = Release|Win32
 		{EF316420-0177-46E6-BB45-98AA8C4BA99B}.Release|Win32.Build.0 = Release|Win32
 		{EF316420-0177-46E6-BB45-98AA8C4BA99B}.Release|x64.ActiveCfg = Release|Win32
+		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Debug|Win32.Build.0 = Debug|Win32
+		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Debug|x64.ActiveCfg = Debug|Win32
+		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Release|Win32.ActiveCfg = Release|Win32
+		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Release|Win32.Build.0 = Release|Win32
+		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

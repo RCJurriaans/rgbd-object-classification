@@ -24,4 +24,6 @@
 //#include <pcl/io/openni_grabber.h>
 //#include <pcl/common/time.h>
 
-//#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/cloud_viewer.h>
+
+#include "openni_image_bayer_grbg.h"

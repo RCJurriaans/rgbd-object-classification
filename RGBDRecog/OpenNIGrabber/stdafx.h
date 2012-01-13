@@ -10,6 +10,22 @@
 #include <stdio.h>
 #include <tchar.h>
 
+#include <XnOS.h>
+//#include <GL/glut.h>
+#include <math.h>
+#include <XnCppWrapper.h>
+
+#include <cv.h>
+#include <cxcore.h>
+#include <highgui.h>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/openni_grabber.h>
+#include <pcl/common/time.h>
+#include <pcl/visualization/cloud_viewer.h>
+
+
 
 
 // TODO: reference additional headers your program requires here
