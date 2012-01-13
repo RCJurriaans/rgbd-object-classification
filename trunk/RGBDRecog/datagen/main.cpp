@@ -46,7 +46,7 @@ unsigned int g_numSaves = 0;
 string outFolder = ".\\saves\\";
 
 IplImage *g_outFrameRGB;
-pcl::PointCloud<pcl::PointXYZ>* g_cloud;
+pcl::PointCloud<pcl::PointXYZ>::Ptr g_cloud;
 vector<XnDepthPixel*> depthHistory;
 
 //---------------------------------------------------------------------------
@@ -68,10 +68,16 @@ void saveBuffers(const XnDepthPixel* pDepth, const XnUInt8* pImage)
 	// Save the RGB image
 	stringstream  rgb_filename;
 	rgb_filename << outFolder << "rgb_" << number << ".bmp";
-	memcpy(g_outFrameRGB->imageData, pImage, sizeof(XnUInt8) * 3 * g_imageMD.XRes() * g_imageMD.YRes());
-	cvCvtColor( g_outFrameRGB, g_outFrameRGB, CV_BGR2RGB );
-	//cvCvtColor( g_outFrameRGB, g_outFrameRGB, CV_BayerBG2BGR); // TODO: Fix bayer aliasing. Maybe possible with Mat instead of ILP?
-	if(!cvSaveImage(rgb_filename.str().c_str(), g_outFrameRGB)) printf("Could not save: %s\n", rgb_filename.str().c_str());
+	//memcpy(g_outFrameRGB->imageData, pImage, sizeof(XnUInt8) * 3 * g_imageMD.XRes() * g_imageMD.YRes());
+	//cvCvtColor( g_outFrameRGB, g_outFrameRGB, CV_BGR2RGB );
+	//if(!cvSaveImage(rgb_filename.str().c_str(), g_outFrameRGB)) printf("Could not save: %s\n", rgb_filename.str().c_str());
+
+	openni_wrapper::ImageBayerGRBG imageBayer(&g_imageMD, openni_wrapper::ImageBayerGRBG::DebayeringMethod(2));// 1 == edge aware
+	cv::Mat colorImage = cv::Mat::zeros (480, 640, CV_8UC3); 
+	unsigned char* rgb_buffer = (unsigned char*)(colorImage.data ); 
+	imageBayer.fillRGB(colorImage.cols, colorImage.rows, rgb_buffer, colorImage.step); 
+	cv::cvtColor(colorImage,colorImage,CV_RGB2BGR);  // don't forget openCV uses BGR color order instead of RGB
+	if(!cv::imwrite(rgb_filename.str(), colorImage)) printf("Could not save: %s\n", rgb_filename.str().c_str());
 
 	// Save depth image
 	stringstream depth_filename;
@@ -90,6 +96,15 @@ void saveBuffers(const XnDepthPixel* pDepth, const XnUInt8* pImage)
 	//pcl::io::savePCDFileASCII(depth_filename.str(), *g_cloud);
 	pcl::io::savePCDFile(depth_filename.str(), *g_cloud, true);
 	cout << "Saved depth and RGB data. Index: " << g_numSaves << std::endl;
+
+	// Start cloud viewer
+	//pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(g_cloud);
+    //viewer.showCloud(cloud);
+    //while (!viewer.wasStopped ())
+    //{
+		//Sleep(100);
+    //}
 
 	/* Old csv writeout
 	ofstream depthFile;
@@ -123,12 +138,24 @@ void glutDisplay (void)
 		printf("Read failed: %s\n", xnGetStatusString(rc));
 		return;
 	}
+	
 
-	g_depth.GetMetaData(g_depthMD);
-	g_image.GetMetaData(g_imageMD);
+	//g_depth.GetMetaData(g_depthMD);
+	//g_image.GetMetaData(g_imageMD);
 
-	const XnDepthPixel* pDepth = g_depthMD.Data();
-	const XnUInt8* pImage = g_imageMD.Data();
+	//g_image.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_8_BIT );
+	
+	//openni_wrapper::ImageBayerGRBG imageBayer(&g_imageMD, openni_wrapper::ImageBayerGRBG::DebayeringMethod(2));// 1 == edge aware
+	//cv::Mat colorImage = cv::Mat::zeros (480, 640, CV_8UC3); 
+	//unsigned char* rgb_buffer = (unsigned char*)(colorImage.data ); 
+	//imageBayer.fillRGB(colorImage.cols, colorImage.rows, rgb_buffer, colorImage.step); 
+	//cv::cvtColor(colorImage,colorImage,CV_RGB2BGR);  // don't forget openCV uses BGR color order instead of RGB
+	//const XnUInt8* pImage = rgb_buffer;
+
+	//const XnUInt8* pImage = g_imageMD.Data();
+	//const XnDepthPixel* pDepth = g_depthMD.Data();
+
+	g_image.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_16_BIT );
 
 	if (g_spacePressed)
 	{
@@ -312,20 +339,21 @@ void glutKeyboard (unsigned char key, int x, int y)
 
 int main(int argc, char* argv[])
 {
-	cout << "Please enter the frame-index to begin with." << endl;
-	cin >> g_numSaves;
+	// Get start index
+	//cout << "Please enter the frame-index to begin with." << endl;
+	//cin >> g_numSaves;
 	cout << "Initializing.." << endl;
 
 	// Create the image that stores the frame (RGB)
 	g_outFrameRGB = cvCreateImage(cvSize(640, 480), IPL_DEPTH_8U, 3);
 	
 	// Initialize the point cloud for storing the depth of the frame:
-	pcl::PointCloud<pcl::PointXYZ> cloud;
-	g_cloud = &cloud;
-	cloud.width    = 640;
-	cloud.height   = 480;
-	cloud.is_dense = true;
-	cloud.points.resize(cloud.width * cloud.height);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud( new pcl::PointCloud<pcl::PointXYZ>);
+	g_cloud = cloud;
+	cloud->width    = 640;
+	cloud->height   = 480;
+	cloud->is_dense = true;
+	cloud->points.resize(cloud->width * cloud->height);
 
 	// Create maps for storing the depth history
 	for (int i = 0; i < 8; i++)
@@ -333,7 +361,6 @@ int main(int argc, char* argv[])
 	
 	// Initialize OpenNI
 	XnStatus rc;
-
 	EnumerationErrors errors;
 	rc = g_context.InitFromXmlFile(SAMPLE_XML_PATH, g_scriptNode, &errors);
 	if (rc == XN_STATUS_NO_NODE_PRESENT)
@@ -377,7 +404,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-
+	
+	//g_image.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_8_BIT ); //imageGen == xn::ImageGenerator
 	g_depth.GetMetaData(g_depthMD);
 	g_image.GetMetaData(g_imageMD);
 
@@ -389,16 +417,21 @@ int main(int argc, char* argv[])
 	}
 
 	// RGB is the only image format supported.
-	if (g_imageMD.PixelFormat() != XN_PIXEL_FORMAT_RGB24)
-	{
-		printf("The device image format must be RGB24\n");
-		return 1;
-	}
+	//if (g_imageMD.PixelFormat() != XN_PIXEL_FORMAT_RGB24)
+	//{
+	//	printf("The device image format must be RGB24\n");
+	//	return 1;
+	//}
 
 	// Texture map init
 	g_nTexMapX = (((unsigned short)(g_depthMD.FullXRes()-1) / 512) + 1) * 512;
 	g_nTexMapY = (((unsigned short)(g_depthMD.FullYRes()-1) / 512) + 1) * 512;
 	g_pTexMap = (XnRGB24Pixel*)malloc(g_nTexMapX * g_nTexMapY * sizeof(XnRGB24Pixel));
+
+	// Debayering
+	g_image.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_16_BIT ); //imageGen == xn::ImageGenerator
+	//g_image.GetMetaData(imageMD); // imageMD == xn::ImageMetaData
+	
 
 	// OpenGL init
 	glutInit(&argc, argv);
@@ -425,6 +458,7 @@ int main(int argc, char* argv[])
 	cvReleaseImage(&g_outFrameRGB);
 	for (int i=0; i < 8; i++)
 		delete depthHistory[i];
+	//delete &g_cloud;
 
 	return 0;
 }
