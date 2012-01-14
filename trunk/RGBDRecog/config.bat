@@ -7,3 +7,4 @@ XCOPY "%OPENCV_DIR%/modules/calib3d/include" "%OPENCV_DIR%/include " /D /E /C /R
 XCOPY "%OPENCV_DIR%/modules/objdetect/include" "%OPENCV_DIR%/include " /D /E /C /R /I /K /Y 
 XCOPY "%OPENCV_DIR%/modules/legacy/include" "%OPENCV_DIR%/include " /D /E /C /R /I /K /Y 
 XCOPY "%OPENCV_DIR%/modules/highgui/include" "%OPENCV_DIR%/include " /D /E /C /R /I /K /Y 
+XCOPY "%OPENCV_DIR%/modules/ml/include" "%OPENCV_DIR%/include " /D /E /C /R /I /K /Y 
