@@ -32,11 +32,12 @@ using namespace cv; //opencv namespace
 enum classes {AIRPLANES, CARS, FACES, MOTORBIKES}; //names of the classes
 enum colorsettings {NORMAL, HUE, OPPONENT}; //name of the color modes
 string classNames[4] = {"airplanes", "cars", "faces", "motorbikes"}; //strings of names of the classes
+const int classMax[4] = {500,465,400,500};
 const int amountOfClasses = 4; 
 const int cookBookNumImg = 250; //number of images used to create the dictionary. The first 'this amount' images are used from the folders
 const int SIFTThreshScale = 4; //Threshold for the amount of points that sift finds for each image, 4 gives around 450 points...
 const int dicsize = 500; //size of the codebook to use for SIFT features
-#define _CRTDBG_MAP_ALLOC //used for memory leak checking in debug mode, just leave it on
+//#define _CRTDBG_MAP_ALLOC //used for memory leak checking in debug mode
 #define IMGEXTENSION ".jpg" //extension that is used of the images
 
 
@@ -97,7 +98,6 @@ void createCookbook(const int mode){
 			}else if (mode == OPPONENT){
 				tempinput.release();
 				tempinput = cv::imread(imagePath);
-				//convertBGRImageToOpponentColorSpace(tempinput,input);
 			}
 			if (mode == NORMAL){ //use the gotten image data to compute the features, and add them to the feature vector
 				descriptors.release(); //still clear all data before reinitializing
@@ -149,15 +149,29 @@ void createCookbook(const int mode){
 	_CrtDumpMemoryLeaks();
 }
 
-void generateTrainingData(FeatureVector codebook, int mode){
-		string imagePath; //path where the images are
+vector<Mat> generateTrainingData(FeatureVector codebook, int mode){
+	string imagePath; //path where the images are
 	string filePath; //filepath for each image
+	Mat tempinput; //temp
 	vector<Mat> input; //stores the image data
+	vector<Mat> planes; //temp file for splitting the image data
+	SIFT detector(SIFTThreshScale*(0.04 / SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS), 10,
+          SIFT::CommonParams::DEFAULT_NOCTAVES,
+          SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS,
+          SIFT::CommonParams::DEFAULT_FIRST_OCTAVE,
+          SIFT::CommonParams::FIRST_ANGLE ); //sift class, ugly initialization of all parameters...
+    vector<KeyPoint> keypoints; //temp variable that contains the keypoints found for each img
+	Mat descriptors; //temp variable used to store the extracted SIFT descriptors for every image
+	//SiftDescriptorExtractor SDE; //Sift descriptor extraction class
+	//OpponentColorDescriptorExtractor des(&SDE); //written by van de Sande... extracts the opponent SIFT data
+	Mat grayimg; //temp used to store the grayimg in for Opponent color 
+	vector<Mat> histogram;
+
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
 		cout << "class: " << i << endl;
-		for(int j = 251; j <= cookBookNumImg+250; j++){ //for each image
+		for(int j = 251; j <= classMax[i]; j++){ //for each image
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + IMGEXTENSION; //get the proper filename
 			cout << "image: " << j << endl;
 			if(mode == NORMAL){ //every step cleans up all the matrices, and adds new image data
@@ -174,29 +188,35 @@ void generateTrainingData(FeatureVector codebook, int mode){
 			}else if (mode == OPPONENT){
 				tempinput.release();
 				tempinput = cv::imread(imagePath);
-				//convertBGRImageToOpponentColorSpace(tempinput,input);
 			}
 			if (mode == NORMAL){ //use the gotten image data to compute the features, and add them to the feature vector
 				descriptors.release(); //still clear all data before reinitializing
 				detector(input[0],Mat(),vector<KeyPoint>(),descriptors);
-				fv->AddFeatures(descriptors);
 			} else if(mode == HUE){
 				descriptors.release();
 				keypoints.clear();
 				detector(input[1],Mat(),keypoints,Mat());
 				detector(input[0],Mat(),keypoints,descriptors,true);
-				fv->AddFeatures(descriptors);
 			} else if(mode == OPPONENT){
 				descriptors.release();
 				keypoints.clear();
 				grayimg.release();
 				cvtColor(tempinput,grayimg,CV_RGB2GRAY);
 				detector(grayimg,Mat(),keypoints,Mat());
-				des.compute(tempinput,keypoints,descriptors);
-				fv->AddFeatures(descriptors);
+				//des.compute(tempinput,keypoints,descriptors);
+			}
+			//descriptor now contains the found feature descriptors,
+			//we throw these to the codebook to generate a histogram
+			//histogram.release();
+			if(j == 251){
+				histogram.push_back(codebook.GenHistogram(descriptors));
+			}
+			else{
+				hconcat(histogram[i],codebook.GenHistogram(descriptors),histogram[i]);
 			}
 		}
 	}
+	return histogram;
 }
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -208,11 +228,83 @@ int _tmain(int argc, _TCHAR* argv[])
 	//load the codebook data
 	FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::READ);
 	Mat M; fs["codebook" + boost::lexical_cast<string>(mode)] >> M;
+	fs.release();
 	FeatureVector codebook;
 	codebook.AddFeatures(M);
+	codebook.TrainkNN();//train kNN method for evaluating close descriptors
+	
 
-	generateTrainingData(codebook, mode);
+	//Mat img = imread("nemo1.jpg");
+	//imshow( "name", img);
+	//cvWaitKey(0);
 
-	_CrtDumpMemoryLeaks(); //used to check memory leakages in debug mode, will output to the output screen in msvc2010
+
+
+
+	//vector<Mat> trainingdata = generateTrainingData(codebook, mode);
+	//vector<int> classNumbers;
+	//for(unsigned int i = 0; i < trainingdata.size(); i++){
+	//	classNumbers.push_back(trainingdata[i].rows);
+	//}
+	//Mat mergedData;
+	//mergedData = trainingdata[0];
+	//for(int i = 1; i < amountOfClasses; i++){
+	//	hconcat(mergedData,trainingdata[i],mergedData);
+	//}
+
+	//FileStorage fs2("trainingdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE); //store the codebook to a yaml file
+	//for(int i = 0; i < amountOfClasses;i++){
+	//	fs2 << "trainingdata" + boost::lexical_cast<string>(mode) + boost::lexical_cast<string>(i)  << trainingdata[i];
+	//}
+	//fs2.release();
+
+
+
+
+
+
+	
+	//vector<Mat> trainingdata;
+	//FileStorage fs2("trainingdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::READ);
+	//Mat temp;
+	//for(int i = 0; i < amountOfClasses; i++){
+	//	temp.release();
+	//	fs2["trainingdata" + boost::lexical_cast<string>(mode)+ boost::lexical_cast<string>(i)] >> temp;
+	//	trainingdata.push_back(temp);
+	//}
+	//Mat mergedData;
+	//mergedData = trainingdata[0];
+	//for(int i = 1; i < amountOfClasses; i++){
+	//	hconcat(mergedData,trainingdata[i],mergedData);
+	//}
+	//fs2.release();
+
+
+
+	//cout << "training tree" << endl;
+	//CvRTrees* treestructure = new CvRTrees();
+	//Mat responses(mergedData.cols,1,mergedData.type());
+	//for(int i = 0; i < amountOfClasses;i++){
+	//	int multifactor=0;
+	//	for(int j = 0; j < i; j++){
+	//		multifactor+= classMax[j]-cookBookNumImg;
+	//	}
+	//	for(int j = 0; j < trainingdata[i].cols; j++){
+	//		responses.at<float>(j+multifactor) = i;
+	//	}
+	//}
+
+	//treestructure->train(mergedData,CV_COL_SAMPLE,responses,Mat(),Mat(),Mat(),Mat(),CvRTParams());
+	////CvFileStorage fs3("randomforestdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE);
+	//string filename = "randomforestdata" + boost::lexical_cast<string>(mode);
+	//string dataname = "randomforestdata" + boost::lexical_cast<string>(mode) + ".yml";
+	//treestructure->write(cvOpenFileStorage(dataname.c_str(), 0, CV_STORAGE_WRITE_TEXT ), filename.c_str());
+
+	string filename = "randomforestdata" + boost::lexical_cast<string>(mode);
+	string dataname = "randomforestdata" + boost::lexical_cast<string>(mode) + ".yml";
+	CvRTrees* treestructure = new CvRTrees();
+	treestructure->read(cvOpenFileStorage(dataname.c_str(), 0, CV_STORAGE_READ ), cvGetFileNodeByName(cvOpenFileStorage(dataname.c_str(), 0, CV_STORAGE_READ ),0,filename.c_str()));
+	cout << "done" << endl;
+	//_CrtDumpMemoryLeaks(); //used to check memory leakages in debug mode, will output to the output screen in msvc2010
 	return 0;
 }
