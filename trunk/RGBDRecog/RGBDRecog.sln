@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual C++ Express 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "datagen", "datagen\datagen.vcxproj", "{77AA6587-6CD7-4ECE-A96E-73FDDEA35184}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenNIGrabber", "OpenNIGrabber\OpenNIGrabber.vcxproj", "{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}"
@@ -9,16 +9,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCL_segmentation", "PCL_seg
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGBDRecog", "RGBDRecog\RGBDRecog.vcxproj", "{EF316420-0177-46E6-BB45-98AA8C4BA99B}"
 EndProject
-<<<<<<< .mine
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5B6FA8D4-3856-4844-AEF8-BBB43D4E9FF4}"
 	ProjectSection(SolutionItems) = preProject
 		Performance1.psess = Performance1.psess
 	EndProjectSection
 EndProject
-=======
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PointCloudViewer", "PointCloudViewer\PointCloudViewer.vcxproj", "{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}"
-EndProject
->>>>>>> .r27
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -53,12 +48,6 @@ Global
 		{EF316420-0177-46E6-BB45-98AA8C4BA99B}.Release|Win32.ActiveCfg = Release|Win32
 		{EF316420-0177-46E6-BB45-98AA8C4BA99B}.Release|Win32.Build.0 = Release|Win32
 		{EF316420-0177-46E6-BB45-98AA8C4BA99B}.Release|x64.ActiveCfg = Release|Win32
-		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Debug|Win32.ActiveCfg = Debug|Win32
-		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Debug|Win32.Build.0 = Debug|Win32
-		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Debug|x64.ActiveCfg = Debug|Win32
-		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Release|Win32.ActiveCfg = Release|Win32
-		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Release|Win32.Build.0 = Release|Win32
-		{9B2AFBC9-6ED3-4E39-83B7-163E77A8C998}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,7 +6,7 @@
 using namespace xn;
 using namespace cv;
 
-
+void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie);
 
 class Renderer
 {
@@ -14,20 +14,20 @@ public:
 	Renderer( boost::function<void (int)> inputCallback ) : 
 		RGBImage(Mat(480, 640, CV_8UC3)),
 		depthImage(Mat(480,640, CV_32FC1)),
-		viewer(NULL),
+		viewer(new pcl::visualization::CloudViewer("Cloud Viewer")),//NULL),
 		processInput(inputCallback),
 		cloudViewerOpen(false)
-		//cloudKeyboardCallback( cloudKeyboardCB )
 	{
-		//g_processInput = inputCallback;
+		viewer->registerKeyboardCallback( &keyboardCB, &processInput );
 	}
 
 	void renderRGB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB);
+	void renderOpenCVRGB(const boost::shared_ptr<cv::Mat>& RGBImage );
 	void renderDepth(const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth);
 	void renderCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud);
+	void renderCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud);
 	void closeCloudDisplay();
 	void openCloudDisplay();
-	//void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie);
 
 protected:
 	pcl::visualization::CloudViewer* viewer;
@@ -35,7 +35,6 @@ protected:
 	Mat depthImage;
 	boost::function<void (int)> processInput;
 	bool cloudViewerOpen;
-	//void (T::*callback) (const pcl::visualization::KeyboardEvent&, void*) cloudKeyboardCallback;
 private:
 };
 
