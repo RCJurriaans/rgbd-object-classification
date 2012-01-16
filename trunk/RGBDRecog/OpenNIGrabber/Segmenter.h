@@ -4,7 +4,7 @@
 class Segmenter
 {
 public:
-	void segmentPlanes(pcl::PointCloud<pcl::PointXYZ>::ConstPtr inputCloud);
+	void segmentPlanes();//const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& inputCloud);
 
 protected:
 

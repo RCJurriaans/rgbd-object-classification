@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}</ProjectGuid>
+    <ProjectGuid>{BF811064-0028-422A-9145-8CE8DE9A47DA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>OpenNIGrabber</RootNamespace>
+    <RootNamespace>pcdViewer</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -50,13 +50,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\include;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(OPENCV_DIR)\include\opencv</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OPEN_NI_LIB);$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\Eigen\bin;$(PCL_ROOT)\3rdParty\Boost\lib;$(OPENCV_DIR)\lib\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openNI.lib;pcl_io-gd.lib;pcl_common-gd.lib;pcl_visualization-gd.lib;pcl_filters-gd.lib;pcl_sample_consensus-gd.lib;pcl_segmentation-gd.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openNI.lib;pcl_io-gd.lib;pcl_common-gd.lib;pcl_visualization-gd.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -79,15 +78,11 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Segmenter.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="Segmenter.cpp" />
+    <ClCompile Include="pcdViewer.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

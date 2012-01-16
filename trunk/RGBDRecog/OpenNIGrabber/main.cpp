@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "Renderer.h"
+#include "Segmenter.h"
 #include <sstream>
 
 using namespace xn;
@@ -59,6 +60,7 @@ public:
 	{
 		if (timeToSave)
 		{
+			
 			if ( saveCloud(cloud) && saveRGB(*cloudToRGB(cloud)) )
 				cout << "Saved " << numSaves << endl;
 			timeToSave = false;
@@ -194,7 +196,9 @@ protected:
 
 int main ()
 {
-	DataDistributor d;
-	d.run();
+	Segmenter seg;
+	seg.segmentPlanes();
+	//DataDistributor d;
+	//d.run();
 	return 0;
 }
