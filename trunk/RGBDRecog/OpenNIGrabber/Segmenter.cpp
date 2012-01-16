@@ -91,7 +91,7 @@ void Segmenter::segmentPlanes()//const pcl::PointCloud<pcl::PointXYZRGB>::ConstP
 
   // Write the downsampled version to disk
   pcl::PCDWriter writer;
-  writer.write<pcl::PointXYZ> ("depth_0.pcd", *cloud_filtered, false);
+  writer.write<pcl::PointXYZ> ("filtered.pcd", *cloud_filtered, false);
 
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
