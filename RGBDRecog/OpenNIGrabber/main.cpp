@@ -196,9 +196,9 @@ protected:
 
 int main ()
 {
-	Segmenter seg;
-	seg.segmentPlanes();
-	//DataDistributor d;
-	//d.run();
+	//Segmenter seg;
+	//seg.segmentPlanes();
+	DataDistributor d;
+	d.run();
 	return 0;
 }
