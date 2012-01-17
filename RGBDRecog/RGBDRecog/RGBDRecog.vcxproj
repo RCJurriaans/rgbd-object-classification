@@ -98,16 +98,20 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\..\..\data_info.txt" />
     <None Include="ReadMe.txt" />
+    <None Include="RFParams.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FeatureVector.h" />
     <ClInclude Include="ImageWrapper.h" />
+    <ClInclude Include="RFClass.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FeatureVector.cpp" />
+    <ClCompile Include="RFClass.cpp" />
     <ClCompile Include="RGBDRecog.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

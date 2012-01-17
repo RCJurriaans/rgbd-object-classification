@@ -16,6 +16,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
+    <None Include="..\..\..\data_info.txt" />
+    <None Include="RFParams.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -30,6 +32,9 @@
     <ClInclude Include="FeatureVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RFClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -39,6 +44,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FeatureVector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RFClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
