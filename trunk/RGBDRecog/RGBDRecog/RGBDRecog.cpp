@@ -21,17 +21,16 @@
 //#include <boost\lexical_cast.hpp> //to quickly lexical cast integers //moved to stdafx
 
 #include "Winbase.h"
+#include "RFClass.h"
 
 using namespace std;
 using namespace cv; //opencv namespace
 
 
-
-
 //settings
 enum classes {AIRPLANES, CARS, FACES, MOTORBIKES}; //names of the classes
-enum colorsettings {NORMAL, HUE, OPPONENT}; //name of the color modes
 string classNames[4] = {"airplanes", "cars", "faces", "motorbikes"}; //strings of names of the classes
+enum colorsettings {NORMAL, HUE, OPPONENT};
 const int classMax[4] = {500,465,400,500};
 const int numTestIm[4] = {50,50,50,50};
 const int amountOfClasses = 4; 
@@ -163,8 +162,8 @@ vector<Mat> generateTrainingData(FeatureVector codebook, int mode){
           SIFT::CommonParams::FIRST_ANGLE ); //sift class, ugly initialization of all parameters...
     vector<KeyPoint> keypoints; //temp variable that contains the keypoints found for each img
 	Mat descriptors; //temp variable used to store the extracted SIFT descriptors for every image
-	//SiftDescriptorExtractor SDE; //Sift descriptor extraction class
-	//OpponentColorDescriptorExtractor des(&SDE); //written by van de Sande... extracts the opponent SIFT data
+	SiftDescriptorExtractor *SDE; //Sift descriptor extraction class
+	OpponentColorDescriptorExtractor des(SDE); //written by van de Sande... extracts the opponent SIFT data
 	Mat grayimg; //temp used to store the grayimg in for Opponent color 
 	vector<Mat> histogram;
 
@@ -307,19 +306,65 @@ void predictTestSet(CvRTrees * treestructure, int mode, FeatureVector codebook){
 	delete [] predictions;
  }
 
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-	int mode = NORMAL; //specify the color mode used, either NORMAL, HUE or OPPONENT
+	//int mode = NORMAL; //specify the color mode used, either NORMAL, HUE or OPPONENT
+
+	char option = ' ';
+
+	while(option != 'q' && option != 'Q'){
+		cout << "Choose a classification method: " << endl
+			 << "  (R) andom forests" << endl
+			 << "  (N) earest neighbor" << endl
+			 << "  (Q) uit" << endl;
+		option = cin.get();
+		switch(option){
+			case 'r': case 'R':{
+				cin.clear();
+				cin.sync();
+				cout << "Running the random forest menu" << endl;
+				RFClass* rfclass = new RFClass();
+				if(rfclass!= NULL){
+					rfclass->menu();
+				}
+				else{
+					cout << "Could not create the random forest." << endl;
+				}
+			} break;
+
+			case 'n': case 'N':{
+				cin.clear();
+				cin.sync();
+				cout << "Neirest neigbor is not implemented yet" << endl;
+			} break;
+			
+			case 'q': case 'Q':{
+				cin.clear();
+				cin.sync();
+				cout << "exiting..." << endl;
+			} break;
+			default:{
+				cin.clear();
+				cin.sync();
+				cout << "No such option exists" << endl;
+			} break;
+
+		}
+	}
+
+
 
 	//createCookbook(mode);
 	
-	//load the codebook data
-	FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::READ);
-	Mat M; fs["codebook" + boost::lexical_cast<string>(mode)] >> M;
-	fs.release();
-	FeatureVector codebook;
-	codebook.AddFeatures(M);
-	codebook.TrainkNN();//train kNN method for evaluating close descriptors
+	////load the codebook data
+	//FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::READ);
+	//Mat M; fs["codebook" + boost::lexical_cast<string>(mode)] >> M;
+	//fs.release();
+	//FeatureVector codebook;
+	//codebook.AddFeatures(M);
+	//codebook.TrainkNN();//train kNN method for evaluating close descriptors
 	
 
 	//Mat img = imread("nemo1.jpg");
@@ -329,75 +374,75 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
 
-	vector<Mat> trainingdata = generateTrainingData(codebook, mode);
-	vector<int> classNumbers;
-	for(unsigned int i = 0; i < trainingdata.size(); i++){
-		classNumbers.push_back(trainingdata[i].rows);
-	}
-	Mat mergedData;
-	mergedData = trainingdata[0];
-	for(int i = 1; i < amountOfClasses; i++){
-		hconcat(mergedData,trainingdata[i],mergedData);
-	}
+	//vector<Mat> trainingdata = generateTrainingData(codebook, mode);
+	//vector<int> classNumbers;
+	//for(unsigned int i = 0; i < trainingdata.size(); i++){
+	//	classNumbers.push_back(trainingdata[i].rows);
+	//}
+	//Mat mergedData;
+	//mergedData = trainingdata[0];
+	//for(int i = 1; i < amountOfClasses; i++){
+	//	hconcat(mergedData,trainingdata[i],mergedData);
+	//}
 
-	FileStorage fs2("trainingdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE); //store the codebook to a yaml file
-	for(int i = 0; i < amountOfClasses;i++){
-		fs2 << "trainingdata" + boost::lexical_cast<string>(mode) + boost::lexical_cast<string>(i)  << trainingdata[i];
-	}
-	fs2.release();
-
-
+	//FileStorage fs2("trainingdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE); //store the codebook to a yaml file
+	//for(int i = 0; i < amountOfClasses;i++){
+	//	fs2 << "trainingdata" + boost::lexical_cast<string>(mode) + boost::lexical_cast<string>(i)  << trainingdata[i];
+	//}
+	//fs2.release();
 
 
 
 
-	
-	vector<Mat> trainingdata2;
-	FileStorage fs3("trainingdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::READ);
-	Mat temp;
-	for(int i = 0; i < amountOfClasses; i++){
-		temp.release();
-		fs3["trainingdata" + boost::lexical_cast<string>(mode)+ boost::lexical_cast<string>(i)] >> temp;
-		trainingdata2.push_back(temp);
-	}
-	Mat mergedData2;
-	mergedData2 = trainingdata2[0];
-	for(int i = 1; i < amountOfClasses; i++){
-		hconcat(mergedData2,trainingdata2[i],mergedData2);
-	}
-	fs2.release();
-	cout << "training tree" << endl;
-	CvRTrees* treestructure = new CvRTrees();
-	Mat responses(mergedData2.cols,1,mergedData2.type());
-	for(int i = 0; i < amountOfClasses;i++){
-		int multifactor=0;
-		for(int j = 0; j < i; j++){
-			multifactor+= classMax[j]-cookBookNumImg[i];
-		}
-		for(int j = 0; j < trainingdata2[i].cols; j++){
-			responses.at<float>(j+multifactor) = static_cast<float>(i);
-		}
-	}
-
-	treestructure->train(mergedData2,CV_COL_SAMPLE,responses,Mat(),Mat(),Mat(),Mat(),CvRTParams());
-	//CvFileStorage fs3("randomforestdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE);
-	string filename = "randomforestdata" + boost::lexical_cast<string>(mode);
-	string dataname = "randomforestdata" + boost::lexical_cast<string>(mode) + ".yml";
-	treestructure->write(cvOpenFileStorage(dataname.c_str(), 0, CV_STORAGE_WRITE_TEXT ), filename.c_str());
 
 
-	cout << "loading tree structure" << endl;
-	string filename2 = "randomforestdata" + boost::lexical_cast<string>(mode);
-	string dataname2 = "randomforestdata" + boost::lexical_cast<string>(mode) + ".yml";
-	CvRTrees* treestructure2 = new CvRTrees();
-	treestructure2->read(cvOpenFileStorage(dataname2.c_str(), 0, CV_STORAGE_READ ), cvGetFileNodeByName(cvOpenFileStorage(dataname2.c_str(), 0, CV_STORAGE_READ ),0,filename2.c_str()));
+	//
+	//vector<Mat> trainingdata2;
+	//FileStorage fs3("trainingdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::READ);
+	//Mat temp;
+	//for(int i = 0; i < amountOfClasses; i++){
+	//	temp.release();
+	//	fs3["trainingdata" + boost::lexical_cast<string>(mode)+ boost::lexical_cast<string>(i)] >> temp;
+	//	trainingdata2.push_back(temp);
+	//}
+	//Mat mergedData2;
+	//mergedData2 = trainingdata2[0];
+	//for(int i = 1; i < amountOfClasses; i++){
+	//	hconcat(mergedData2,trainingdata2[i],mergedData2);
+	//}
+	//fs2.release();
+	//cout << "training tree" << endl;
+	//CvRTrees* treestructure = new CvRTrees();
+	//Mat responses(mergedData2.cols,1,mergedData2.type());
+	//for(int i = 0; i < amountOfClasses;i++){
+	//	int multifactor=0;
+	//	for(int j = 0; j < i; j++){
+	//		multifactor+= classMax[j]-cookBookNumImg[i];
+	//	}
+	//	for(int j = 0; j < trainingdata2[i].cols; j++){
+	//		responses.at<float>(j+multifactor) = static_cast<float>(i);
+	//	}
+	//}
+
+	//treestructure->train(mergedData2,CV_COL_SAMPLE,responses,Mat(),Mat(),Mat(),Mat(),CvRTParams());
+	////CvFileStorage fs3("randomforestdata" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE);
+	//string filename = "randomforestdata" + boost::lexical_cast<string>(mode);
+	//string dataname = "randomforestdata" + boost::lexical_cast<string>(mode) + ".yml";
+	//treestructure->write(cvOpenFileStorage(dataname.c_str(), 0, CV_STORAGE_WRITE_TEXT ), filename.c_str());
+
+
+	//cout << "loading tree structure" << endl;
+	//string filename2 = "randomforestdata" + boost::lexical_cast<string>(mode);
+	//string dataname2 = "randomforestdata" + boost::lexical_cast<string>(mode) + ".yml";
+	//CvRTrees* treestructure2 = new CvRTrees();
+	//treestructure2->read(cvOpenFileStorage(dataname2.c_str(), 0, CV_STORAGE_READ ), cvGetFileNodeByName(cvOpenFileStorage(dataname2.c_str(), 0, CV_STORAGE_READ ),0,filename2.c_str()));
 
 
 	//_CrtDumpMemoryLeaks(); //used to check memory leakages in debug mode, will output to the output screen in msvc2010
-	cout << "predicting test data" << endl;
-	predictTestSet(treestructure2, mode, codebook);
+	//cout << "predicting test data" << endl;
+	//predictTestSet(treestructure2, mode, codebook);
 
-		cout << "done" << endl;
+	//	cout << "done" << endl;
 
 	return 0;
 }

@@ -12,6 +12,7 @@
 
 
 
+
 // TODO: reference additional headers your program requires here
 #include <cv.h>
 #include <cxcore.h>
@@ -20,3 +21,6 @@
 #include "Winbase.h"
 #include <string>
 #include <ml.h>
+#include <iostream>
+#include <fstream>
+#include <vector>

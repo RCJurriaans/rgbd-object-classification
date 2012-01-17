@@ -43,7 +43,7 @@ Mat* FeatureVector::kmeans(int dicsize){
 void FeatureVector::TrainkNN(){
 	Mat trainClasses(features->rows,1,features->type());
 	for(int i =0; i < features->rows; i++){
-		trainClasses.at<float>(i,0) = i;
+		trainClasses.at<float>(i,0) = static_cast<float>(i);
 	}
 	
 	CvMat tempfeats = *features;
