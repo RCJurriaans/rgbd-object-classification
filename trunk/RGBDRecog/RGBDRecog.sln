@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pcdViewer", "pcdViewer\pcdViewer.vcxproj", "{BF811064-0028-422A-9145-8CE8DE9A47DA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BackgroundSubtraction", "BackgroundSubtraction\BackgroundSubtraction.vcxproj", "{8A19202D-0EF3-4F41-9B75-39BFFC976A49}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -56,6 +58,12 @@ Global
 		{BF811064-0028-422A-9145-8CE8DE9A47DA}.Release|Win32.ActiveCfg = Release|Win32
 		{BF811064-0028-422A-9145-8CE8DE9A47DA}.Release|Win32.Build.0 = Release|Win32
 		{BF811064-0028-422A-9145-8CE8DE9A47DA}.Release|x64.ActiveCfg = Release|Win32
+		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Debug|Win32.Build.0 = Debug|Win32
+		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Debug|x64.ActiveCfg = Debug|Win32
+		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|Win32.ActiveCfg = Release|Win32
+		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|Win32.Build.0 = Release|Win32
+		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
