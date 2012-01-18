@@ -15,7 +15,12 @@ class SegmentCloud
 
 
 public:
-	SegmentCloud() {}
+	SegmentCloud() {
+	setSegMethod(SegBack);
+	setThreshold(0.05);
+	setMaxDistanceFilter(2);
+	setMinDistanceFilter(0.1);
+	}
 
 	// Method of Segmentation
 	enum SegmentationMethod { SegBack, SegObj, SegPlane, SegNormHist };
@@ -30,7 +35,8 @@ public:
 
 	// Thresholds
 	double threshold;
-	double distanceFilter;
+	double maxDistanceFilter;
+	double minDistanceFilter;
 
 	// Get Different Cloud types
 	void getNaNCloud();
@@ -50,7 +56,8 @@ public:
 	void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
 
 	void setThreshold(double);
-	void setDistanceFilter(double);
+	void setMaxDistanceFilter(double);
+	void setMinDistanceFilter(double);
 protected:
 
 private:

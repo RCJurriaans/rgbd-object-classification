@@ -44,14 +44,14 @@ void SegmentCloud::getNaNCloud()
 			// Check whether the distance is smaller than a threshold
 			// Check whether the distance is within the range of the RGB-D camera
 			// Check for QNaN
-			if(abs(point_backz-point_imgz)<threshold || point_imgz>distanceFilter || point_imgz != point_imgz){
+			if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
 				inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
 				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
 			}
 			else {
 				// std::cout << "Width: " << i << ", Height: " << j << std::endl;
 
-				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 1;
+				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 255;
 			}
 
 		}
@@ -117,8 +117,12 @@ void SegmentCloud::setThreshold(double thres)
 	threshold = thres;
 }
 
-void SegmentCloud::setDistanceFilter(double distFilt)
+void SegmentCloud::setMaxDistanceFilter(double distFilt)
 {
-	distanceFilter = distFilt;
+	maxDistanceFilter = distFilt;
 }
 
+void SegmentCloud::setMinDistanceFilter(double distFilt)
+{
+	minDistanceFilter = distFilt;
+}
