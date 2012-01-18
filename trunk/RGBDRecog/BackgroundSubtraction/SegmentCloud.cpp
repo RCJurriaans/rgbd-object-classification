@@ -8,7 +8,6 @@
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
-#include <pcl/range_image/range_image.h>
 
 #include <cv.h>
 #include <cxcore.h>
@@ -22,7 +21,8 @@
 void SegmentCloud::getNaNCloud()
 {
 	int nmax;
-	cv::Mat BooleanMask( inputCloud->height, inputCloud->width, CV_8UC1);
+	BooleanMask->release();
+	BooleanMask = new cv::Mat( inputCloud->height, inputCloud->width, CV_8UC1);
 	
 	switch( getSegMethod() ){
 	case SegBack:
@@ -46,20 +46,17 @@ void SegmentCloud::getNaNCloud()
 			// Check for QNaN
 			if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
 				inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
-				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
+				BooleanMask->data[j*BooleanMask->step[0]+i*BooleanMask->step[1]] = 0;
 			}
 			else {
 				// std::cout << "Width: " << i << ", Height: " << j << std::endl;
 
-				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 255;
+				BooleanMask->data[j*BooleanMask->step[0]+i*BooleanMask->step[1]] = 255;
 			}
 
 		}
 
-		cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
-		cv::imshow("TestMask", BooleanMask);
-		cv::waitKey();
-		cvDestroyWindow("TestMask");
+
 
 		break;
 	case SegObj:
@@ -110,6 +107,7 @@ void SegmentCloud::setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr clo
 void SegmentCloud::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
 {
 	inputCloud = cloud;
+	
 }
 
 void SegmentCloud::setThreshold(double thres)

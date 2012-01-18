@@ -2,6 +2,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include <cv.h>
 
 class SegmentCloud
 {
@@ -15,6 +16,8 @@ class SegmentCloud
 
 
 public:
+
+
 	SegmentCloud() {
 	setSegMethod(SegBack);
 	setThreshold(0.05);
@@ -31,7 +34,8 @@ public:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr UnorgCloud;
 
 	// Masks
-	//boost::shared_ptr<cv::Mat> BooleanMask;
+	cv::Mat* BooleanMask;
+	// boost::shared_ptr<cv::Mat> BooleanMask;
 
 	// Thresholds
 	double threshold;
