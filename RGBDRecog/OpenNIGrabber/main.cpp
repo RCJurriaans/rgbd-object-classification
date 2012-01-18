@@ -257,14 +257,14 @@ int
 	SegmentCloud SC;
 
 	std::string path_back;
-	// std::cout << "Enter background pcd file path" << std::endl;
-	// std::cin >> path_back;
-	path_back = "Saves/Background/depth_0.pcd";
+	std::cout << "Enter background pcd file path" << std::endl;
+	std::cin >> path_back;
+	// path_back = "saves/Background/depth_0.pcd";
 
 	std::string path_img;
-	//std::cout << "Enter image pcd file path" << std::endl;
-	//std::cin >> path_img;
-	path_img = "Saves/Pepper/depth_2.pcd";
+	std::cout << "Enter image pcd file path" << std::endl;
+	std::cin >> path_img;
+	// path_img = "saves/Pepper/depth_2.pcd";
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
@@ -273,11 +273,6 @@ int
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_img (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_img, *cloud_img);
 	SC.setInputCloud(cloud_img);
-
-	SC.setThreshold(0.05);
-	SC.setDistanceFilter(2);
-
-	SC.setSegMethod(SegmentCloud::SegBack);
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud;
 	pcl::RangeImage rangeImage;
@@ -290,7 +285,10 @@ int
 	
 	time_t end = time(NULL);
 
-
+	cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
+	cv::imshow("TestMask", *SC.BooleanMask);
+	cv::waitKey();
+	cvDestroyWindow("TestMask");
 
 	std::cout << "Time: " << difftime(end, start) << std::endl;
 	std::cout << "Saving "  <<  std::endl;
