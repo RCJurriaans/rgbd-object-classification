@@ -103,6 +103,7 @@
     <None Include="RFParams.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FeatureExtractor.h" />
     <ClInclude Include="FeatureVector.h" />
     <ClInclude Include="ImageWrapper.h" />
     <ClInclude Include="RFClass.h" />
@@ -110,6 +111,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FeatureExtractor.cpp" />
     <ClCompile Include="FeatureVector.cpp" />
     <ClCompile Include="RFClass.cpp" />
     <ClCompile Include="RGBDRecog.cpp" />
