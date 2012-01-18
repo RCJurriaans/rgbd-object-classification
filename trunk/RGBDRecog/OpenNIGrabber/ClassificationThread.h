@@ -32,8 +32,6 @@ public:
 			cout << "Segmenting.." << endl;
 			segmenter.setInputCloud(cloud);
 			segmenter.setBackgroundImage(bgCloud);
-			segmenter.setDistanceFilter(3);
-			segmenter.setThreshold(0.05);
 			segmenter.getNaNCloud();
 
 			v->showCloud(cloud);
