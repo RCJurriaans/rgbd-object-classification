@@ -19,12 +19,12 @@
 #include <math.h>
 
 // Get Different Cloud types
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getNaNCloud()
+void SegmentCloud::getNaNCloud()
 {
 
 	int nmax;
 	cv::Mat BooleanMask( inputCloud->height, inputCloud->width, CV_8UC1);
-	
+
 	switch( getSegMethod() ){
 	case SegBack:
 
@@ -32,30 +32,35 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getNaNCloud()
 		float point_imgz;
 
 		nmax = inputCloud->width * inputCloud->height;
-		std::cout << nmax << " points to check" << std::endl;
 
 		for(int n=0; n < nmax ; n++ ){
+			// Extract z value from both clouds
 			point_backz = backgroundCloud->at(n).z;
 			point_imgz  = inputCloud->at(n).z;
-				
-			int i = n % inputCloud->width;
-			int j = (n-i) % inputCloud->height;
 
-			if(abs(point_backz-point_imgz)<threshold || point_imgz>distanceFilter){
+			// Recalculate indices in matrix from n
+			int i = n % inputCloud->width;
+			int j = ((n-i) / inputCloud->width);
+
+			// Check whether the distance is smaller than a threshold
+			// Check whether the distance is within the range of the RGB-D camera
+			// Check for QNaN
+			if(abs(point_backz-point_imgz)<threshold || point_imgz>distanceFilter || point_imgz != point_imgz){
 				inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
 				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
 			}
 			else {
-				std::cout << "Width: " << i << ", Height: " << j << std::endl;
+				// std::cout << "Width: " << i << ", Height: " << j << std::endl;
+
 				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 1;
 			}
 
 		}
 
-		cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
-		cv::imshow("TestMask", BooleanMask);
-		cv::waitKey();
-		cvDestroyWindow("TestMask");
+		//cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
+		//cv::imshow("TestMask", BooleanMask);
+		//cv::waitKey();
+		//cvDestroyWindow("TestMask");
 
 		break;
 	case SegObj:
@@ -68,8 +73,6 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getNaNCloud()
 		std::cout << "No such method yet" << std::endl;
 		break;
 	}
-
-	return inputCloud;
 
 };
 
@@ -133,7 +136,7 @@ int
 	std::string path_img;
 	//std::cout << "Enter image pcd file path" << std::endl;
 	//std::cin >> path_img;
-	path_img = "Saves/SourMilk/depth_29.pcd";
+	path_img = "Saves/Pepper/depth_2.pcd";
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
@@ -142,8 +145,6 @@ int
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_img (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_img, *cloud_img);
 	SC.setInputCloud(cloud_img);
-
-
 
 	SC.setThreshold(0.05);
 	SC.setDistanceFilter(2);
@@ -156,8 +157,9 @@ int
 	std::cout << "Starting " << cloud_img->width << " " << cloud_img->height <<  std::endl;
 
 	time_t start = time(NULL);
-	segmentCloud = SC.getNaNCloud();
-	// SC.BooleanMask;
+	// segmentCloud = SC.getNaNCloud();
+	SC.getNaNCloud();
+
 	time_t end = time(NULL);
 
 
@@ -166,7 +168,7 @@ int
 	std::cout << "Saving "  <<  std::endl;
 
 
-	pcl::io::savePCDFileASCII ("Saves/test_pcd.pcd", *segmentCloud);
+	pcl::io::savePCDFileASCII ("Saves/test_pcd.pcd", *cloud_img);
 	std::cerr << "Saved " << cloud_img->points.size () << " data points to Saves/test_pcd.pcd." << std::endl;
 
 

@@ -31,7 +31,7 @@ public:
 	double distanceFilter;
 
 	// Get Different Cloud types
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr getNaNCloud();
+	void getNaNCloud();
 	void getWindowCloud();
 	void getUnorgCloud();
 
