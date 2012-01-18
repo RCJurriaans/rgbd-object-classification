@@ -5,35 +5,25 @@
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/visualization/cloud_viewer.h>
+
+#include <ctime>
 
 int
  main (int argc, char** argv)
 {
-  pcl::PointCloud<pcl::PointXYZ> cloud;
+	double x = 2.3453453;
+	cout << x;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
 
-  // Fill in the cloud data
-  cloud.width  = 15;
-  cloud.height = 1;
-  cloud.points.resize (cloud.width * cloud.height);
+  pcl::io::loadPCDFile<pcl::PointXYZ> (".\\depth_1.pcd", *cloud);
 
-  // Generate the data
-  for (size_t i = 0; i < cloud.points.size (); ++i)
-  {
-    cloud.points[i].x = 1024 * rand () / (RAND_MAX + 1.0f);
-    cloud.points[i].y = 1024 * rand () / (RAND_MAX + 1.0f);
-    cloud.points[i].z = 1.0;
-  }
-
-  // Set a few outliers
-  cloud.points[0].z = 2.0;
-  cloud.points[3].z = -2.0;
-  cloud.points[6].z = 4.0;
-
-  std::cerr << "Point cloud data: " << cloud.points.size () << " points" << std::endl;
-  for (size_t i = 0; i < cloud.points.size (); ++i)
-    std::cerr << "    " << cloud.points[i].x << " " 
-                        << cloud.points[i].y << " " 
-                        << cloud.points[i].z << std::endl;
+  cout << "loaded" << endl;
+  //pcl::visualization::CloudViewer* v = new pcl::visualization::CloudViewer("aaa");
+  //v->showCloud(cloud);
+ 
+  
 
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
 
@@ -44,17 +34,23 @@ int
   pcl::SACSegmentation<pcl::PointXYZ> seg;
   std::cerr << "Segmentation object made\n ";
   // Optional
-  seg.setOptimizeCoefficients (true);
+  seg.setOptimizeCoefficients (false);
   // Mandatory
   seg.setModelType (pcl::SACMODEL_PLANE);
   seg.setMethodType (pcl::SAC_RANSAC);
   seg.setDistanceThreshold (0.01);
-
-  seg.setInputCloud (cloud.makeShared ());
+  seg.setMaxIterations(10);
+  seg.setInputCloud (cloud->makeShared ());
 
   std::cerr << "Segmentation parameters set\n ";
 
+  time_t start = time(NULL);
+
   seg.segment (*inliers, *coefficients);
+
+  time_t end = time(NULL);
+  double t = difftime(end,start);
+  cout << "Time taken: " << t << "s" << endl;
 
 //  std::cerr << "Segment made\n ";
 
@@ -62,6 +58,7 @@ int
   if (inliers->indices.size () == 0)
   {
     PCL_ERROR ("Could not estimate a planar model for the given dataset.");
+	cin.get();
     return (-1);
   }
 
@@ -70,11 +67,30 @@ int
                                       << coefficients->values[2] << " " 
                                       << coefficients->values[3] << std::endl;
 
-  std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
-  for (size_t i = 0; i < inliers->indices.size (); ++i)
-    std::cerr << inliers->indices[i] << "    " << cloud.points[inliers->indices[i]].x << " "
-                                               << cloud.points[inliers->indices[i]].y << " "
-                                               << cloud.points[inliers->indices[i]].z << std::endl;
+  //std::cerr << "Model inliers: " << inliers->indices.size () << std::endl;
+  //for (size_t i = 0; i < inliers->indices.size (); ++i)
+  //  std::cerr << inliers->indices[i] << "    " << cloud.points[inliers->indices[i]].x << " "
+  //                                             << cloud.points[inliers->indices[i]].y << " "
+  //                                             << cloud.points[inliers->indices[i]].z << std::endl;
 
+   pcl::ExtractIndices<pcl::PointXYZ> extract;
+   //const boost::shared_ptr<
+   //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p(&cloud);
+
+   extract.setInputCloud (cloud);
+    extract.setIndices (inliers);
+    extract.setNegative (false);
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr outCloud(new pcl::PointCloud<pcl::PointXYZ>());
+    extract.filter (*outCloud);
+
+	//delete v;
+	pcl::visualization::CloudViewer viewer("Viewer");
+	viewer.showCloud(outCloud);
+
+	while (!viewer.wasStopped ())
+	{
+		Sleep(1000);
+	}
   return (0);
 }

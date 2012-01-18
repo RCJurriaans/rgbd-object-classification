@@ -3,8 +3,15 @@
 
 #include "stdafx.h"
 #include "Renderer.h"
-#include "Segmenter.h"
+#include "NBNN.h"
+#include "ClassificationThread.h"
+#include "SegmentCloud.h"
+
 #include <sstream>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+
+#include "pcl/range_image/range_image.h"
 
 using namespace xn;
 using namespace cv;
@@ -18,13 +25,13 @@ using namespace std;
 class DataDistributor
 {
 public:
-	//const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cl;
 	DataDistributor() :
 		renderer(new Renderer(boost::bind(&DataDistributor::processInput, this, _1))),
 		grabber(new pcl::OpenNIGrabber()),
 		saveFolder(".\\saves\\"),
 		numSaves(0),
-		timeToSave(false)
+		timeToSave(false),
+		NBNNClassifier(new NBNN())
 	{
 		// make callback function from member function
 		boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> I_CB =
@@ -41,15 +48,23 @@ public:
 		renderDepth = boost::bind(&Renderer::renderDepth, renderer, _1);
 		renderCloud = boost::bind(&Renderer::renderCloud, renderer, _1);
 		renderCloudRGB = boost::bind(&Renderer::renderCloudRGB, renderer, _1);
-
-
-		// Connect callback functions. 
+		
+		// Connect callback functions
 		boost::signals2::connection c = grabber->registerCallback(I_CB);
 		boost::signals2::connection c2 = grabber->registerCallback(D_CB);
-		
-		toggleConnection(renderRGBConnection, renderRGB);
-	}
+		//toggleConnection(renderRGBConnection, renderRGB);
+		toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 
+		// Initialize classifier
+		vector<string> paths;
+		//paths.push_back(".\\dataset\\.....");
+		//NBNNClassifier->loadTrainingData(paths);
+
+		boost::function<void (const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &)> inpCB
+			= boost::bind(&DataDistributor::classifierThreadInput, this, _1);
+		grabber->registerCallback(inpCB);
+	}
+	
 	~DataDistributor()
 	{
 		delete renderer;
@@ -70,6 +85,25 @@ public:
 		processInput(cvWaitKey(1));
 	}
 
+	void classifierThreadInput(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
+	{
+
+		//classificationInputMutex.lock();
+		//s_cloud = cloud;
+		///classificationInputMutex.unlock();
+		
+		
+		// Segment the object:
+		//segmenter->setInputCloud(cloud);
+		//segmenter->segment(..
+
+		// Calculate features
+		// TODO
+
+		// Classify
+		//TODO
+		//renderer->renderCloudRGB(cloud);
+	}
 
 	// These are required for handling events in each thread
 	void imageCB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB){ processInput( cvWaitKey(1) ); }
@@ -118,9 +152,9 @@ public:
 		return rgbImage;
 	}
 	
+	
 	void processInput( int key )
 	{
-
 		switch(key)
 		{
 		case -1:
@@ -148,13 +182,22 @@ public:
 			cin >> numSaves;
 			grabber->registerCallback( saveCB );
 			break;
+		case 'b':
+			classificationInputMutex.lock();
+			s_backgroundCloud = s_cloud;
+			classificationInputMutex.unlock();
+			break;
 		default:
 			return;
 		}
 	}
+	
 
 	void run ()
 	{
+		// Start classification thread
+		boost::thread classify( ClassificationThread( classificationInputMutex, s_cloud, s_backgroundCloud ) );
+
 		// start receiving point clouds
 		grabber->start();
 
@@ -169,13 +212,22 @@ public:
 
 protected:
 	
-	pcl::Grabber* grabber;
-	Renderer* renderer;
+	// Settings
 	string saveFolder;
 	int numSaves;
 	bool timeToSave;
+	
+	// System components
+	pcl::Grabber* grabber;
+	Renderer* renderer;
+	NBNN *NBNNClassifier;
+	
+	// Threading
+	boost::mutex classificationInputMutex; // Locks all following:
+	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_cloud;
+	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_backgroundCloud;
+	  
 
-	//pcl::visualization::CloudViewer* viewer;
 
 	// Callbacks
 	boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> renderRGB;
@@ -190,15 +242,65 @@ protected:
 	boost::signals2::connection renderDepthConnection;
 	boost::signals2::connection renderCloudConnection;
 	boost::signals2::connection renderCloudRGBConnection;
-
-
 };
-
+/*
 int main ()
 {
-	//Segmenter seg;
-	//seg.segmentPlanes();
 	DataDistributor d;
 	d.run();
 	return 0;
+}
+*/
+int
+	main (int argc, char** argv)
+{
+	SegmentCloud SC;
+
+	std::string path_back;
+	// std::cout << "Enter background pcd file path" << std::endl;
+	// std::cin >> path_back;
+	path_back = "Saves/Background/depth_0.pcd";
+
+	std::string path_img;
+	//std::cout << "Enter image pcd file path" << std::endl;
+	//std::cin >> path_img;
+	path_img = "Saves/Pepper/depth_2.pcd";
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
+	SC.setBackgroundImage(cloud_back);
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_img (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_img, *cloud_img);
+	SC.setInputCloud(cloud_img);
+
+	SC.setThreshold(0.05);
+	SC.setDistanceFilter(2);
+
+	SC.setSegMethod(SegmentCloud::SegBack);
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud;
+	pcl::RangeImage rangeImage;
+
+	std::cout << "Starting " << cloud_img->width << " " << cloud_img->height <<  std::endl;
+
+	time_t start = time(NULL);
+	// segmentCloud = SC.getNaNCloud();
+	SC.getNaNCloud();
+	
+	time_t end = time(NULL);
+
+
+
+	std::cout << "Time: " << difftime(end, start) << std::endl;
+	std::cout << "Saving "  <<  std::endl;
+
+
+	pcl::io::savePCDFileASCII ("Saves/test_pcd.pcd", *cloud_img);
+	std::cerr << "Saved " << cloud_img->points.size () << " data points to Saves/test_pcd.pcd." << std::endl;
+
+
+	return (0);
+
+
 }

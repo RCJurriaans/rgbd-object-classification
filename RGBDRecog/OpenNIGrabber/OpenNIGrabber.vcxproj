@@ -49,14 +49,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\include;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(OPENCV_DIR)\include\opencv</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\include;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(OPENCV_DIR)\include\opencv;$(OPENCV_DIR)\include\opencv2;$(OPENCV_DIR)\include\opencv2\flann;$(OPENCV_DIR)\include\opencv2\features2d;$(SolutionDir)\BackgroundSubtraction</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OPEN_NI_LIB);$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\Eigen\bin;$(PCL_ROOT)\3rdParty\Boost\lib;$(OPENCV_DIR)\lib\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openNI.lib;pcl_io-gd.lib;pcl_common-gd.lib;pcl_visualization-gd.lib;pcl_filters-gd.lib;pcl_sample_consensus-gd.lib;pcl_segmentation-gd.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OPEN_NI_LIB);$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\Eigen\bin;$(PCL_ROOT)\3rdParty\Boost\lib;$(OPENCV_DIR)\lib\Debug;$(SolutionDir)\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>openNI.lib;pcl_io-gd.lib;pcl_common-gd.lib;pcl_visualization-gd.lib;pcl_filters-gd.lib;pcl_sample_consensus-gd.lib;pcl_segmentation-gd.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;opencv_flann231d.lib;opencv_features2d231d.lib;CloudSegmentation.lib;pcl_range_image-gd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -79,6 +79,8 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClassificationThread.h" />
+    <ClInclude Include="NBNN.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Segmenter.h" />
     <ClInclude Include="stdafx.h" />
@@ -86,6 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NBNN.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Segmenter.cpp" />
     <ClCompile Include="stdafx.cpp">
