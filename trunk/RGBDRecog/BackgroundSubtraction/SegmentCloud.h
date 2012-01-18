@@ -11,8 +11,11 @@ class SegmentCloud
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr inputCloud;
 
 
+
 public:
-		// Method of Segmentation
+	SegmentCloud() {}
+
+	// Method of Segmentation
 	enum SegmentationMethod { SegBack, SegObj, SegPlane, SegNormHist };
 	SegmentationMethod crtMethod;
 
@@ -20,6 +23,10 @@ public:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr WindowCloud;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr UnorgCloud;
 
+	// Masks
+	//boost::shared_ptr<cv::Mat> BooleanMask;
+
+	// Thresholds
 	double threshold;
 	double distanceFilter;
 
@@ -34,14 +41,14 @@ public:
 
 	// Get different masks
 	void getROI();
-	void getMask();
+
 
 	// Set necessary clouds
 	void setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
 	void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
 
-	void SegmentCloud::setThreshold(double);
-	void SegmentCloud::setDistanceFilter(double);
+	void setThreshold(double);
+	void setDistanceFilter(double);
 protected:
 
 private:
