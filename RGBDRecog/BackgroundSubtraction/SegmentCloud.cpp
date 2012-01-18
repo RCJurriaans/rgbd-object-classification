@@ -21,10 +21,9 @@
 // Get Different Cloud types
 void SegmentCloud::getNaNCloud()
 {
-
 	int nmax;
 	cv::Mat BooleanMask( inputCloud->height, inputCloud->width, CV_8UC1);
-
+	
 	switch( getSegMethod() ){
 	case SegBack:
 
@@ -32,12 +31,12 @@ void SegmentCloud::getNaNCloud()
 		float point_imgz;
 
 		nmax = inputCloud->width * inputCloud->height;
-
+		
 		for(int n=0; n < nmax ; n++ ){
 			// Extract z value from both clouds
 			point_backz = backgroundCloud->at(n).z;
 			point_imgz  = inputCloud->at(n).z;
-
+			
 			// Recalculate indices in matrix from n
 			int i = n % inputCloud->width;
 			int j = ((n-i) / inputCloud->width);
@@ -57,10 +56,10 @@ void SegmentCloud::getNaNCloud()
 
 		}
 
-		//cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
-		//cv::imshow("TestMask", BooleanMask);
-		//cv::waitKey();
-		//cvDestroyWindow("TestMask");
+		cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
+		cv::imshow("TestMask", BooleanMask);
+		cv::waitKey();
+		cvDestroyWindow("TestMask");
 
 		break;
 	case SegObj:
@@ -159,7 +158,7 @@ int
 	time_t start = time(NULL);
 	// segmentCloud = SC.getNaNCloud();
 	SC.getNaNCloud();
-
+	
 	time_t end = time(NULL);
 
 
