@@ -4,11 +4,11 @@
 class SegmentCloud
 {
 
+
 	// Cloud to segment
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
 	// Optional Background image (only necessary for background subtraction)
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr inputCloud;
-
 
 
 public:
@@ -20,6 +20,8 @@ public:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr WindowCloud;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr UnorgCloud;
 
+	double threshold;
+	double distanceFilter;
 
 	// Get Different Cloud types
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr getNaNCloud();
@@ -38,7 +40,8 @@ public:
 	void setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
 	void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
 
-
+	void SegmentCloud::setThreshold(double);
+	void SegmentCloud::setDistanceFilter(double);
 protected:
 
 private:
