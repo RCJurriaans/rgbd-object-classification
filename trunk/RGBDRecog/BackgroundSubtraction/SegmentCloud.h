@@ -2,7 +2,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include <cv.h>
+#include <opencv2\opencv.hpp>
 #include "ImageCalculation.h"
 
 class SegmentCloud

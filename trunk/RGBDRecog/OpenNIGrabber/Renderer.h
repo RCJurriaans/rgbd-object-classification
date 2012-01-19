@@ -3,8 +3,8 @@
 #define RENDERER_H
 
 #include "stdafx.h"
-using namespace xn;
-using namespace cv;
+//using namespace xn;
+//using namespace cv;
 
 void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie);
 
@@ -12,8 +12,8 @@ class Renderer
 {
 public:
 	Renderer( boost::function<void (int)> inputCallback ) : 
-		RGBImage(Mat(480, 640, CV_8UC3)),
-		depthImage(Mat(480,640, CV_32FC1)),
+		RGBImage(cv::Mat(480, 640, CV_8UC3)),
+		depthImage(cv::Mat(480,640, CV_32FC1)),
 		viewer(new pcl::visualization::CloudViewer("Cloud Viewer")),//NULL),
 		processInput(inputCallback),
 		cloudViewerOpen(false)
@@ -31,8 +31,8 @@ public:
 
 protected:
 	pcl::visualization::CloudViewer* viewer;
-	Mat RGBImage;
-	Mat depthImage;
+	cv::Mat RGBImage;
+	cv::Mat depthImage;
 	boost::function<void (int)> processInput;
 	bool cloudViewerOpen;
 private:

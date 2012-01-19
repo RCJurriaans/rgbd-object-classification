@@ -7,15 +7,8 @@
 #include "ClassificationThread.h"
 #include "SegmentCloud.h"
 
-#include <sstream>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-
-#include "pcl/range_image/range_image.h"
-
-using namespace xn;
-using namespace cv;
-using namespace std;
+//using namespace xn;
+//using namespace std;
 
 #ifdef WIN32
 # define sleep(x) Sleep((x)*1000) 
@@ -56,10 +49,11 @@ public:
 		toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 
 		// Initialize classifier
-		vector<string> paths;
+		std::vector<std::string> paths;
 		//paths.push_back(".\\dataset\\.....");
 		//NBNNClassifier->loadTrainingData(paths);
 
+		// Callback for sending frame to classification thread
 		boost::function<void (const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &)> inpCB
 			= boost::bind(&DataDistributor::classifierThreadInput, this, _1);
 		grabber->registerCallback(inpCB);
@@ -75,40 +69,36 @@ public:
 	{
 		if (timeToSave)
 		{
-			
 			if ( saveCloud(cloud) && saveRGB(*cloudToRGB(cloud)) )
 				cout << "Saved " << numSaves << endl;
 			timeToSave = false;
 			numSaves++;
 		}
 		
-		processInput(cvWaitKey(1));
+		//processInput(cvWaitKey(1));
 	}
 
 	void classifierThreadInput(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
 	{
+		classificationInputMutex.lock();
+		s_cloud = cloud;
+		classificationInputMutex.unlock();
 
-		//classificationInputMutex.lock();
-		//s_cloud = cloud;
-		///classificationInputMutex.unlock();
-		
-		
-		// Segment the object:
-		//segmenter->setInputCloud(cloud);
-		//segmenter->segment(..
+		processInput(cvWaitKey(1));
 
-		// Calculate features
-		// TODO
+		classificationOutputMutex.lock();
+		if( s_segmentedCloud ) {
+			cout << "rendering segmented cloud" << endl;
 
-		// Classify
-		//TODO
-		//renderer->renderCloudRGB(cloud);
+			renderer->renderCloudRGB(s_segmentedCloud);
+		}
+		classificationOutputMutex.unlock();
 	}
 
 	// These are required for handling events in each thread
 	void imageCB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB){ processInput( cvWaitKey(1) ); }
 	void depthCB(const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth) { processInput( cvWaitKey(1) ); }
-	void imageDepthCB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB, const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth, float constant) { processInput( cvWaitKey(1) ); }
+	void imageDepthCB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB, const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth, float constant) { /*processInput( cvWaitKey(1) );*/ }
 	void cloudCB(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud) {}
 
 	template <class T>
@@ -121,14 +111,14 @@ public:
 
 	bool saveCloud( const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud )
 	{
-		stringstream depth_filename;
+		std::stringstream depth_filename;
 		depth_filename << saveFolder << "depth_" << numSaves << ".pcd";
 		return pcl::io::savePCDFile(depth_filename.str(), *cloud.get(), true) == 0;
 	}
 
-	bool saveRGB( const Mat& rgbImage)
+	bool saveRGB( const cv::Mat& rgbImage)
 	{
-		stringstream  rgb_filename;
+		std::stringstream  rgb_filename;
 		rgb_filename << saveFolder << "rgb_" << numSaves << ".bmp";
 		if(!cv::imwrite(rgb_filename.str(), rgbImage)) {
 			cout << "Could not save: " << rgb_filename.str().c_str();
@@ -183,6 +173,8 @@ public:
 			grabber->registerCallback( saveCB );
 			break;
 		case 'b':
+			cout << "update set" << endl;
+			toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 			classificationInputMutex.lock();
 			s_backgroundCloud = s_cloud;
 			classificationInputMutex.unlock();
@@ -192,11 +184,11 @@ public:
 		}
 	}
 	
-
 	void run ()
 	{
 		// Start classification thread
-		boost::thread classify( ClassificationThread( classificationInputMutex, s_cloud, s_backgroundCloud ) );
+		boost::thread classify( ClassificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
+													  classificationOutputMutex, s_segmentedCloud) );
 
 		// start receiving point clouds
 		grabber->start();
@@ -213,7 +205,7 @@ public:
 protected:
 	
 	// Settings
-	string saveFolder;
+	std::string saveFolder;
 	int numSaves;
 	bool timeToSave;
 	
@@ -224,10 +216,11 @@ protected:
 	
 	// Threading
 	boost::mutex classificationInputMutex; // Locks all following:
-	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_cloud;
-	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_backgroundCloud;
-	  
+	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_cloud;
+	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_backgroundCloud;
 
+	boost::mutex classificationOutputMutex;
+	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_segmentedCloud;
 
 	// Callbacks
 	boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> renderRGB;
@@ -243,14 +236,15 @@ protected:
 	boost::signals2::connection renderCloudConnection;
 	boost::signals2::connection renderCloudRGBConnection;
 };
-/*
+
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
 }
-*/
+
+/*
 int
 	main (int argc, char** argv)
 {
@@ -302,3 +296,4 @@ int
 
 
 }
+*/

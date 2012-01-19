@@ -22,6 +22,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pcdViewer", "pcdViewer\pcdV
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CloudSegmentation", "BackgroundSubtraction\BackgroundSubtraction.vcxproj", "{8A19202D-0EF3-4F41-9B75-39BFFC976A49}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "normalstest", "normalstest\normalstest.vcxproj", "{E70F773C-815F-43BC-BA88-E5779A66ABF8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -68,6 +70,12 @@ Global
 		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|Win32.ActiveCfg = Release|Win32
 		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|Win32.Build.0 = Release|Win32
 		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|x64.ActiveCfg = Release|Win32
+		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Debug|Win32.Build.0 = Debug|Win32
+		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Debug|x64.ActiveCfg = Debug|Win32
+		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Release|Win32.ActiveCfg = Release|Win32
+		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Release|Win32.Build.0 = Release|Win32
+		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

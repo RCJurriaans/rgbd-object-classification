@@ -4,10 +4,8 @@
 #include "ImageAccess.h"
 #include "DisjointSet.h"
 
-#include <cv.h>	
-#include <cvaux.h>
-#include <highgui.h>
-using namespace cv;
+#include <opencv2\opencv.hpp>
+#include <opencv2\core\core_c.h>	// Oude shit, zouden we liever niet includen. Check even of je dat kunt fixen.
 
 #define _X_COORD 0
 #define _Y_COORD 1
