@@ -6,18 +6,12 @@
 
 class SegmentCloud
 {
-
-
 	// Cloud to segment
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
 	// Optional Background image (only necessary for background subtraction)
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr inputCloud;
 
-
-
 public:
-
-
 	SegmentCloud() {
 	setSegMethod(SegBack);
 	setThreshold(0.05);
@@ -34,9 +28,8 @@ public:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr UnorgCloud;
 
 	// Masks
-	cv::Mat* BooleanMask;
-	// boost::shared_ptr<cv::Mat> BooleanMask;
-
+	cv::Mat BooleanMask;
+	
 	// Thresholds
 	double threshold;
 	double maxDistanceFilter;
@@ -53,7 +46,6 @@ public:
 
 	// Get different masks
 	void getROI();
-
 
 	// Set necessary clouds
 	void setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);

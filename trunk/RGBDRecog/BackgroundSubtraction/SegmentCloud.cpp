@@ -21,8 +21,8 @@
 void SegmentCloud::getNaNCloud()
 {
 	int nmax;
-	BooleanMask->release();
-	BooleanMask = new cv::Mat( inputCloud->height, inputCloud->width, CV_8UC1);
+	BooleanMask.release();
+	BooleanMask = cv::Mat( inputCloud->height, inputCloud->width, CV_8UC1);
 	
 	switch( getSegMethod() ){
 	case SegBack:
@@ -31,7 +31,7 @@ void SegmentCloud::getNaNCloud()
 		float point_imgz;
 
 		nmax = inputCloud->width * inputCloud->height;
-		
+		std::cout << "Created segment object" << std::endl;
 		for(int n=0; n < nmax ; n++ ){
 			// Extract z value from both clouds
 			point_backz = backgroundCloud->at(n).z;
@@ -46,18 +46,12 @@ void SegmentCloud::getNaNCloud()
 			// Check for QNaN
 			if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
 				inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
-				BooleanMask->data[j*BooleanMask->step[0]+i*BooleanMask->step[1]] = 0;
+				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
 			}
 			else {
-				// std::cout << "Width: " << i << ", Height: " << j << std::endl;
-
-				BooleanMask->data[j*BooleanMask->step[0]+i*BooleanMask->step[1]] = 255;
+				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 255;
 			}
-
 		}
-
-
-
 		break;
 	case SegObj:
 		std::cout << "No such method yet" << std::endl;
@@ -79,15 +73,61 @@ void SegmentCloud::getWindowCloud()
 
 void SegmentCloud::getUnorgCloud()
 {
+int nmax;
+	BooleanMask.release();
+	BooleanMask = cv::Mat( inputCloud->height, inputCloud->width, CV_8UC1);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+
+	switch( getSegMethod() ){
+	case SegBack:
+
+		float point_backz;
+		float point_imgz;
+
+		nmax = inputCloud->width * inputCloud->height;
+		std::cout << "Created segment object" << std::endl;
+		for(int n=0; n < nmax ; n++ ){
+			// Extract z value from both clouds
+			point_backz = backgroundCloud->at(n).z;
+			point_imgz  = inputCloud->at(n).z;
+			
+			// Recalculate indices in matrix from n
+			int i = n % inputCloud->width;
+			int j = ((n-i) / inputCloud->width);
+
+			// Check whether the distance is smaller than a threshold
+			// Check whether the distance is within the range of the RGB-D camera
+			// Check for QNaN
+			if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
+				//inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
+				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
+			}
+			else {
+				segmentCloud->push_back(inputCloud->at(n));
+				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 255;
+			}
+		}
+		inputCloud->swap(*segmentCloud);
+
+		break;
+	case SegObj:
+		std::cout << "No such method yet" << std::endl;
+		break;
+	case SegPlane:
+		std::cout << "No such method yet" << std::endl;
+		break;
+	case SegNormHist:
+		std::cout << "No such method yet" << std::endl;
+		break;
+	}
 
 }
 
-// Get different masks
+// Get mask
 void SegmentCloud::getROI()
 {
 
 }
-
 
 
 // Choose Segmentation method
@@ -98,28 +138,31 @@ void SegmentCloud::setSegMethod(SegmentCloud::SegmentationMethod method){
 	crtMethod = method;
 }
 
-// Set necessary clouds
+// Set background cloud
 void SegmentCloud::setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
 {
 	backgroundCloud = cloud;
 }
 
+// Set input cloud
 void SegmentCloud::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
 {
 	inputCloud = cloud;
-	
 }
 
+// Set threshold for difference between background and input
 void SegmentCloud::setThreshold(double thres)
 {
 	threshold = thres;
 }
 
+// Set max distance of points
 void SegmentCloud::setMaxDistanceFilter(double distFilt)
 {
 	maxDistanceFilter = distFilt;
 }
 
+// Set min distance of points
 void SegmentCloud::setMinDistanceFilter(double distFilt)
 {
 	minDistanceFilter = distFilt;
