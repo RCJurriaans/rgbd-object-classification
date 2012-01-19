@@ -82,7 +82,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(VLFEATROOT)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/F 5242880000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/F 52428800000 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -107,6 +107,7 @@
     <ClInclude Include="FeatureVector.h" />
     <ClInclude Include="ImageWrapper.h" />
     <ClInclude Include="RFClass.h" />
+    <ClInclude Include="RFClassifier.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -114,6 +115,7 @@
     <ClCompile Include="FeatureExtractor.cpp" />
     <ClCompile Include="FeatureVector.cpp" />
     <ClCompile Include="RFClass.cpp" />
+    <ClCompile Include="RFClassifier.cpp" />
     <ClCompile Include="RGBDRecog.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -9,8 +9,8 @@
 
 #include <stdio.h>
 #include <tchar.h>
-
-
+#define _AFXDLL
+#include <afx.h>
 
 
 // TODO: reference additional headers your program requires here
