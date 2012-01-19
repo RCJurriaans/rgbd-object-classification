@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include <string>
 
+// PCL stuff
 #include <iostream>
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
+// Opencv stuff
 #include <cv.h>
 #include <cxcore.h>
 #include <highgui.h>
@@ -17,13 +19,18 @@
 #include <ctime>
 #include <math.h>
 
+// Blobb stuff
+#include "ImageAccess.h"
+
+
+
 // Get Different Cloud types
 void SegmentCloud::getNaNCloud()
 {
 	int nmax;
 	BooleanMask.release();
-	BooleanMask = cv::Mat( inputCloud->height, inputCloud->width, CV_8UC1);
-	
+	BooleanMask = cv::Mat::zeros( inputCloud->height, inputCloud->width, CV_8UC1);
+
 	switch( getSegMethod() ){
 	case SegBack:
 
@@ -31,12 +38,11 @@ void SegmentCloud::getNaNCloud()
 		float point_imgz;
 
 		nmax = inputCloud->width * inputCloud->height;
-		std::cout << "Created segment object" << std::endl;
 		for(int n=0; n < nmax ; n++ ){
 			// Extract z value from both clouds
 			point_backz = backgroundCloud->at(n).z;
 			point_imgz  = inputCloud->at(n).z;
-			
+
 			// Recalculate indices in matrix from n
 			int i = n % inputCloud->width;
 			int j = ((n-i) / inputCloud->width);
@@ -46,7 +52,7 @@ void SegmentCloud::getNaNCloud()
 			// Check for QNaN
 			if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
 				inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
-				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
+				//BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
 			}
 			else {
 				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 255;
@@ -73,9 +79,9 @@ void SegmentCloud::getWindowCloud()
 
 void SegmentCloud::getUnorgCloud()
 {
-int nmax;
+	int nmax;
 	BooleanMask.release();
-	BooleanMask = cv::Mat( inputCloud->height, inputCloud->width, CV_8UC1);
+	BooleanMask = cv::Mat::ones( inputCloud->height, inputCloud->width, CV_8UC1);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
 	switch( getSegMethod() ){
@@ -90,7 +96,7 @@ int nmax;
 			// Extract z value from both clouds
 			point_backz = backgroundCloud->at(n).z;
 			point_imgz  = inputCloud->at(n).z;
-			
+
 			// Recalculate indices in matrix from n
 			int i = n % inputCloud->width;
 			int j = ((n-i) / inputCloud->width);
@@ -99,12 +105,11 @@ int nmax;
 			// Check whether the distance is within the range of the RGB-D camera
 			// Check for QNaN
 			if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
-				//inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
 				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
 			}
 			else {
 				segmentCloud->push_back(inputCloud->at(n));
-				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 255;
+				//BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 1;
 			}
 		}
 		inputCloud->swap(*segmentCloud);
@@ -126,7 +131,11 @@ int nmax;
 // Get mask
 void SegmentCloud::getROI()
 {
-
+	IplImage ipl_bmask = BooleanMask;//cvCreateImage(cvSize(BooleanMask.size().height,BooleanMask.size().width),8,1);
+	std::cout << "Created ipl version of mask " <<  std::endl;
+	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
+	//BwImage enter(ipl_bmask);
+	imcalc.Calculate(&ipl_bmask, 1);
 }
 
 

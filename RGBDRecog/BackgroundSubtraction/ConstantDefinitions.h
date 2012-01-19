@@ -1,0 +1,16 @@
+#define _HDIMS 16
+#define _HRANGELOW 0
+#define _HRANGEHIGH 180
+#define _MODELNAME "instrument"
+#define _OUTPUTFILE "logFile.txt"
+#define _VALUEMIN 80
+#define _VALUEMAX 256
+#define _SATURATIONMIN 80
+#define _SMOOTHRANGE 9
+#define _HISTOGRAMCUTOFF 170
+#define _XMEAN 0
+#define _YMEAN 1
+#define _CLUSTERSPERCOLOR 2
+#define _SMOOTHRANGE 5
+#define _PIXEL_LIMIT 20
+#define _BOXFACTOR 40

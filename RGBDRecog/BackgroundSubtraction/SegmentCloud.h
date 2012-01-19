@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include <cv.h>
+#include "ImageCalculation.h"
 
 class SegmentCloud
 {
@@ -10,6 +11,8 @@ class SegmentCloud
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
 	// Optional Background image (only necessary for background subtraction)
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr inputCloud;
+	
+
 
 public:
 	SegmentCloud() {
@@ -18,6 +21,8 @@ public:
 	setMaxDistanceFilter(2);
 	setMinDistanceFilter(0.1);
 	}
+
+	ImageCalculation imcalc;
 
 	// Method of Segmentation
 	enum SegmentationMethod { SegBack, SegObj, SegPlane, SegNormHist };
