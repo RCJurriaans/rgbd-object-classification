@@ -49,7 +49,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\include;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(OPENCV_DIR)\include\opencv</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\include;$(PCL_ROOT)\3rdParty\flann\include;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(OPENCV_DIR)\include\opencv</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

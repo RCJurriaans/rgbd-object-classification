@@ -3,36 +3,36 @@
 #include "stdafx.h"
 #include "Renderer.h"
 
-using namespace xn;
-using namespace cv;
-
+//using namespace xn;
 
 
 void Renderer::renderRGB(const boost::shared_ptr<openni_wrapper::Image>& oniBGR) 
 {
 	oniBGR->fillRGB(640, 480, RGBImage.data);
-	cvtColor( RGBImage, RGBImage, CV_BGR2RGB );
-	imshow( "RGB Display", RGBImage);
-	processInput( cvWaitKey(1) );
+	cv::cvtColor( RGBImage, RGBImage, cv::COLOR_BGR2RGB ); //CV_BGR2RGB );
+	cv::imshow( "RGB Display", RGBImage);
+	//processInput( cvWaitKey(1) );
 }
 
 void Renderer::renderOpenCVRGB(const boost::shared_ptr<cv::Mat>& RGBImage )
 {
-	imshow( "RGB Display", *RGBImage);
+	cv::imshow( "RGB Display", *RGBImage);
 	//processInput( cvWaitKey(1) );
 }
 
 void Renderer::renderDepth(const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth)
 {
 	oniDepth->fillDepthImage(640, 480, (float*)depthImage.data);
-	imshow("Depth Display", depthImage);
-	processInput( cvWaitKey(1) );
+	cv::imshow("Depth Display", depthImage);
+	//processInput( cvWaitKey(1) );
 }
 
 void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie)
 {
 	boost::function<void (int)>* processInput = (boost::function<void (int)>*)cookie;
-	(*processInput)(e.getKeyCode());
+	if(e.keyDown()) {
+		(*processInput)(e.getKeyCode());
+	}
 }
 
 void Renderer::renderCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
@@ -52,7 +52,7 @@ void Renderer::renderCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr 
 		viewer->showCloud (cloud);
 	}*/
 	viewer->showCloud (cloud);
-	processInput( cvWaitKey(1) );
+	//processInput( cvWaitKey(1) );
 }
 void Renderer::renderCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
 {

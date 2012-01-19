@@ -1,7 +1,7 @@
 
 #pragma once
 #include <vector>
-#include "features2d.hpp"
+#include "opencv2\features2d\features2d.hpp"
 
 class NBNN //: public Classifier
 {

@@ -23,6 +23,9 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/visualization/keyboard_event.h>
 
+//#include <pcl/features/normal_3d.h>
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	std::string path;

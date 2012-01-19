@@ -2,6 +2,7 @@
 
 
 #include "stdafx.h"
+/*
 #include "NBNN.h"
 #include <ml.h>
 
@@ -95,3 +96,5 @@ unsigned int NBNN::relationalClassify(const cv::Mat& queryDescriptors)
 
 	return minClass;
 }
+
+*/

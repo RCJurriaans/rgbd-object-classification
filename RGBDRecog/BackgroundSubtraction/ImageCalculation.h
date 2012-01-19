@@ -1,9 +1,7 @@
 #pragma once
 
-#include <cv.h>	
-#include <cvaux.h>
-#include <highgui.h>
-using namespace cv;
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 //Model of a Color is a CvHistogram
 typedef CvHistogram *ColorModel;
