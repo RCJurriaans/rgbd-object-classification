@@ -1,0 +1,2 @@
+SIFTThreshScale 4
+dicsize 500

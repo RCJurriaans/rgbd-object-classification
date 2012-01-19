@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include "FeatureVector.h"
+#include "FeatureExtractor.h" 
+#include "RFClassifier.h"
 using namespace std;
 using namespace cv;
 
@@ -15,20 +17,29 @@ public:
 	void menu();
 private:
 	void createCodebookMenu();
+	void rfTrainigmenu();
 	void createCodebook(int mode);
 	string convertNumberToFLString(int length, int number);
 	string ifBoolReturnChar(bool in, string out);
 	void addDescriptor(bool & firstadded, Mat & tempfeaturevector, FeatureVector * codebooks,Mat & descriptors, int mode);
 	void trainModelMenu();
 	void trainModel(vector<int> mode);
+	void generateRandomForest(vector<int> mode);
+
+	void rfTesting(vector<int> mode);
+
+	void rfTestingmenu();
+
 	int amountOfClasses;
 	string fileExtension;
 	vector<string> classNames;
-	vector<int> traingPicNum;
+	vector<int> trainigPicNum;
 	vector<int> testPicNum;
 	int SIFTThreshScale;
 	int dicsize;
-	int amountOfPossibleFeatures;
 
 	static vector<string> colornames;
+
+	FeatureExtractor* featureExtractor;
+	RFClassifier * rfclassifier;
 };

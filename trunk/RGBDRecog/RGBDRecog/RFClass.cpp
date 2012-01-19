@@ -3,13 +3,16 @@
 #include "FeatureVector.h"
 #include <fstream>
 #include <time.h>
+
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+
 using namespace cv;
 using namespace std;
 
 
 
 RFClass::RFClass(void){
-	amountOfPossibleFeatures = 6;
 
 	ifstream infile;
 	string filename;
@@ -39,7 +42,7 @@ RFClass::RFClass(void){
 	//get the amount of images for each training set class
 	for(int i = 0; i < amountOfClasses;i++){ 
 		infile >> tempi;
-		traingPicNum.push_back(tempi);
+		trainigPicNum.push_back(tempi);
 	}
 	infile.ignore('\n');
 	infile.getline(temp,256);
@@ -53,7 +56,7 @@ RFClass::RFClass(void){
 	cout << endl;
 	cout << "Loaded dataset parameters:" << endl << "Class names | training images | test images:" << endl;
 	for(int i = 0; i < amountOfClasses; i++){
-		cout << "  " << classNames[i] << ' ' << traingPicNum[i] << ' ' << testPicNum[i] << endl;
+		cout << "  " << classNames[i] << ' ' << trainigPicNum[i] << ' ' << testPicNum[i] << endl;
 	}
 	infile.close();
 
@@ -73,33 +76,38 @@ RFClass::RFClass(void){
 	cout << "  " << "Sift Treshold Scale: " << SIFTThreshScale << endl;
 	cout << "  " << "Codebook size: " << dicsize << endl;
 	cout << endl;
+
+	featureExtractor = new FeatureExtractor();
+	rfclassifier = new RFClassifier();
 }
 
 
 
 RFClass::~RFClass(void){
+	delete featureExtractor;
+	delete rfclassifier;
 }
 
 //converts a number to a fixed length string, adding zeros in front
 string RFClass:: convertNumberToFLString(int length, int number){
-
 	int tempnum = number;
-	length--;
 	string returnvalue;
-			while(tempnum/10 != 0){
-				tempnum = tempnum/10;
-				length--;
-			}
-			for(int k = 0; k < length; k++){
-				returnvalue += "0";
-			}
-			returnvalue += boost::lexical_cast<string>(number);
+	
+	length--;
+	
+		while(tempnum/10 != 0){
+			tempnum = tempnum/10;
+			length--;
+		}
+		for(int k = 0; k < length; k++){
+			returnvalue += "0";
+		}
+		returnvalue += boost::lexical_cast<string>(number);
 	return returnvalue;
 }
 
 void RFClass::createCodebook(int mode){
-	const char *_COLORNAMES[] = {"NORMALSIFT", "HUESIFT", "OPPONENTSIFT","NORMALSURF", "HUESURF", "OPPONENTSURF"};
-	cout << "Running codebook creation with setting: " << _COLORNAMES[mode] << endl;
+	cout << "Running codebook creation with setting: " << featureExtractor->getFeatureName(mode) << endl;
 	cout << "parameters are from data_info.txt:" << endl;
 	cout << "  Dictionary size: " << dicsize << endl;
 	cout << "  SIFT Threshold Scale: " << SIFTThreshScale << endl;
@@ -111,92 +119,47 @@ void RFClass::createCodebook(int mode){
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
-	Mat tempinput; //temp
-	vector<Mat> input; //stores the image data
-	vector<Mat> planes; //temp file for splitting the image data
+	Mat input; //stores the image data
 	FeatureVector* fv = new FeatureVector; //this contains all features that are extacted
-	SIFT siftdetector(SIFTThreshScale*(0.04 / SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS), 10,
-          SIFT::CommonParams::DEFAULT_NOCTAVES,
-          SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS,
-          SIFT::CommonParams::DEFAULT_FIRST_OCTAVE,
-          SIFT::CommonParams::FIRST_ANGLE ); //sift class, ugly initialization of all parameters...
-	SURF surfdetector;
-    vector<KeyPoint> keypoints; //temp variable that contains the keypoints found for each img
-	Mat descriptors; //temp variable used to store the extracted SIFT descriptors for every image
-	SiftDescriptorExtractor* SDE = new cv::SiftDescriptorExtractor(); //Sift descriptor extraction class
-	OpponentColorDescriptorExtractor des(SDE); //written by van de Sande... extracts the opponent SIFT data
-	SurfDescriptorExtractor* SuDE = new cv::SurfDescriptorExtractor();
-	OpponentColorDescriptorExtractor desSURF(SuDE);
-	Mat grayimg; //temp used to store the grayimg in for Opponent color
-
-	vector<float> tempfloatdesc;
 
 	cout << "Running image feature extraction" << endl;
-			cout << "Using the first half of the training images to create the codebooks" << endl;
+	cout << "Using the first half of the training images to create the codebooks" << endl;
+
+	//construct a boolean vector with the single mode in modes,
+	// used as a parameter for the featureextraction
+	vector<bool> modes;
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
+		if(i == mode){
+			modes.push_back(true);
+		}else{
+			modes.push_back(false);
+		}
+	}
+
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = 1; j <= floor(static_cast<double>(traingPicNum[i])/2); j++){ //for each image
+		for(int j = 1; j <= floor(static_cast<double>(trainigPicNum[i])/2); j++){ //for each image
+
+			imagePath.clear();
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
-			if(mode == 0 || mode == 3){ //every step cleans up all the matrices, and adds new image data
-				input.clear();
-				input.push_back(cv::imread(imagePath,0)); //Load as grayscale image
-			}else if (mode == 1 || mode == 4){
-				input.clear();
-				tempinput.release();
-				planes.clear();
-				tempinput = cv::imread(imagePath);
-				cvtColor(tempinput,tempinput,CV_BGR2HSV);
-				split(tempinput,planes);
-				input.push_back(planes[0]);
-				input.push_back(planes[2]);
-			}else if (mode == 2 || mode == 5){
-				tempinput.release();
-				tempinput = cv::imread(imagePath);
-			}
-			if (mode == 0||mode == 3){ //use the gotten image data to compute the features, and add them to the feature vector
-				descriptors.release(); //still clear all data before reinitializing
-				if(mode == 0){
-					siftdetector(input[0],Mat(),vector<KeyPoint>(),descriptors);
-				}else if (mode == 3){
-					tempfloatdesc.clear();
-					tempinput.release();
-					surfdetector(input[0],Mat(),keypoints,tempfloatdesc);
-					tempinput = Mat(tempfloatdesc).reshape(1,keypoints.size());
-					descriptors = tempinput;
-				}
-				fv->AddFeatures(descriptors);
-			} else if(mode == 1|| mode == 4){
-				descriptors.release();
-				keypoints.clear();
-				if(mode == 1){
-					siftdetector(input[1],Mat(),keypoints,Mat());
-					siftdetector(input[0],Mat(),keypoints,descriptors,true);
-				} else if (mode == 4){
-					tempinput.release();
-					tempfloatdesc.clear();
-					surfdetector(input[1],Mat(),keypoints,vector<float>());
-					surfdetector(input[1],Mat(),keypoints,tempfloatdesc,true);
-					tempinput = Mat(tempfloatdesc).reshape(1,keypoints.size());
-					descriptors = tempinput;
-				}
-				fv->AddFeatures(descriptors);
-			} else if(mode == 2|| mode == 5){
-				descriptors.release();
-				keypoints.clear();
-				grayimg.release();
-				cvtColor(tempinput,grayimg,CV_RGB2GRAY);
-				if(mode == 2){
-					siftdetector(grayimg,Mat(),keypoints,Mat());
-					des.compute(tempinput,keypoints,descriptors);
-				} else if (mode == 5){
-					surfdetector(grayimg,Mat(),keypoints,vector<float>());
-					desSURF.compute(tempinput,keypoints,descriptors);
-				}
-				fv->AddFeatures(descriptors);
-			}
+			input.release();
+			input = cv::imread(imagePath);
+			//this should return a single Mat with the descriptor, as only one value in modes is true
+			//features are in the rows
+
+
+
+			vector<Mat> RawFeatures = featureExtractor->extractRawFeatures(modes,input);
+
+
+			fv->AddFeatures(RawFeatures[0]);
+			RawFeatures[0].release();
+			RawFeatures.clear();
+			input.release();
 		}
 	}
 	cout << "found " << fv->features->rows << " descriptors."<< endl;
@@ -205,26 +168,12 @@ void RFClass::createCodebook(int mode){
 	cout << "writing the result to file: " << "codebook" + boost::lexical_cast<string>(mode) + ".yml" << endl;
 	FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE); //store the codebook to a yaml file
 	fs << "codebook" + boost::lexical_cast<string>(mode) << *codebook;
-	
-	//delete all data... just for security :/
-	fv->~FeatureVector();
-	tempinput.release();
-	for(unsigned int i = 0; i < input.size(); i++)
-	{
-		input[i].release();
-	}
-	for(unsigned int i = 0; i < planes.size(); i++)
-	{
-		planes[i].release();
-	}
-	descriptors.release();
-	des.empty();
-	grayimg.release();
-	delete fv;
-	delete codebook;
 	final=clock()-init;
 	
-	cout <<  "Done creating the " << _COLORNAMES[mode] << " codebook in "  << (double)final / ((double)CLOCKS_PER_SEC*60) << " minutes" <<endl;
+	cout <<  "Done creating the " << featureExtractor->getFeatureName(mode) << " codebook in "  << (double)final / ((double)CLOCKS_PER_SEC*60) << " minutes" <<endl;
+	delete fv;
+	codebook->release();
+	delete codebook;
 }
 
 string RFClass::ifBoolReturnChar(bool in, string out){
@@ -237,7 +186,7 @@ string RFClass::ifBoolReturnChar(bool in, string out){
 void RFClass::createCodebookMenu(){
 	char option = ' ';
 	vector<bool> foundCodebooks;
-	for(int i = 0; i < amountOfPossibleFeatures; i++){
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
 		FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", FileStorage::READ);
 		if(fs.isOpened()){
 			foundCodebooks.push_back(true);
@@ -325,15 +274,15 @@ void RFClass::addDescriptor(bool & firstadded, Mat & tempfeaturevector, FeatureV
 		tempfeaturevector.release();
 		tempfeaturevector = codebooks[mode].GenHistogram(descriptors);
 		firstadded = true;
-		}else{
-			vconcat(tempfeaturevector,codebooks[mode].GenHistogram(descriptors),tempfeaturevector);
-		}
+	}else{
+		vconcat(tempfeaturevector,codebooks[mode].GenHistogram(descriptors),tempfeaturevector);
+	}
 }
 
 void RFClass:: trainModel(vector<int> mode){
 	vector<bool> modes;
-	const char *_COLORNAMES[] = {"NORMALSIFT", "HUESIFT", "OPPONENTSIFT","NORMALSURF", "HUESURF", "OPPONENTSURF"};
-	for(int i = 0; i < amountOfPossibleFeatures; i++){
+	//const char *_COLORNAMES[] = {"NORMALSIFT", "HUESIFT", "OPPONENTSIFT","NORMALSURF", "HUESURF", "OPPONENTSURF"};
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
 		modes.push_back(false);
 	}
 	for(unsigned int i = 0; i < mode.size(); i++){ //set the options of the algorithm
@@ -343,7 +292,7 @@ void RFClass:: trainModel(vector<int> mode){
 	cout << "Running training with settings: ";
 	for(unsigned int i = 0; i < modes.size(); i++){
 		if(modes[i]){
-			cout << _COLORNAMES[i] << " ";
+			cout << featureExtractor->getFeatureName(i) << " ";
 		}
 	}
 	cout << "parameters are from data_info.txt:" << endl;
@@ -353,10 +302,10 @@ void RFClass:: trainModel(vector<int> mode){
 	cout << "Assuming that the training data files are located in: " << getenv("RGBDDATA_DIR") << endl;
 
 	FeatureVector *codebooks;
-	codebooks = new FeatureVector[amountOfPossibleFeatures];
+	codebooks = new FeatureVector[featureExtractor->getAmountOfFeatures()];
 
 	//load the codebook data
-	for(int i = 0; i < amountOfPossibleFeatures; i++){
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
 		if(modes[i] == true){
 			FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", FileStorage::READ);
 			Mat M; fs["codebook" + boost::lexical_cast<string>(i)] >> M;
@@ -368,110 +317,43 @@ void RFClass:: trainModel(vector<int> mode){
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
-	Mat tempinput; //temp
-	vector<Mat> input; //stores the image data
-	vector<Mat> planes; //temp file for splitting the image data
-	SIFT siftdetector(SIFTThreshScale*(0.04 / SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS), 10,
-          SIFT::CommonParams::DEFAULT_NOCTAVES,
-          SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS,
-          SIFT::CommonParams::DEFAULT_FIRST_OCTAVE,
-          SIFT::CommonParams::FIRST_ANGLE ); //sift class, ugly initialization of all parameters...
-	SURF surfdetector;
-    vector<KeyPoint> keypoints; //temp variable that contains the keypoints found for each img
-	Mat descriptors; //temp variable used to store the extracted SIFT descriptors for every image
-	SiftDescriptorExtractor * SDE = new cv::SiftDescriptorExtractor(); //Sift descriptor extraction class
-	OpponentColorDescriptorExtractor des(SDE); //written by van de Sande... extracts the opponent SIFT data
-	SurfDescriptorExtractor* SuDE = new cv::SurfDescriptorExtractor();
-	OpponentColorDescriptorExtractor desSURF(SuDE);
-	Mat grayimg; //temp used to store the grayimg in for Opponent color 
+	Mat input; //stores the image data
 
-	vector<float> tempfloatdesc;
 	Mat tempfeaturevector;
 	vector<Mat> featurevector;
+
+	//load the featureExtractor codebooks if they are not yet loaded
+	if(!featureExtractor->codeBooksLoaded()){
+		featureExtractor->loadCodebooks();
+	}
 
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = static_cast<int>(floor(static_cast<double>(traingPicNum[i])/2))+1; j <= traingPicNum[i]; j++){ //for each image
-			bool firstadded = false;
+		for(int j = static_cast<int>(floor(static_cast<double>(trainigPicNum[i])/2))+1; j <= trainigPicNum[i]; j++){ //for each image
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
-			if(modes[0] || modes[3]){ //every step cleans up all the matrices, and adds new image data
-				input.clear();
-				input.push_back(cv::imread(imagePath,0)); //Load as grayscale image
-			}else if (modes[1] || modes[4]){
-				input.clear();
-				tempinput.release();
-				tempinput = cv::imread(imagePath);
-				cvtColor(tempinput,tempinput,CV_BGR2HSV);
-				split(tempinput,planes);
-				input.push_back(planes[0]);
-				input.push_back(planes[2]);
-			}else if (modes[2] || modes[5]){
-				tempinput.release();
-				tempinput = cv::imread(imagePath);
-			}
-			if (modes[0] || modes[3]){ //use the gotten image data to compute the features, and add them to the feature vector
-				descriptors.release(); //still clear all data before reinitializing
-				if(modes[0]){
-					siftdetector(input[0],Mat(),vector<KeyPoint>(),descriptors);	
-					addDescriptor(firstadded,tempfeaturevector,codebooks,descriptors,0);
-				}
-				if(modes[3]){
-					tempfloatdesc.clear();
-					tempinput.release();
-					surfdetector(input[0],Mat(),keypoints,tempfloatdesc);
-					tempinput = Mat(tempfloatdesc).reshape(1,keypoints.size());
-					descriptors = tempinput;
-					addDescriptor(firstadded,tempfeaturevector,codebooks,descriptors,3);
-				}
-			} else if(modes[1] || modes[4]){
-				descriptors.release();
-				keypoints.clear();
-				if(modes[1]){
-					siftdetector(input[1],Mat(),keypoints,Mat());
-					siftdetector(input[0],Mat(),keypoints,descriptors,true);
-					addDescriptor(firstadded,tempfeaturevector,codebooks,descriptors,1);
-				}
-				if(modes[4]){
-					tempinput.release();
-					tempfloatdesc.clear();
-					surfdetector(input[1],Mat(),keypoints,vector<float>());
-					surfdetector(input[1],Mat(),keypoints,tempfloatdesc,true);
-					tempinput = Mat(tempfloatdesc).reshape(1,keypoints.size());
-					descriptors = tempinput;
-					addDescriptor(firstadded,tempfeaturevector,codebooks,descriptors,5);
-				}
-			} else if(modes[2] || modes[5]){
-				descriptors.release();
-				keypoints.clear();
-				grayimg.release();
-				cvtColor(tempinput,grayimg,CV_RGB2GRAY);
-				if(modes[2]){
-					siftdetector(grayimg,Mat(),keypoints,Mat());
-					des.compute(tempinput,keypoints,descriptors);
-					addDescriptor(firstadded,tempfeaturevector,codebooks,descriptors,2);
-				}
-				if(modes[5]){
-					surfdetector(grayimg,Mat(),keypoints,vector<float>());
-					desSURF.compute(tempinput,keypoints,descriptors);
-					addDescriptor(firstadded,tempfeaturevector,codebooks,descriptors,5);
-				}
-			}
+			input.release();
+			input = cv::imread(imagePath); //Load as grayscale image
+			
+			Mat tempfeaturevector = featureExtractor->extractFeatures(modes,input);
 			
 			//tempfeaturevector now contains all found feature descriptors,
 			//we can add this to this class
-			if(j == floor(static_cast<double>(traingPicNum[i])/2)+1){
+
+			if(j == floor(static_cast<double>(trainigPicNum[i])/2)+1){
 				featurevector.push_back(tempfeaturevector);
 			}else{
 				hconcat(featurevector[i],tempfeaturevector,featurevector[i]);
 			}
 		}
 	}
+
+
 	string modestring;
 	modestring.clear();
-	for(int i = 0; i < amountOfPossibleFeatures; i++){
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
 		if(modes[i]){
 			modestring += '1';
 		}
@@ -492,38 +374,15 @@ void RFClass:: trainModel(vector<int> mode){
 	fs2.release();
 
 	cout << "Saved trainingdata" << endl;
-	cout << "Starting training of random forest" << endl;
 
-	Mat mergedData;
-	mergedData = featurevector[0];
-	for(int i = 1; i < amountOfClasses; i++){
-		hconcat(mergedData,featurevector[i],mergedData);
-	}
-	CvRTrees* treestructure = new CvRTrees();
-	Mat responses(mergedData.cols,1,mergedData.type());
-	for(int i = 0; i < amountOfClasses;i++){
-		int multifactor=0;
-		for(int j = 0; j < i; j++){
-			multifactor+= traingPicNum[j]-static_cast<int>(floor(static_cast<double>(traingPicNum[j])/2));
-		}
-		for(int j = 0; j < featurevector[i].cols; j++){
-			responses.at<float>(j+multifactor) = static_cast<float>(i);
-		}
-	}
-	treestructure->train(mergedData,CV_COL_SAMPLE,responses,Mat(),Mat(),Mat(),Mat(),CvRTParams());
 
-	cout << "Random forest trained, saving the data to " << "randomforestdata" + modestring + ".yml" << endl;
-	string filename = "randomforestdata" + modestring;
-	string dataname = "randomforestdata" + modestring + ".yml";
-	treestructure->write(cvOpenFileStorage(dataname.c_str(), 0, CV_STORAGE_WRITE_TEXT ), filename.c_str());
-	cout << "Done saving the random forest data." << endl;
-	delete[]codebooks;
+
 }
 
 void RFClass::trainModelMenu(){
 		char option = ' ';
 	vector<bool> foundCodebooks;
-	for(int i = 0; i < amountOfPossibleFeatures; i++){
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
 		FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", FileStorage::READ);
 		if(fs.isOpened()){
 			foundCodebooks.push_back(true);
@@ -534,12 +393,11 @@ void RFClass::trainModelMenu(){
 	}
 
 	vector<int> chosenOptions;
-	const char *_COLORNAMES[] = {"NORMALSIFT", "HUESIFT", "OPPONENTSIFT","NORMALSURF", "HUESURF", "OPPONENTSURF"};
 	while(option){
 		cout << "For which feature type do you want to train the data? (multiple possible)" << endl << endl
 			 << "Chosen features: ";
 		for(unsigned int i = 0; i < chosenOptions.size(); i++){
-			cout << _COLORNAMES[chosenOptions[i]] << " ";
+			cout << featureExtractor->getFeatureName(chosenOptions[i]) << " ";
 		}
 		cout << endl
 		     << "  (S) Standard SIFT " << ifBoolReturnChar(foundCodebooks[0],"codebook exists ") << endl
@@ -609,12 +467,290 @@ void RFClass::trainModelMenu(){
 	}
 }
 
+void RFClass::generateRandomForest(vector<int> mode){
+	vector<bool> modes;//create boolean array of modes
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
+		modes.push_back(false);
+	}
+	for(unsigned int i = 0; i < mode.size(); i++){ //set the options of the algorithm
+		modes[mode[i]] = true;
+	}
+	
+	//create a string of the modeboolean
+	string modestring;
+	modestring.clear();
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
+		if(modes[i]){
+			modestring += '1';
+		}
+		else{
+			modestring += '0';
+		}
+	}
+
+	vector<Mat> trainingdata;
+	FileStorage fs("trainingdata" + modestring +"RF" +  ".yml", FileStorage::READ);
+	Mat temp;
+	for(int i = 0; i < amountOfClasses; i++){
+		temp.release();
+		fs["trainingdata" + modestring+ boost::lexical_cast<string>(i)] >> temp;
+		trainingdata.push_back(temp);
+	}
+	fs.release();
+
+	cout << "Starting training of random forest" << endl;
+	rfclassifier->trainTree(trainingdata);
+
+	cout << "Starting output of random forest data" << endl;
+	rfclassifier->write("randomforestdata" + modestring + ".yml", "randomforestdata" + modestring);
+	
+	cout << "Done with the random forest creation and saving" << endl;
+}
+
+void RFClass::rfTrainigmenu(){
+	char option = ' ';
+
+	vector<int> chosenOptions;
+	while(option){
+		cout << "For which feature type do you want to generate the random forest? (multiple possible)" << endl << endl
+			 << "Chosen features: ";
+		for(unsigned int i = 0; i < chosenOptions.size(); i++){
+			cout << featureExtractor->getFeatureName(chosenOptions[i]) << " ";
+		}
+		cout << endl
+		     << "  (S) Standard SIFT " << endl
+			 << "  (H) Hue SIFT " <<  endl
+			 << "  (O) Opponent SIFT "<<  endl
+			 << "  (1) Normal SURF "  << endl
+			 << "  (2) Hue SURF " <<  endl
+			 << "  (3) Opponent SURF " <<  endl
+			 << "  (R) andom forest creation with the current settings" << endl
+			 << "  (Q) uit" << endl;
+		option = cin.get();
+		switch(option){
+			case 'q': case 'Q':{
+				cin.clear();
+				cin.sync();
+				cout << "exiting..." << endl;
+				return;
+		} break;
+			case 's':  case 'S':{
+				cin.clear();
+				cin.sync();
+				cout << "Adding standard SIFT to used features" << endl;
+				chosenOptions.push_back(0);
+		} break;
+			case 'h': case 'H':{
+				cin.clear();
+				cin.sync();
+				cout << "Adding hue SIFT to used features" << endl;
+				chosenOptions.push_back(1);
+		} break;
+			case 'o': case 'O':{
+				cin.clear();
+				cin.sync();
+				cout << "Adding opponent SIFT to used features" << endl;
+				chosenOptions.push_back(2);
+		} break;
+			case '1': {
+				cin.clear();
+				cin.sync();
+				cout << "Adding normal SURF to used features" << endl;
+				chosenOptions.push_back(3);
+		} break;
+			case '2': {
+				cin.clear();
+				cin.sync();
+				cout << "Adding hue SURF to used features" << endl;
+				chosenOptions.push_back(4);
+		} break;
+			case '3': {
+				cin.clear();
+				cin.sync();
+				cout << "Adding opponent SIFT to used features" << endl;
+				chosenOptions.push_back(5);
+		} break;
+			case 'r': case 'R': {
+				cin.clear();
+				cin.sync();
+				cout << "Starting creating tree with chosen features" << endl;
+				generateRandomForest(chosenOptions);
+		} break;
+			default:{
+				cin.clear();
+				cin.sync();
+				cout << "No such option exists" << endl;
+			}break;
+		}
+	}
+}
+
+void RFClass::rfTesting(vector<int> mode){
+
+	if(!featureExtractor->codeBooksLoaded()){
+		featureExtractor->loadCodebooks();
+	}
+
+	cout << "Starting testing the random forest algorithm on all test data" << endl;
+	vector<bool> modes;//create boolean array of modes
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
+		modes.push_back(false);
+	}
+	for(unsigned int i = 0; i < mode.size(); i++){ //set the options of the algorithm
+		modes[mode[i]] = true;
+	}
+	
+	//create a string of the modeboolean
+	string modestring;
+	modestring.clear();
+	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
+		if(modes[i]){
+			modestring += '1';
+		}
+		else{
+			modestring += '0';
+		}
+	}
+	//generateRandomForest(mode);
+	//read the data of the random forest
+	//somehow, gets corrupted :( :( :(
+	rfclassifier->read("randomforestdata" + modestring + ".yml", "randomforestdata" + modestring);
+	//now we use the random forest to predict the class of each of the test images
+
+	Mat input;
+	string imagePath; //path where the images are
+	string filePath; //filepath for each image
+	Mat result;
+	float** predictions = new float*[amountOfClasses];
+	for(int i = 0; i < amountOfClasses; i++){
+		predictions[i] = new float [testPicNum[i]];
+	}
+
+	for(int i = 0; i < amountOfClasses; i++){
+		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
+		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
+		cout << "procesing class: " << classNames[i] << endl;
+		for(int j = 1; j < testPicNum[i]; j++){ //for each image
+			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			cout << "processing image: " << classNames[i] << "_" << j << endl;
+			input.release();
+			input = cv::imread(imagePath); //Load rgb image
+			result.release();
+			result = featureExtractor->extractFeatures(modes,input);
+			predictions[i][j] = rfclassifier->predict(result);
+		}
+	}
+	cout << "Classified all images, calculating the accuracy" << endl;
+	vector<float> accuracy;
+	for(int i = 0; i < amountOfClasses; i++){
+		float sum = 0;
+		for(int j = 0; j < testPicNum[i]; j++){
+			if(predictions[i][j] == static_cast<float>(i)){
+				sum++;
+			}
+		}
+		sum = sum/testPicNum[i];
+		accuracy.push_back(sum);
+	}
+
+	cout << "Displaying results:" << endl;
+	for(int i = 0; i < amountOfClasses; i++){
+		cout << classNames[i] << ": " << accuracy[i] << endl;
+	}
+
+
+	for(int i = 0; i < amountOfClasses; i++){
+		delete [] predictions[i];
+	}
+	delete [] predictions;
+
+}
+
+void RFClass::rfTestingmenu(){
+	char option = ' ';
+
+	vector<int> chosenOptions;
+	while(option){
+		cout << "For which feature type do you want to load the random forest for testing? (multiple possible)" << endl << endl
+			 << "Chosen features: ";
+		for(unsigned int i = 0; i < chosenOptions.size(); i++){
+			cout << featureExtractor->getFeatureName(chosenOptions[i]) << " ";
+		}
+		cout << endl
+		     << "  (S) Standard SIFT " << endl
+			 << "  (H) Hue SIFT " <<  endl
+			 << "  (O) Opponent SIFT "<<  endl
+			 << "  (1) Normal SURF "  << endl
+			 << "  (2) Hue SURF " <<  endl
+			 << "  (3) Opponent SURF " <<  endl
+			 << "  (R) andom forest testing" << endl
+			 << "  (Q) uit" << endl;
+		option = cin.get();
+		switch(option){
+			case 'q': case 'Q':{
+				cin.clear();
+				cin.sync();
+				cout << "exiting..." << endl;
+				return;
+		} break;
+			case 's':  case 'S':{
+				cin.clear();
+				cin.sync();
+				cout << "Adding standard SIFT to used features" << endl;
+				chosenOptions.push_back(0);
+		} break;
+			case 'h': case 'H':{
+				cin.clear();
+				cin.sync();
+				cout << "Adding hue SIFT to used features" << endl;
+				chosenOptions.push_back(1);
+		} break;
+			case 'o': case 'O':{
+				cin.clear();
+				cin.sync();
+				cout << "Adding opponent SIFT to used features" << endl;
+				chosenOptions.push_back(2);
+		} break;
+			case '1': {
+				cin.clear();
+				cin.sync();
+				cout << "Adding normal SURF to used features" << endl;
+				chosenOptions.push_back(3);
+		} break;
+			case '2': {
+				cin.clear();
+				cin.sync();
+				cout << "Adding hue SURF to used features" << endl;
+				chosenOptions.push_back(4);
+		} break;
+			case '3': {
+				cin.clear();
+				cin.sync();
+				cout << "Adding opponent SIFT to used features" << endl;
+				chosenOptions.push_back(5);
+		} break;
+			case 'r': case 'R': {
+				cin.clear();
+				cin.sync();
+				cout << "Starting testing with chosen random forest options" << endl;
+				rfTesting(chosenOptions);
+		} break;
+			default:{
+				cin.clear();
+				cin.sync();
+				cout << "No such option exists" << endl;
+			}break;
+		}
+	}
+}
+
 void RFClass::menu(void){
 	char option = ' ';
 	while(option){
 		cout << "Choose an option: " << endl
 			 << "  (C) odebook creation" << endl
 			 << "  (T) raining the model" << endl
+			 << "  (R) andom Forest training" << endl
 			 << "  (A) pply model to test set" << endl
 			 << "  (Q) uit" << endl ;
 		cin.clear();
@@ -638,6 +774,18 @@ void RFClass::menu(void){
 				cin.sync();
 				cout << "Loading training menu" << endl;
 				trainModelMenu();
+		} break;
+			 case 'r': case 'R':{
+				cin.clear();
+				cin.sync();
+				cout << "Loading random forest training menu" << endl;
+				rfTrainigmenu();
+		} break;
+			case 'a': case 'A':{
+				cin.clear();
+				cin.sync();
+				cout << "Evaluating the test set" << endl;
+				rfTestingmenu();
 		} break;
 			default:{
 				cin.clear();

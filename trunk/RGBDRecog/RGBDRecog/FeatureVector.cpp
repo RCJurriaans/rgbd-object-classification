@@ -3,6 +3,8 @@
 #include <ml.h>
 #include <highgui.h>
 
+using namespace std;
+
 //constructor
 FeatureVector::FeatureVector(void)
 {
@@ -19,13 +21,16 @@ FeatureVector::~FeatureVector(void)
 }
 
 //add descriptorIn features to this class' feature list
-void FeatureVector::AddFeatures(Mat descriptorIn){
+void FeatureVector::AddFeatures(Mat& descriptorIn){
+
 	if(features->rows == 0){
+		features->release();
 		*features = descriptorIn; //no features as of yet
 	}
 	else{
 		vconcat(descriptorIn,*features,*features); //there are features, concat them
 	}
+	descriptorIn.release();
 }
 
 //apply kmeans with dicsize clusters on the feature set
@@ -61,6 +66,7 @@ Mat FeatureVector::GenHistogram(const Mat descriptors){
 	knn->find_nearest(desc,1,0,0,nearests,0);
 
 	Mat nearest = nearests;
+
 	MatND histogram;
 	float hranges[] = { 0, 500 };
     const float* ranges[] = { hranges };

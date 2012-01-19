@@ -14,7 +14,7 @@ public:
 	~FeatureVector(void);
 	Mat* features;
 
-	void AddFeatures(Mat keypoints); //add keypoints to the features, used in the codebook creation
+	void AddFeatures(Mat & descriptorIn); //add keypoints to the features, used in the codebook creation
 	Mat* kmeans(int dicsize); //apply kmeans on the features in the class // note: this is very slow :(
 	Mat GenHistogram(const Mat descriptors); // take a set of feature descriptors, and create a codebook histogram of these
 	CvKNearest* knn;
