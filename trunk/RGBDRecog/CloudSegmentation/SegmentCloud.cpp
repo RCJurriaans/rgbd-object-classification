@@ -103,8 +103,7 @@ void SegmentCloud::getWindowCloud()
 			j=jmin;
 		}
 		else
-		{
-			j++;
+		{			j++;
 		}
 	}
 
