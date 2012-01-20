@@ -73,6 +73,31 @@ void SegmentCloud::getNaNCloud()
 
 void SegmentCloud::getWindowCloud()
 {
+	int mean_x = imcalc.getmean(0,0);
+	int mean_y = imcalc.getmean(0,1);
+
+	int boxWidth  = imcalc.getRegions(0,0)*1.2;
+	int boxHeight = imcalc.getRegions(0,1)*1.2;
+
+	//int nmax = 1.2* (boxWidth * boxHeight);
+
+	int imin = mean_x-boxWidth/2;
+	int imax = mean_x+boxWidth/2;
+	int jmin = mean_y-boxHeight/2;
+	int jmax = mean_y+boxHeight/2;
+
+	pcl::PointCloud<pcl::PointXYZRGB> windowCloud;
+
+	windowCloud.width = boxWidth;
+	windowCloud.height = boxHeight;
+
+	for(int i=imin; i < imax ; i++ ){
+		for(int j=jmin; j < imax ; j++ ){
+			windowCloud.push_back(inputCloud->at(j, i));
+		}
+	}
+
+	inputCloud->swap(windowCloud);
 
 }
 
