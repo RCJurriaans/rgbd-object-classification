@@ -14,13 +14,23 @@
 
 
 // TODO: reference additional headers your program requires here
-#include <cv.h>
-#include <cxcore.h>
-#include <highgui.h>
+//#include <cv.h>
+//#include <cxcore.h>
+//#include <highgui.h>
 #include <boost\lexical_cast.hpp>
 #include "Winbase.h"
 #include <string>
-#include <ml.h>
+//#include <ml.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
+
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/ml/ml.hpp>
+#include <opencv2/legacy/legacy.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
+#include <opencv2/video/video.hpp>

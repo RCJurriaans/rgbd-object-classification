@@ -1,6 +1,6 @@
 // stdafx.cpp : source file that includes just the standard includes
 // RGBDRecog.pch will be the pre-compiled header
-// stdafx.obj will contain the pre-compiled type information
+// stdafx.obj will contain the pre-compiled type inforcv::Mation
 
 #include "stdafx.h"
 

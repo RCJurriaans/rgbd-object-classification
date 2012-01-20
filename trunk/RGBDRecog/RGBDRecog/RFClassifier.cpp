@@ -1,9 +1,9 @@
 #include "StdAfx.h"
 #include "RFClassifier.h"
 
-#include <cv.h>
-#include "ml.h"
-using namespace cv;
+//#include <cv.h>
+//#include "ml.h"
+//using namespace cv;
 using namespace std;
 
 RFClassifier::RFClassifier(void)
@@ -17,22 +17,22 @@ RFClassifier::~RFClassifier(void)
 	//delete treestructure;
 }
 
-float RFClassifier:: predict(Mat input){
-	return treestructure->predict(input,Mat());
+float RFClassifier:: predict(cv::Mat input){
+	return treestructure->predict(input,cv::Mat());
 }
 
-void RFClassifier:: trainTree(vector<Mat> trainingData){
+void RFClassifier:: trainTree(vector<cv::Mat> trainingData){
 	
-	//create a matrix with all the trainingData merged
+	//create a cv::Matrix with all the trainingData merged
 	//this is needed as input for the random tree trainer
-	Mat mergedData;
+	cv::Mat mergedData;
 	mergedData = trainingData[0];
 	for(unsigned int i = 1; i < trainingData.size(); i++){
 		hconcat(mergedData,trainingData[i],mergedData);
 	}
 
-	//create a response matrix with different numbers for each class
-	Mat responses(mergedData.cols,1,mergedData.type());
+	//create a response cv::Matrix with different numbers for each class
+	cv::Mat responses(mergedData.cols,1,mergedData.type());
 	for(unsigned int i = 0; i < trainingData.size();i++){
 		int multifactor=0;
 		for(unsigned int j = 0; j < i; j++){
@@ -42,7 +42,7 @@ void RFClassifier:: trainTree(vector<Mat> trainingData){
 			responses.at<float>(j+multifactor) = static_cast<float>(i);
 		}
 	}
-	treestructure->train(mergedData,CV_COL_SAMPLE,responses,Mat(),Mat(),Mat(),Mat(),CvRTParams());
+	treestructure->train(mergedData,CV_COL_SAMPLE,responses,cv::Mat(),cv::Mat(),cv::Mat(),cv::Mat(),CvRTParams());
 }
 
 void RFClassifier::write(string filename, string dataname){

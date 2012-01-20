@@ -7,7 +7,7 @@
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 
-using namespace cv;
+//using namespace cv;
 using namespace std;
 
 
@@ -119,7 +119,7 @@ void RFClass::createCodebook(int mode){
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
-	Mat input; //stores the image data
+	cv::Mat input; //stores the image data
 	FeatureVector* fv = new FeatureVector; //this contains all features that are extacted
 
 	cout << "Running image feature extraction" << endl;
@@ -148,12 +148,12 @@ void RFClass::createCodebook(int mode){
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
 			input.release();
 			input = cv::imread(imagePath);
-			//this should return a single Mat with the descriptor, as only one value in modes is true
+			//this should return a single cv::Mat with the descriptor, as only one value in modes is true
 			//features are in the rows
 
 
 
-			vector<Mat> RawFeatures = featureExtractor->extractRawFeatures(modes,input);
+			vector<cv::Mat> RawFeatures = featureExtractor->extractRawFeatures(modes,input);
 
 
 			fv->AddFeatures(RawFeatures[0]);
@@ -164,9 +164,9 @@ void RFClass::createCodebook(int mode){
 	}
 	cout << "found " << fv->features->rows << " descriptors."<< endl;
 	cout << "Running kmeans" << endl;
-	Mat* codebook = fv->kmeans(dicsize); //run kmeans on the data for dicsize clusters
+	cv::Mat* codebook = fv->kmeans(dicsize); //run kmeans on the data for dicsize clusters
 	cout << "writing the result to file: " << "codebook" + boost::lexical_cast<string>(mode) + ".yml" << endl;
-	FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", FileStorage::WRITE); //store the codebook to a yaml file
+	cv::FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", cv::FileStorage::WRITE); //store the codebook to a yaml file
 	fs << "codebook" + boost::lexical_cast<string>(mode) << *codebook;
 	final=clock()-init;
 	
@@ -187,7 +187,7 @@ void RFClass::createCodebookMenu(){
 	char option = ' ';
 	vector<bool> foundCodebooks;
 	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", FileStorage::READ);
+		cv::FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
 		if(fs.isOpened()){
 			foundCodebooks.push_back(true);
 		}
@@ -269,7 +269,7 @@ void RFClass::createCodebookMenu(){
 	}
 }
 
-void RFClass::addDescriptor(bool & firstadded, Mat & tempfeaturevector, FeatureVector * codebooks,Mat & descriptors, int mode){
+void RFClass::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, FeatureVector * codebooks,cv::Mat & descriptors, int mode){
 	if(!firstadded){
 		tempfeaturevector.release();
 		tempfeaturevector = codebooks[mode].GenHistogram(descriptors);
@@ -307,8 +307,8 @@ void RFClass:: trainModel(vector<int> mode){
 	//load the codebook data
 	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
 		if(modes[i] == true){
-			FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", FileStorage::READ);
-			Mat M; fs["codebook" + boost::lexical_cast<string>(i)] >> M;
+			cv::FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
+			cv::Mat M; fs["codebook" + boost::lexical_cast<string>(i)] >> M;
 			fs.release();
 			codebooks[i].AddFeatures(M);
 			codebooks[i].TrainkNN();
@@ -317,10 +317,10 @@ void RFClass:: trainModel(vector<int> mode){
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
-	Mat input; //stores the image data
+	cv::Mat input; //stores the image data
 
-	Mat tempfeaturevector;
-	vector<Mat> featurevector;
+	cv::Mat tempfeaturevector;
+	vector<cv::Mat> featurevector;
 
 	//load the featureExtractor codebooks if they are not yet loaded
 	if(!featureExtractor->codeBooksLoaded()){
@@ -337,7 +337,7 @@ void RFClass:: trainModel(vector<int> mode){
 			input.release();
 			input = cv::imread(imagePath); //Load as grayscale image
 			
-			Mat tempfeaturevector = featureExtractor->extractFeatures(modes,input);
+			cv::Mat tempfeaturevector = featureExtractor->extractFeatures(modes,input);
 			
 			//tempfeaturevector now contains all found feature descriptors,
 			//we can add this to this class
@@ -367,7 +367,7 @@ void RFClass:: trainModel(vector<int> mode){
 
 
 
-	FileStorage fs2("trainingdata" + modestring + "RF" ".yml", FileStorage::WRITE); //store the codebook to a yaml file
+	cv::FileStorage fs2("trainingdata" + modestring + "RF" ".yml", cv::FileStorage::WRITE); //store the codebook to a yaml file
 	for(int i = 0; i < amountOfClasses;i++){
 		fs2 << "trainingdata" + modestring + boost::lexical_cast<string>(i) << featurevector[i];
 	}
@@ -383,7 +383,7 @@ void RFClass::trainModelMenu(){
 		char option = ' ';
 	vector<bool> foundCodebooks;
 	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", FileStorage::READ);
+		cv::FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
 		if(fs.isOpened()){
 			foundCodebooks.push_back(true);
 		}
@@ -488,9 +488,9 @@ void RFClass::generateRandomForest(vector<int> mode){
 		}
 	}
 
-	vector<Mat> trainingdata;
-	FileStorage fs("trainingdata" + modestring +"RF" +  ".yml", FileStorage::READ);
-	Mat temp;
+	vector<cv::Mat> trainingdata;
+	cv::FileStorage fs("trainingdata" + modestring +"RF" +  ".yml", cv::FileStorage::READ);
+	cv::Mat temp;
 	for(int i = 0; i < amountOfClasses; i++){
 		temp.release();
 		fs["trainingdata" + modestring+ boost::lexical_cast<string>(i)] >> temp;
@@ -617,20 +617,20 @@ void RFClass::rfTesting(vector<int> mode){
 	rfclassifier->read("randomforestdata" + modestring + ".yml", "randomforestdata" + modestring);
 	//now we use the random forest to predict the class of each of the test images
 
-	Mat input;
+	cv::Mat input;
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
-	Mat result;
+	cv::Mat result;
 	float** predictions = new float*[amountOfClasses];
 	for(int i = 0; i < amountOfClasses; i++){
-		predictions[i] = new float [testPicNum[i]];
+		predictions[i] = new float [testPicNum[i]+1];
 	}
 
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
 		cout << "procesing class: " << classNames[i] << endl;
-		for(int j = 1; j < testPicNum[i]; j++){ //for each image
+		for(int j = 1; j <= testPicNum[i]; j++){ //for each image
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			cout << "processing image: " << classNames[i] << "_" << j << endl;
 			input.release();
@@ -644,7 +644,7 @@ void RFClass::rfTesting(vector<int> mode){
 	vector<float> accuracy;
 	for(int i = 0; i < amountOfClasses; i++){
 		float sum = 0;
-		for(int j = 0; j < testPicNum[i]; j++){
+		for(int j = 1; j <= testPicNum[i]; j++){
 			if(predictions[i][j] == static_cast<float>(i)){
 				sum++;
 			}
@@ -653,10 +653,16 @@ void RFClass::rfTesting(vector<int> mode){
 		accuracy.push_back(sum);
 	}
 
-	cout << "Displaying results:" << endl;
+	cout << "Displaying accuracy results:" << endl;
 	for(int i = 0; i < amountOfClasses; i++){
 		cout << classNames[i] << ": " << accuracy[i] << endl;
 	}
+	float accuracysum = 0;
+	for(int i = 0; i < amountOfClasses; i++){
+		accuracysum+= accuracy[i];
+	}
+	accuracysum = accuracysum / amountOfClasses;
+	cout << "Average accuracy: " << accuracysum << endl;
 
 
 	for(int i = 0; i < amountOfClasses; i++){
