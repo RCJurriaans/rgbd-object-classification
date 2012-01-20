@@ -9,6 +9,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/PointIndices.h>
 
 // Opencv stuff
 #include <opencv2/core/core.hpp>
@@ -78,7 +79,6 @@ void SegmentCloud::getWindowCloud()
 
 	int boxWidth  = imcalc.getRegions(0,0)*1.2;
 	int boxHeight = imcalc.getRegions(0,1)*1.2;
-
 	
 	int imin = mean_x-boxWidth/2;
 	int imax = mean_x+boxWidth/2;
@@ -91,11 +91,20 @@ void SegmentCloud::getWindowCloud()
 	windowCloud->height = boxHeight;
 	windowCloud->points.resize (windowCloud->width * windowCloud->height);
 
-	for(int i=imin; i < imax ; i++ ){
-		for(int j=jmin; j < jmax ; j++ ){
-			int wj = j-jmin;
-			int wi = i-imin;
-			windowCloud->at(wj,wi) =  inputCloud->at(j, i);
+	int nmax = windowCloud->width * windowCloud->height;
+
+	int i = imin;
+	int j = jmin;
+
+	for(int n=0; n < nmax ; n++ ){
+		windowCloud->points[n] = inputCloud->at(j,i);
+		if(j==jmax){
+			i++;
+			j=jmin;
+		}
+		else
+		{
+			j++;
 		}
 	}
 
@@ -161,7 +170,7 @@ void SegmentCloud::getROI()
 	std::cout << "Created ipl version of mask " <<  std::endl;
 	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
 	//BwImage enter(ipl_bmask);
-	imcalc.Calculate(&ipl_bmask, 1);
+	imcalc.Calculate(&ipl_bmask, 10);
 }
 
 

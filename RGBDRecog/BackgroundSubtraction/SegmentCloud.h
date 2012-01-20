@@ -51,7 +51,7 @@ public:
 
 	// Get different masks
 	void getROI();
-
+	
 	// Set necessary clouds
 	void setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
 	void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
