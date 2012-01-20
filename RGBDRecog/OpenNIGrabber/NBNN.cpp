@@ -2,9 +2,9 @@
 
 
 #include "stdafx.h"
-/*
+
 #include "NBNN.h"
-#include <ml.h>
+#include <opencv2\ml\ml.hpp>
 
 using namespace std;
 
@@ -97,4 +97,3 @@ unsigned int NBNN::relationalClassify(const cv::Mat& queryDescriptors)
 	return minClass;
 }
 
-*/

@@ -47,20 +47,24 @@ public:
 			// Segment pointcloud
 			if(cloud && bgCloud) {
 
+				// Segment the object
 				cout << "Segmenting.." << endl;
 				segmenter.setInputCloud(cloud);
 				segmenter.setBackgroundImage(bgCloud);
-				segmenter.setThreshold(0.05);
+				//segmenter.setThreshold(0.05);
 				//segmenter.setDistanceFilter(3);
-				segmenter.setSegMethod(SegmentCloud::SegBack);
-				segmenter.getUnorgCloud();
+				//segmenter.setSegMethod(SegmentCloud::SegBack);
+				segmenter.getNaNCloud();
+				//segmenter.getROI();
+				//segmenter.getWindowCloud();
+
+				// Extract features
+				//pcl::PointCloud<pcl::Normal>::Ptr normals = calculateNormals(cloud);
+
 
 				// Classify data
 				//TODO
 				
-				//pcl::io::savePCDFile("testseg.pcd", *cloud.get(), true);
-				//cout << "saved" << endl;
-
 				// Return output to main thread
 				outputMutex.lock();
 				s_segCloud = cloud;
@@ -70,8 +74,8 @@ public:
 			//boost::thread::yield();
 		}
 	}
-	/*
-	void calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
+	
+	pcl::PointCloud<pcl::Normal>::Ptr calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
 	{
 		// Create the normal estimation class, and pass the input dataset to it
 		pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
@@ -90,22 +94,21 @@ public:
 
 		// Compute the features
 		ne.compute (*cloud_normals);
+
+		return cloud_normals;
 	}
 
-	void calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
+	boost::shared_ptr<cv::Mat> calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals)
 	{
-
-		pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal> ());
-
 		// Create the FPFH estimation class, and pass the input dataset+normals to it
-		pcl::FPFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fpfh;
+		pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh;
 		fpfh.setInputCloud (cloud);
 		fpfh.setInputNormals (normals);
 		// alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);
 
 		// Create an empty kdtree representation, and pass it to the FPFH estimation object.
 		// Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-		pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZ> ());
+		pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
 		fpfh.setSearchMethod (tree);
 
 		// Output datasets
@@ -117,9 +120,18 @@ public:
 
 		// Compute the features
 		fpfh.compute (*fpfhs);
-
+		
+		// Convert to cv::Mat (there's probably a faster way: memcpy innerloop; )
+		boost::shared_ptr<cv::Mat> outMat( new cv::Mat(33, fpfhs->points.size(), CV_32FC1) );
+		for (int p = 0; p < fpfhs->points.size(); p++)
+		{
+			for (int f = 0; f < 33; f++){
+				outMat->data[outMat->step[0]*f + p] = fpfhs->at(p).histogram[f];
+			}
+		}
+		return outMat;
 	}
-	*/
+	
 	boost::mutex& inputMutex;
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& s_cloud;
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& s_bgCloud;
