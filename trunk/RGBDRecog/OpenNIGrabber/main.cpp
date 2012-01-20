@@ -236,53 +236,84 @@ protected:
 	boost::signals2::connection renderCloudConnection;
 	boost::signals2::connection renderCloudRGBConnection;
 };
-
+/*
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
 }
+*/
 
-/*
 int
 	main (int argc, char** argv)
 {
 	SegmentCloud SC;
 
 	std::string path_back;
-	std::cout << "Enter background pcd file path" << std::endl;
-	std::cin >> path_back;
-	// path_back = "saves/Background/depth_0.pcd";
+	//std::cout << "Enter background pcd file path" << std::endl;
+	//std::cin >> path_back;
+	 path_back = "saves/depth_6.pcd";
 
 	std::string path_img;
-	std::cout << "Enter image pcd file path" << std::endl;
-	std::cin >> path_img;
-	// path_img = "saves/Pepper/depth_2.pcd";
+	//std::cout << "Enter image pcd file path" << std::endl;
+	//std::cin >> path_img;
+	 path_img = "saves/depth_5.pcd";
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
 	SC.setBackgroundImage(cloud_back);
+	std::cout << "Background loaded" << std::endl;
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_img (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_img, *cloud_img);
 	SC.setInputCloud(cloud_img);
+	std::cout << "Input loaded" << std::endl;
 
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud;
-	pcl::RangeImage rangeImage;
 
 	std::cout << "Starting " << cloud_img->width << " " << cloud_img->height <<  std::endl;
 
 	time_t start = time(NULL);
-	// segmentCloud = SC.getNaNCloud();
-	SC.getNaNCloud();
 	
+	SC.getNaNCloud();
+	//SC.getUnorgCloud();
+	SC.getROI();
+	SC.getWindowCloud();
+
 	time_t end = time(NULL);
 
-	cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
-	cv::imshow("TestMask", *SC.BooleanMask);
+	std::cout << "Ending " << cloud_img->width << " " << cloud_img->height <<  std::endl;
+
+	int mean_x = SC.imcalc.getmean(0,0);
+	int mean_y = SC.imcalc.getmean(0,1);
+
+	int boxWidth  = SC.imcalc.getRegions(0,0);
+	int boxHeight = SC.imcalc.getRegions(0,1);
+
+	boxWidth *= 1.2;
+	boxHeight *= 1.2;
+
+
+	int xmin = mean_x-boxWidth/2;
+	int xmax = mean_x+boxWidth/2;
+	int ymin = mean_y-boxHeight/2;
+	int ymax = mean_y+boxHeight/2;
+
+	IplImage ipl_bmask = SC.BooleanMask;
+
+	cvRectangle(&ipl_bmask,                  
+                cvPoint(xmin, ymin),        
+                cvPoint(xmax, ymax),       
+                cvScalar(255,0,0)); 
+                
+
+	//cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
+	//cv::imshow("TestMask", SC.BooleanMask);
+	cvShowImage("TestMask", &ipl_bmask);
 	cv::waitKey();
 	cvDestroyWindow("TestMask");
+
+	
 
 	std::cout << "Time: " << difftime(end, start) << std::endl;
 	std::cout << "Saving "  <<  std::endl;
@@ -296,4 +327,3 @@ int
 
 
 }
-*/
