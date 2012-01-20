@@ -11,9 +11,11 @@
 #include <math.h>
 #include <XnCppWrapper.h>
 
-#include <cv.h>
-#include <cxcore.h>
-#include <highgui.h>
+//#include <cv.h>
+//#include <cxcore.h>
+//#include <highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
