@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
+# Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGBDRecog", "RGBDRecog\RGBDRecog.vcxproj", "{EF316420-0177-46E6-BB45-98AA8C4BA99B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8A19202D-0EF3-4F41-9B75-39BFFC976A49} = {8A19202D-0EF3-4F41-9B75-39BFFC976A49}
@@ -14,6 +14,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Classification", "Classification\Classification.vcxproj", "{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Realtime", "Realtime\OpenNIGrabber.vcxproj", "{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Segmentation", "Segmentation\Segmentation.vcxproj", "{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,12 @@ Global
 		{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}.Release|Win32.ActiveCfg = Release|Win32
 		{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}.Release|Win32.Build.0 = Release|Win32
 		{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}.Release|x64.ActiveCfg = Release|Win32
+		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Debug|Win32.Build.0 = Debug|Win32
+		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Debug|x64.ActiveCfg = Debug|Win32
+		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|Win32.ActiveCfg = Release|Win32
+		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|Win32.Build.0 = Release|Win32
+		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -11,7 +11,7 @@
 
 
 //Include other libraries
-#include "FeatureVector.h" //feature vector contains SIFT features
+//#include "FeatureVector.h" //feature vector contains SIFT features
 #include <string>
 
 //#include "Winbase.h"
