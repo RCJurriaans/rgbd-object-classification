@@ -77,8 +77,8 @@ void SegmentCloud::getWindowCloud()
 	int mean_x = imcalc.getmean(0,0);
 	int mean_y = imcalc.getmean(0,1);
 
-	int boxWidth  = imcalc.getRegions(0,0)*1.2;
-	int boxHeight = imcalc.getRegions(0,1)*1.2;
+	int boxWidth  = static_cast<int>(imcalc.getRegions(0,0)*1.2);
+	int boxHeight = static_cast<int>(imcalc.getRegions(0,1)*1.2);
 	
 	int imin = mean_x-boxWidth/2;
 	int imax = mean_x+boxWidth/2;
