@@ -7,7 +7,6 @@
 #include "ClassificationThread.h"
 #include "SegmentCloud.h"
 
-//using namespace xn;
 //using namespace std;
 
 #ifdef WIN32
@@ -236,15 +235,15 @@ protected:
 	boost::signals2::connection renderCloudConnection;
 	boost::signals2::connection renderCloudRGBConnection;
 };
-/*
+
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
 }
-*/
 
+/*
 int
 	main (int argc, char** argv)
 {
@@ -327,3 +326,4 @@ int
 
 
 }
+*/
