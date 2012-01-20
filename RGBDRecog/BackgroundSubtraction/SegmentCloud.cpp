@@ -79,25 +79,27 @@ void SegmentCloud::getWindowCloud()
 	int boxWidth  = imcalc.getRegions(0,0)*1.2;
 	int boxHeight = imcalc.getRegions(0,1)*1.2;
 
-	//int nmax = 1.2* (boxWidth * boxHeight);
-
+	
 	int imin = mean_x-boxWidth/2;
 	int imax = mean_x+boxWidth/2;
 	int jmin = mean_y-boxHeight/2;
 	int jmax = mean_y+boxHeight/2;
 
-	pcl::PointCloud<pcl::PointXYZRGB> windowCloud;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr windowCloud  (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-	windowCloud.width = boxWidth;
-	windowCloud.height = boxHeight;
+	windowCloud->width = boxWidth;
+	windowCloud->height = boxHeight;
+	windowCloud->points.resize (windowCloud->width * windowCloud->height);
 
 	for(int i=imin; i < imax ; i++ ){
-		for(int j=jmin; j < imax ; j++ ){
-			windowCloud.push_back(inputCloud->at(j, i));
+		for(int j=jmin; j < jmax ; j++ ){
+			int wj = j-jmin;
+			int wi = i-imin;
+			windowCloud->at(wj,wi) =  inputCloud->at(j, i);
 		}
 	}
 
-	inputCloud->swap(windowCloud);
+	inputCloud->swap(*windowCloud);
 
 }
 
