@@ -252,12 +252,12 @@ int
 	std::string path_back;
 	//std::cout << "Enter background pcd file path" << std::endl;
 	//std::cin >> path_back;
-	 path_back = "saves/Background/depth_0.pcd";
+	 path_back = "saves/depth_6.pcd";
 
 	std::string path_img;
 	//std::cout << "Enter image pcd file path" << std::endl;
 	//std::cin >> path_img;
-	 path_img = "saves/Pepper/depth_2.pcd";
+	 path_img = "saves/depth_5.pcd";
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
@@ -269,16 +269,16 @@ int
 	SC.setInputCloud(cloud_img);
 	std::cout << "Input loaded" << std::endl;
 
+
 	std::cout << "Starting " << cloud_img->width << " " << cloud_img->height <<  std::endl;
 
-	
 	time_t start = time(NULL);
 	
 	SC.getNaNCloud();
 	//SC.getUnorgCloud();
 	SC.getROI();
 	SC.getWindowCloud();
-	
+
 	time_t end = time(NULL);
 
 	std::cout << "Ending " << cloud_img->width << " " << cloud_img->height <<  std::endl;
