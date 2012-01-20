@@ -4,7 +4,7 @@
 #include "FeatureExtractor.h" 
 #include "RFClassifier.h"
 using namespace std;
-using namespace cv;
+//using namespace cv;
 
 
 
@@ -21,7 +21,7 @@ private:
 	void createCodebook(int mode);
 	string convertNumberToFLString(int length, int number);
 	string ifBoolReturnChar(bool in, string out);
-	void addDescriptor(bool & firstadded, Mat & tempfeaturevector, FeatureVector * codebooks,Mat & descriptors, int mode);
+	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, FeatureVector * codebooks,cv::Mat & descriptors, int mode);
 	void trainModelMenu();
 	void trainModel(vector<int> mode);
 	void generateRandomForest(vector<int> mode);

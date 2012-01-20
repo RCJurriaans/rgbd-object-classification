@@ -1,9 +1,9 @@
 #pragma once
 #include <string>
-#include <cv.h>
+//#include <cv.h>
 #include "FeatureVector.h"
 using namespace std;
-using namespace cv;
+//using namespace cv;
 
 class FeatureExtractor
 {
@@ -20,36 +20,36 @@ public:
 	//call this if you want to use the codebooks (for extractFeatures)
 	void loadCodebooks();
 
-	//gets all specified descriptors from an image, and matches them with the available codebooks
+	//gets all specified descriptors from an image, and cv::Matches them with the available codebooks
 	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg);
 
-	//extract a vector of opencv matrixes with all raw descriptors
-	//each Mat in the vector contains in order the descriptors for SIFT/SURF or
+	//extract a vector of opencv cv::Matrixes with all raw descriptors
+	//each cv::Mat in the vector contains in order the descriptors for SIFT/SURF or
 	//other descriptions.
 	//Features are in the rows!
-	vector<Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg);
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg);
 private:
-	SiftDescriptorExtractor * SDE;
-	SurfDescriptorExtractor * SuDE;
-	OpponentColorDescriptorExtractor * des;
-	OpponentColorDescriptorExtractor * desSURF;
+	cv::SiftDescriptorExtractor * SDE;
+	cv::SurfDescriptorExtractor * SuDE;
+	cv::OpponentColorDescriptorExtractor * des;
+	cv::OpponentColorDescriptorExtractor * desSURF;
 	string* featureNames;
 	int amountOfFeatures;
 
-	SIFT * siftdetector;
-	SURF * surfdetector;
+	cv::SIFT * siftdetector;
+	cv::SURF * surfdetector;
 
 	FeatureVector* codebooks;
 
-	Mat normalSift(const Mat grayimg);
-	Mat hueSift(const Mat grayimg,const  Mat hueimg);
-	Mat opSift(const Mat grayimg,const  Mat rgbimg);
-	Mat normalSurf(const Mat grayimg);
-	Mat hueSurf(const Mat grayimg,const  Mat hueimg);
-	Mat opSurf(const Mat grayimg,const  Mat rgbimg);
+	cv::Mat normalSift(const cv::Mat grayimg);
+	cv::Mat hueSift(const cv::Mat grayimg,const  cv::Mat hueimg);
+	cv::Mat opSift(const cv::Mat grayimg,const  cv::Mat rgbimg);
+	cv::Mat normalSurf(const cv::Mat grayimg);
+	cv::Mat hueSurf(const cv::Mat grayimg,const  cv::Mat hueimg);
+	cv::Mat opSurf(const cv::Mat grayimg,const  cv::Mat rgbimg);
 	
 	bool codebooksloaded;
 
-	void addDescriptor(bool & firstadded, Mat & tempfeaturevector,Mat & descriptors, int mode);
+	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector,cv::Mat & descriptors, int mode);
 };
 
