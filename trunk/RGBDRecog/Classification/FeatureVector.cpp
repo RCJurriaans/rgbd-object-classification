@@ -1,7 +1,9 @@
 #include "StdAfx.h"
 #include "FeatureVector.h"
-#include <ml.h>
-#include <highgui.h>
+//#include <ml.h>
+#include <opencv2\ml\ml.hpp>
+//#include <highgui.h>
+#include <opencv2\highgui\highgui.hpp>
 
 using namespace std;
 

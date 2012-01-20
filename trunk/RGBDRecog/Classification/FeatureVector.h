@@ -1,4 +1,6 @@
 #pragma once
+
+#include "StdAfx.h"
 //#include <cv.h>
 //#include <ml.h>
 //#include <highgui.h>

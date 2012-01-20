@@ -14,7 +14,7 @@
 #include "FeatureVector.h" //feature vector contains SIFT features
 #include <string>
 
-#include "Winbase.h"
+//#include "Winbase.h"
 #include "RFClass.h"
 
 using namespace std;

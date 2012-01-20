@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual C++ Express 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "datagen", "datagen\datagen.vcxproj", "{77AA6587-6CD7-4ECE-A96E-73FDDEA35184}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenNIGrabber", "OpenNIGrabber\OpenNIGrabber.vcxproj", "{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}"
@@ -23,6 +23,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CloudSegmentation", "BackgroundSubtraction\BackgroundSubtraction.vcxproj", "{8A19202D-0EF3-4F41-9B75-39BFFC976A49}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "normalstest", "normalstest\normalstest.vcxproj", "{E70F773C-815F-43BC-BA88-E5779A66ABF8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Classification", "Classification\Classification.vcxproj", "{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -76,6 +78,12 @@ Global
 		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Release|Win32.ActiveCfg = Release|Win32
 		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Release|Win32.Build.0 = Release|Win32
 		{E70F773C-815F-43BC-BA88-E5779A66ABF8}.Release|x64.ActiveCfg = Release|Win32
+		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Debug|Win32.Build.0 = Debug|Win32
+		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Debug|x64.ActiveCfg = Debug|Win32
+		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Release|Win32.ActiveCfg = Release|Win32
+		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Release|Win32.Build.0 = Release|Win32
+		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
