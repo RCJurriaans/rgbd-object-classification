@@ -2,11 +2,9 @@
 //
 
 #include "stdafx.h"
-#include "Renderer.h"
-#include "NBNN.h"
-#include "ClassificationThread.h"
-#include "SegmentCloud.h"
 
+#include "RenderThread.h"
+#include "FeatureExtractor.h"
 //using namespace std;
 
 #ifdef WIN32
@@ -24,6 +22,8 @@ public:
 		numSaves(0),
 		timeToSave(false),
 		NBNNClassifier(new NBNN())
+		,currentCloud(new pcl::PointCloud<pcl::PointXYZRGB>())
+		//,renderThread(new RenderThread())
 	{
 		// make callback function from member function
 		boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> I_CB =
@@ -36,26 +36,32 @@ public:
 //		boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&, const boost::shared_ptr<openni_wrapper::DepthImage>&, float constant)> ID_CB
 //		  = boost::bind(&DataDistributor::imageDepthCB, this, _1, _2, _3);
 
-		renderRGB = boost::bind(&Renderer::renderRGB, renderer, _1);
-		renderDepth = boost::bind(&Renderer::renderDepth, renderer, _1);
-		renderCloud = boost::bind(&Renderer::renderCloud, renderer, _1);
-		renderCloudRGB = boost::bind(&Renderer::renderCloudRGB, renderer, _1);
+		//renderRGB = boost::bind(&Renderer::renderRGB, renderer, _1);
+		//renderDepth = boost::bind(&Renderer::renderDepth, renderer, _1);
+		//renderCloud = boost::bind(&Renderer::renderCloud, renderer, _1);
+		//renderCloudRGB = boost::bind(&Renderer::renderCloudRGB, renderer, _1);
 		
 		// Connect callback functions
 		boost::signals2::connection c = grabber->registerCallback(I_CB);
-		boost::signals2::connection c2 = grabber->registerCallback(D_CB);
+		//boost::signals2::connection c2 = grabber->registerCallback(D_CB);
+		
 		//toggleConnection(renderRGBConnection, renderRGB);
-		toggleConnection(renderCloudRGBConnection, renderCloudRGB);
+		//toggleConnection(renderCloudConnection, renderCloud);
+		//toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 
 		// Initialize classifier
-		std::vector<std::string> paths;
+		//std::vector<std::string> paths;
 		//paths.push_back(".\\dataset\\.....");
 		//NBNNClassifier->loadTrainingData(paths);
 
 		// Callback for sending frame to classification thread
 		boost::function<void (const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &)> inpCB
-			= boost::bind(&DataDistributor::classifierThreadInput, this, _1);
+			= boost::bind(&DataDistributor::distributeCloudRGB, this, _1);
+		boost::function<void (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &)> inpCB2
+			= boost::bind(&DataDistributor::distributeCloud, this, _1);
 		grabber->registerCallback(inpCB);
+
+		//cloudRenderer =  new CloudRenderer();
 	}
 	
 	~DataDistributor()
@@ -68,7 +74,7 @@ public:
 	{
 		if (timeToSave)
 		{
-			if ( saveCloud(cloud) && saveRGB(*cloudToRGB(cloud)) )
+			if ( saveCloud(cloud) && saveRGB(*FeatureExtractor::cloudToRGB(cloud)) )
 				cout << "Saved " << numSaves << endl;
 			timeToSave = false;
 			numSaves++;
@@ -76,14 +82,25 @@ public:
 		
 		//processInput(cvWaitKey(1));
 	}
-
-	void classifierThreadInput(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
+	
+	void distributeCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
 	{
+		renderer->renderCloud(cloud);
+	}
+
+	void distributeCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
+	{
+		
+		//renderThread->setCloud(cloud);
+		//renderer->renderCloudRGB(cloud);
+		currentCloud = cloud;
+
+		//cout << "Sending cloud to classification thread"<<endl;
 		classificationInputMutex.lock();
 		s_cloud = cloud;
 		classificationInputMutex.unlock();
 
-		processInput(cvWaitKey(1));
+		//processInput(cvWaitKey(1));
 
 		classificationOutputMutex.lock();
 		if( s_segmentedCloud ) {
@@ -92,11 +109,13 @@ public:
 			renderer->renderCloudRGB(s_segmentedCloud);
 		}
 		classificationOutputMutex.unlock();
+
+		//processInput(cvWaitKey(10));
 	}
 
 	// These are required for handling events in each thread
-	void imageCB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB){ processInput( cvWaitKey(1) ); }
-	void depthCB(const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth) { processInput( cvWaitKey(1) ); }
+	void imageCB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB){ renderer->renderRGB(oniRGB); processInput( cvWaitKey(1) ); }
+	void depthCB(const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth) { renderer->renderDepth(oniDepth); processInput( cvWaitKey(1) ); }
 	void imageDepthCB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB, const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth, float constant) { /*processInput( cvWaitKey(1) );*/ }
 	void cloudCB(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud) {}
 
@@ -126,20 +145,7 @@ public:
 		return true;
 	}
 
-	boost::shared_ptr<cv::Mat> cloudToRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
-	{
-		boost::shared_ptr<cv::Mat> rgbImage(new cv::Mat(cloud->height, cloud->width, CV_8UC3));
-		for (unsigned int x = 0; x < cloud->width; x++)
-		{
-			for (unsigned int y = 0; y < cloud->height; y++)
-			{
-				rgbImage->data[rgbImage->step[0]*y + rgbImage->step[1]*x + 2] = (*cloud)(x, y).r;
-				rgbImage->data[rgbImage->step[0]*y + rgbImage->step[1]*x + 1] = (*cloud)(x, y).g;
-				rgbImage->data[rgbImage->step[0]*y + rgbImage->step[1]*x + 0] = (*cloud)(x, y).b;
-			}
-		}
-		return rgbImage;
-	}
+	
 	
 	
 	void processInput( int key )
@@ -172,10 +178,9 @@ public:
 			grabber->registerCallback( saveCB );
 			break;
 		case 'b':
-			cout << "update set" << endl;
-			toggleConnection(renderCloudRGBConnection, renderCloudRGB);
+			cout << "Setting background" << endl;
 			classificationInputMutex.lock();
-			s_backgroundCloud = s_cloud;
+			s_backgroundCloud = currentCloud;//s_cloud;
 			classificationInputMutex.unlock();
 			break;
 		default:
@@ -188,6 +193,9 @@ public:
 		// Start classification thread
 		boost::thread classify( ClassificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
 													  classificationOutputMutex, s_segmentedCloud) );
+		//cout << "run" <<endl;
+		//RenderThread r( visualizationInputMutex );
+		//boost::thread visualize( &RenderThread::run, renderThread );
 
 		// start receiving point clouds
 		grabber->start();
@@ -212,7 +220,9 @@ protected:
 	pcl::Grabber* grabber;
 	Renderer* renderer;
 	NBNN *NBNNClassifier;
-	
+
+	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr currentCloud;
+
 	// Threading
 	boost::mutex classificationInputMutex; // Locks all following:
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_cloud;
@@ -221,6 +231,9 @@ protected:
 	boost::mutex classificationOutputMutex;
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_segmentedCloud;
 
+	boost::mutex visualizationInputMutex;
+	//RenderThread* renderThread;
+	
 	// Callbacks
 	boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> renderRGB;
 	boost::function<void (const boost::shared_ptr<openni_wrapper::DepthImage>&)> renderDepth;
@@ -228,7 +241,7 @@ protected:
 	boost::function<void (const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)> renderCloudRGB;
 
 	boost::function<void (const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &)> saveCB;
-
+	
 	// Callback connections
 	boost::signals2::connection renderRGBConnection;
 	boost::signals2::connection renderDepthConnection;

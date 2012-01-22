@@ -33,7 +33,7 @@
     <ClInclude Include="ClassificationThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CloudRenderer.h">
+    <ClInclude Include="RenderThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,7 +50,7 @@
     <ClCompile Include="NBNN.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CloudRenderer.cpp">
+    <ClCompile Include="RenderThread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

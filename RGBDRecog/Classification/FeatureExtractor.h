@@ -4,6 +4,8 @@
 // stdafx.h
 #include <string>
 #include "FeatureVector.h"
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 using namespace std;
 
 
@@ -57,6 +59,10 @@ public:
 	// with x and width the row directions, and y and height the column directions
 	// Outputs a boolean mask to be used with all functions
 	cv::Mat createMask(int rows, int cols, cv::Rect box);
+
+
+	// converts a pointcloud containing RGB info to a cv::Mat image.
+	static boost::shared_ptr<cv::Mat> FeatureExtractor::cloudToRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud);
 
 private:
 	cv::SiftDescriptorExtractor * SDE; //used for extracting the features

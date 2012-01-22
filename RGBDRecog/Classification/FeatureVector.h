@@ -1,10 +1,6 @@
 #pragma once
 
 #include "StdAfx.h"
-//#include <cv.h>
-//#include <ml.h>
-//#include <highgui.h>
-//using namespace cv;
 
 //Implements a opencv cv::Matrix that contains features in the rows
 //can be used to store and perform most calculations on

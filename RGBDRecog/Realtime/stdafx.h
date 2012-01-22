@@ -32,6 +32,10 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "Renderer.h"
+#include "NBNN.h"
+#include "ClassificationThread.h"
+#include "SegmentCloud.h"
 
 
 // TODO: reference additional headers your program requires here
