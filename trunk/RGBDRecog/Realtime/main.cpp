@@ -45,8 +45,8 @@ public:
 		boost::signals2::connection c = grabber->registerCallback(I_CB);
 		//boost::signals2::connection c2 = grabber->registerCallback(D_CB);
 		
-		//toggleConnection(renderRGBConnection, renderRGB);
-		//toggleConnection(renderCloudConnection, renderCloud);
+		toggleConnection(renderRGBConnection, renderRGB);
+		toggleConnection(renderCloudConnection, renderCloud);
 		//toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 
 		// Initialize classifier
@@ -104,9 +104,8 @@ public:
 
 		classificationOutputMutex.lock();
 		if( s_segmentedCloud ) {
-			cout << "rendering segmented cloud" << endl;
-
-			renderer->renderCloudRGB(s_segmentedCloud);
+			//cout << "rendering segmented cloud" << endl;
+			//renderer->renderCloudRGB(cloud);//s_segmentedCloud);
 		}
 		classificationOutputMutex.unlock();
 

@@ -11,17 +11,22 @@ RFClassifier::RFClassifier(void)
 	treestructure = new CvRTrees();
 }
 
+RFClassifier::RFClassifier(string filename, string dataname)
+{
+	RFClassifier();
+	read(filename, dataname);
+}
 
 RFClassifier::~RFClassifier(void)
 {
 	//delete treestructure;
 }
 
-float RFClassifier:: predict(cv::Mat input){
-	return treestructure->predict(input,cv::Mat());
+int RFClassifier::predict(cv::Mat input){
+	return static_cast<int>(treestructure->predict(input,cv::Mat()));
 }
 
-void RFClassifier:: trainTree(vector<cv::Mat> trainingData){
+void RFClassifier::trainTree(vector<cv::Mat> trainingData){
 	
 	//create a cv::Matrix with all the trainingData merged
 	//this is needed as input for the random tree trainer

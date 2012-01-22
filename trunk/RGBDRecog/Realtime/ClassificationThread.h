@@ -3,6 +3,7 @@
 
 #include "SegmentCloud.h"
 #include "FeatureExtractor.h"
+#include "RFClassifier.h"
 
 #include <pcl/point_types.h>
 #include <pcl/features/normal_3d.h>
@@ -21,7 +22,8 @@ public:
 		s_bgCloud(bgCloudPtr),
 		outputMutex(outmutex),
 		s_segCloud(segCloudPtr),
-		extractor(new FeatureExtractor())
+		extractor(new FeatureExtractor()),
+		classifier(new RFClassifier())//"file", "dataname"))
 	{
 		cout << "ClassificationThread constructor" <<endl;
 		extractor->loadCodebooks();
@@ -76,13 +78,11 @@ public:
 				modes.push_back(false);
 				modes.push_back(false);
 				modes.push_back(false);
-				//extractor->extractRawFeatures( modes, img );
+				cv::Mat features = extractor->extractFeatures( modes, *img );
 
 				// Classify
+				int predictedClass = classifier->predict(features);
 
-
-				// Classify data
-				//TODO
 				
 				// Return output to main thread
 				cout << "Sending classifier output to main thread"<<endl;
@@ -153,6 +153,7 @@ public:
 	}
 	
 	boost::shared_ptr<FeatureExtractor> extractor;
+	boost::shared_ptr<RFClassifier> classifier;
 
 	// Threading
 	boost::mutex& inputMutex;

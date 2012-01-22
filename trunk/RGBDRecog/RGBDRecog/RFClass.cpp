@@ -621,9 +621,9 @@ void RFClass::rfTesting(vector<int> mode){
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
 	cv::Mat result;
-	float** predictions = new float*[amountOfClasses];
+	int** predictions = new int*[amountOfClasses];
 	for(int i = 0; i < amountOfClasses; i++){
-		predictions[i] = new float [testPicNum[i]+1];
+		predictions[i] = new int [testPicNum[i]+1];
 	}
 
 	for(int i = 0; i < amountOfClasses; i++){
@@ -645,7 +645,7 @@ void RFClass::rfTesting(vector<int> mode){
 	for(int i = 0; i < amountOfClasses; i++){
 		float sum = 0;
 		for(int j = 1; j <= testPicNum[i]; j++){
-			if(predictions[i][j] == static_cast<float>(i)){
+			if(predictions[i][j] == i){
 				sum++;
 			}
 		}
