@@ -42,16 +42,20 @@ public:
 	// 0 if it isn't
 	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
 	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
-	//extract a vector of opencv cv::Matrixes with all raw descriptors
-	//each cv::Mat in the vector contains in order the descriptors for SIFT/SURF or
-	//other descriptions. Uses the same modes string as the above feature
-	//Features are in the rows
+
+	// extract a vector of opencv cv::Matrixes with all raw descriptors
+	// each cv::Mat in the vector contains in order the descriptors for SIFT/SURF or
+	// other descriptions. Uses the same modes string as the above feature
+	// Features are in the rows
 	// call only after loadCodebooks()
 	// for mask, see extractFeatures description
 	// also comes with ROI version, that accept a cv::Rect
 	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
 	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
 
+	// Input the matrix dimensions (rows, cols), and a rectangle structure
+	// with x and width the row directions, and y and height the column directions
+	// Outputs a boolean mask to be used with all functions
 	cv::Mat createMask(int rows, int cols, cv::Rect box);
 
 private:
