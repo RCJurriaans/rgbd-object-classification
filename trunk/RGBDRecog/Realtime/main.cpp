@@ -44,6 +44,7 @@ public:
 		// Connect callback functions
 		boost::signals2::connection c = grabber->registerCallback(I_CB);
 		boost::signals2::connection c2 = grabber->registerCallback(D_CB);
+		boost::signals2::connection c3 = grabber->registerCallback(C_CB);
 		
 		//toggleConnection(renderRGBConnection, renderRGB);
 		//toggleConnection(renderCloudConnection, renderCloud);
@@ -85,13 +86,12 @@ public:
 	
 	void distributeCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
 	{
+		cout << "rendering cloud"<<endl;
 		renderer->renderCloud(cloud);
 	}
 
 	void distributeCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
 	{
-		
-		//renderThread->setCloud(cloud);
 		//renderer->renderCloudRGB(cloud);
 		currentCloud = cloud;
 
@@ -105,7 +105,8 @@ public:
 		classificationOutputMutex.lock();
 		if( s_segmentedCloud ) {
 			//cout << "rendering segmented cloud" << endl;
-			//renderer->renderCloudRGB(cloud);//s_segmentedCloud);
+			//renderer->ROI = s_ROI;
+			renderer->renderCloudRGB(s_segmentedCloud, s_ROI);
 		}
 		classificationOutputMutex.unlock();
 
@@ -171,8 +172,8 @@ public:
 		case '4':
 			toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 			break;
-		case 'r':
-			cout << "Record mode on. Enter frame number to use as filename (e.g. rgb_FRAMENUM.bmp)" << endl;
+		case 's':
+			cout << "Save mode on. Enter frame number to use as filename (e.g. rgb_FRAMENUM.bmp)" << endl;
 			cin >> numSaves;
 			grabber->registerCallback( saveCB );
 			break;
@@ -190,8 +191,9 @@ public:
 	void run ()
 	{
 		// Start classification thread
-		//boost::thread classify( ClassificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
-		//											  classificationOutputMutex, s_segmentedCloud) );
+		ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
+													  classificationOutputMutex, s_segmentedCloud);
+		boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
 		//cout << "run" <<endl;
 		//RenderThread r( visualizationInputMutex );
@@ -230,6 +232,7 @@ protected:
 
 	boost::mutex classificationOutputMutex;
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_segmentedCloud;
+	  cv::Rect s_ROI;
 
 	boost::mutex visualizationInputMutex;
 	//RenderThread* renderThread;
@@ -248,15 +251,15 @@ protected:
 	boost::signals2::connection renderCloudConnection;
 	boost::signals2::connection renderCloudRGBConnection;
 };
-
+/*
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
-}
+}*/
 
-/*
+
 int
 	main (int argc, char** argv)
 {
@@ -265,21 +268,21 @@ int
 	std::string path_back;
 	//std::cout << "Enter background pcd file path" << std::endl;
 	//std::cin >> path_back;
-	 path_back = "saves/depth_6.pcd";
+	 path_back = "img001.pcd";
 
 	std::string path_img;
 	//std::cout << "Enter image pcd file path" << std::endl;
 	//std::cin >> path_img;
-	 path_img = "saves/depth_5.pcd";
+	 path_img = "img002.pcd";
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
-	SC.setBackgroundImage(cloud_back);
+//	SC.setBackgroundImage(cloud_back);
 	std::cout << "Background loaded" << std::endl;
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_img (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_img, *cloud_img);
-	SC.setInputCloud(cloud_img);
+	//SC.setInputCloud(cloud_img);
 	std::cout << "Input loaded" << std::endl;
 
 
@@ -287,15 +290,16 @@ int
 
 	time_t start = time(NULL);
 	
-	SC.getNaNCloud();
+	//SC.getNaNCloud();
 	//SC.getUnorgCloud();
-	SC.getROI();
-	SC.getWindowCloud();
+	//SC.getROI();
+	cloud_img = SC.getWindowCloud(cloud_img, cloud_back);
 
 	time_t end = time(NULL);
 
 	std::cout << "Ending " << cloud_img->width << " " << cloud_img->height <<  std::endl;
 
+	/*
 	int mean_x = SC.imcalc.getmean(0,0);
 	int mean_y = SC.imcalc.getmean(0,1);
 
@@ -312,7 +316,7 @@ int
 	int ymax = mean_y+boxHeight/2;
 
 	IplImage ipl_bmask = SC.BooleanMask;
-
+	
 	cvRectangle(&ipl_bmask,                  
                 cvPoint(xmin, ymin),        
                 cvPoint(xmax, ymax),       
@@ -329,14 +333,13 @@ int
 
 	std::cout << "Time: " << difftime(end, start) << std::endl;
 	std::cout << "Saving "  <<  std::endl;
+	*/
 
-
-	pcl::io::savePCDFileASCII ("Saves/test_pcd.pcd", *cloud_img);
-	std::cerr << "Saved " << cloud_img->points.size () << " data points to Saves/test_pcd.pcd." << std::endl;
-
+	pcl::io::savePCDFileASCII ("test_pcd.pcd", *cloud_img);
+	std::cerr << "Saved " << cloud_img->points.size () << " data points to test_pcd.pcd." << std::endl;
+	
 
 	return (0);
 
 
 }
-*/

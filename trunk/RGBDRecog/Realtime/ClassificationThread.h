@@ -5,9 +5,6 @@
 #include "FeatureExtractor.h"
 #include "RFClassifier.h"
 
-#include <pcl/point_types.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/fpfh.h>
 
 class ClassificationThread
 {
@@ -21,15 +18,15 @@ public:
 		s_cloud(cloudPtr),
 		s_bgCloud(bgCloudPtr),
 		outputMutex(outmutex),
-		s_segCloud(segCloudPtr),
-		extractor(new FeatureExtractor()),
-		classifier(new RFClassifier())//"file", "dataname"))
+		s_segCloud(segCloudPtr)
+		,extractor(new FeatureExtractor())
+		,classifier(new RFClassifier())//"file", "dataname"))
 	{
 		cout << "ClassificationThread constructor" <<endl;
-		extractor->loadCodebooks();
+		//extractor->loadCodebooks();
 	}
 
-	void operator()()
+	void run()
 	{
 		cout << "Classification Thread active" << endl;
 		while(true)
@@ -39,12 +36,14 @@ public:
 			if (s_bgCloud != NULL) {
 				cout << "Background received in classification thread" << endl;
 				bgCloud.reset( new pcl::PointCloud<pcl::PointXYZRGB>(*s_bgCloud) );
+				//bgCloud = s_bgCloud;
 				s_bgCloud.reset();
 			}
 
 			if (s_cloud != NULL) {
 				//cout << "input cloud set"<< endl;
 				cloud.reset( new pcl::PointCloud<pcl::PointXYZRGB>(*s_cloud));
+				//cloud = s_cloud;
 				s_cloud.reset(); // s_cloud is read in other thread.
 			}
 			else {
@@ -57,18 +56,19 @@ public:
 
 				// Segment the object
 				cout << "Segmenting.." << endl;
-				//Sleep(5000);
-				segmenter.setInputCloud(cloud);
-				segmenter.setBackgroundImage(bgCloud);
+//				segmenter.setInputCloud(cloud);
+	//			segmenter.setBackgroundImage(bgCloud);
+				//segmenter.setMaxDistanceFilter(3);
 				//segmenter.setThreshold(0.05);
-				//segmenter.setDistanceFilter(3);
-				//segmenter.setSegMethod(SegmentCloud::SegBack);
-				segmenter.getNaNCloud();
+				//segmenter.getMask(cloud, bgCloud);
+				//cloud = segmenter.getWindowCloud(cloud, bgCloud);
+				//boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud, bgCloud);
 				//segmenter.getROI();
 				//segmenter.getWindowCloud();
+				cv::Rect r = segmenter.getROI(cloud, bgCloud);
+				cout << r.x << " " << r.y << " " << r.width << " " << r.height << endl;
 
-
-				// Extract features
+		/*	// Extract features
 				//pcl::PointCloud<pcl::Normal>::Ptr normals = calculateNormals(cloud);
 				boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 				std::vector<bool> modes;
@@ -82,12 +82,13 @@ public:
 
 				// Classify
 				int predictedClass = classifier->predict(features);
-
+		*/
 				
 				// Return output to main thread
-				cout << "Sending classifier output to main thread"<<endl;
+				//cout << "Sending classifier output to main thread"<<endl;
 				outputMutex.lock();
 				s_segCloud = cloud;
+				s_ROI = r;
 				outputMutex.unlock();
 			}
 			//Sleep(1);
@@ -162,8 +163,13 @@ public:
 
 	boost::mutex& outputMutex;
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr& s_segCloud;
+	  cv::Rect s_ROI;
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr bgCloud;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
 	SegmentCloud segmenter;
+
+private:
+	ClassificationThread( const ClassificationThread& other ); // non construction-copyable
+    ClassificationThread& operator=( const ClassificationThread& ); // non copyable
 };

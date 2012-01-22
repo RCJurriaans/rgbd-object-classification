@@ -3,13 +3,12 @@
 #include "stdafx.h"
 #include "Renderer.h"
 
-//using namespace xn;
-
 
 void Renderer::renderRGB(const boost::shared_ptr<openni_wrapper::Image>& oniBGR) 
 {
 	oniBGR->fillRGB(640, 480, RGBImage.data);
 	cv::cvtColor( RGBImage, RGBImage, cv::COLOR_BGR2RGB ); //CV_BGR2RGB );
+
 	cv::imshow( "RGB Display", RGBImage);
 }
 
@@ -21,6 +20,7 @@ void Renderer::renderOpenCVRGB(const boost::shared_ptr<cv::Mat>& RGBImage )
 void Renderer::renderDepth(const boost::shared_ptr<openni_wrapper::DepthImage>& oniDepth)
 {
 	oniDepth->fillDepthImage(640, 480, (float*)depthImage.data);
+	//cv::rectangle(depthImage, ROI, cv::Scalar(100));
 	cv::imshow("Depth Display", depthImage);
 }
 
@@ -32,7 +32,8 @@ void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie)
 	}
 }
 
-void Renderer::renderCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)//without const, could do without copy
+void Renderer::renderCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud, //without const, could do without copy
+							  cv::Rect ROI)
 {
 	/*
 	if (!cloudViewerOpen) {
@@ -57,33 +58,30 @@ void Renderer::renderCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr 
 	pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZRGB>(*cloud, *cloudCopy);
 	
 	mtx.lock();
-	vizCloud = cloudCopy;
+		vizCloud = cloudCopy;
+		vizROI = ROI;
 	mtx.unlock();
 }
 
 void Renderer::renderCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
 {
-	//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudCopy( new pcl::PointCloud<pcl::PointXYZRGB>());
-	//pcl::copyPointCloud<pcl::PointXYZ, pcl::PointXYZRGB>(*cloud, *cloudCopy);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudCopy( new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::copyPointCloud<pcl::PointXYZ, pcl::PointXYZRGB>(*cloud, *cloudCopy);
 	
-	//mtx.lock();
-	//vizCloud = cloudCopy;
-	//mtx.unlock();
+	mtx.lock();
+		vizCloud = cloudCopy;
+	mtx.unlock();
 }
 
 
 void Renderer::closeCloudDisplay()
 {
 	cloudViewerOpen = false; 
-	//delete viewer;
-	//viewer = NULL;
 }
 
 void Renderer::openCloudDisplay()
 {
 	cloudViewerOpen = true;
-	//viewer = new pcl::visualization::CloudViewer("Cloud Display");
-	//viewer->registerKeyboardCallback( &keyboardCB, &processInput );
 }
 
 // This method runs on the visualization thread
@@ -95,9 +93,11 @@ void Renderer::visCallback(pcl::visualization::PCLVisualizer& vis)
 	}
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr tempCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+	cv::Rect ROI;
 
 	mtx.lock();
 	  tempCloud.swap(vizCloud);
+	  ROI = vizROI;
 	mtx.unlock();
 
 	if (!vis.updatePointCloud (tempCloud))
@@ -105,5 +105,8 @@ void Renderer::visCallback(pcl::visualization::PCLVisualizer& vis)
 		vis.addPointCloud (tempCloud);
 		vis.resetCameraViewpoint ();
 	}
+	
+
+
 	vis.updatePointCloud(tempCloud);
 }

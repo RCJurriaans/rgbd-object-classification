@@ -1,23 +1,6 @@
 #include "stdafx.h"
 #include "SegmentCloud.h"
 
-#include <stdio.h>
-#include <string>
-
-// PCL stuff
-#include <iostream>
-#include <pcl/point_cloud.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/PointIndices.h>
-
-// Opencv stuff
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
-#include <limits>
-#include <ctime>
-#include <math.h>
 
 // Blobb stuff
 #include "ImageAccess.h"
@@ -25,60 +8,95 @@
 
 
 // Get Different Cloud types
-void SegmentCloud::getNaNCloud()
+boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
+													pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
 {
 	int nmax;
-	BooleanMask.release();
-	BooleanMask = cv::Mat::zeros( inputCloud->height, inputCloud->width, CV_8UC1);
+	//boost::shared_ptr<cv::Mat> mask( &static_cast<cv::Mat>(cv::Mat::zeros( input->height, input->width, CV_8UC1)) );
+	boost::shared_ptr<cv::Mat> mask( new cv::Mat( input->height, input->width, CV_8UC1 ) );
+	//mask = cv::Mat::zeros( input->height, input->width, CV_8UC1 );
+	mask->setTo(cv::Scalar(0));
 
-	switch( getSegMethod() ){
-	case SegBack:
+	float point_backz;
+	float point_imgz;
 
-		float point_backz;
-		float point_imgz;
+	nmax = input->width * input->height;
+	for(int n=0; n < nmax ; n++ ){
+		// Extract z value from both clouds
+		point_backz = background->at(n).z;
+		point_imgz  = input->at(n).z;
 
-		nmax = inputCloud->width * inputCloud->height;
-		for(int n=0; n < nmax ; n++ ){
-			// Extract z value from both clouds
-			point_backz = backgroundCloud->at(n).z;
-			point_imgz  = inputCloud->at(n).z;
+		// Recalculate indices in matrix from n
+		int i = n % input->width;
+		int j = ((n-i) / input->width);
 
-			// Recalculate indices in matrix from n
-			int i = n % inputCloud->width;
-			int j = ((n-i) / inputCloud->width);
-
-			// Check whether the distance is smaller than a threshold
-			// Check whether the distance is within the range of the RGB-D camera
-			// Check for QNaN
-			if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
-				inputCloud->points[n].z = std::numeric_limits<float>::quiet_NaN();
-				//BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
-			}
-			else {
-				BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 255;
-			}
+		// Check whether the distance is smaller than a threshold
+		// Check whether the distance is within the range of the RGB-D camera
+		// Check for QNaN
+		if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
+			//input->points[n].z = std::numeric_limits<float>::quiet_NaN();
+			//mask.data[j*mask.step[0]+i*mask.step[1]] = 0;
 		}
+		else {
+			mask->data[j*mask->step[0]+i*mask->step[1]] = 255;
+		}
+	}
+	
+	return mask;
+}
+
+boost::shared_ptr<cv::Mat>
+SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+{
+	switch( crtMethod ) {
+	case SegBack:
+		return getMask(input, this->background);
 		break;
 	case SegObj:
-		std::cout << "No such method yet" << std::endl;
 		break;
 	case SegPlane:
-		std::cout << "No such method yet" << std::endl;
 		break;
 	case SegNormHist:
-		std::cout << "No such method yet" << std::endl;
 		break;
 	}
 
-};
+	return boost::shared_ptr<cv::Mat>(); // Pleasing compiler
+}
 
-void SegmentCloud::getWindowCloud()
+cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 {
+	IplImage ipl_bmask = *mask;//cvCreateImage(cvSize(BooleanMask.size().height,BooleanMask.size().width),8,1);
+	std::cout << "Created ipl version of mask " <<  std::endl;
+	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
+	//BwImage enter(ipl_bmask);
+	imcalc.Calculate(&ipl_bmask, 10);
+
 	int mean_x = imcalc.getmean(0,0);
 	int mean_y = imcalc.getmean(0,1);
 
-	int boxWidth  = static_cast<int>(imcalc.getRegions(0,0)*1.2);
-	int boxHeight = static_cast<int>(imcalc.getRegions(0,1)*1.2);
+	int boxWidth  = imcalc.getRegions(0,0);
+	int boxHeight = imcalc.getRegions(0,1);
+
+	boxWidth *= 1.2;
+	boxHeight *= 1.2;
+
+	return cv::Rect(mean_x-(boxWidth/2), mean_y-(boxHeight/2), boxWidth, boxHeight);
+}
+
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getWindowCloud(const cv::Rect& ROI,
+																	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+{
+	// We don't want to use imcalc here, because it makes the behaviour of SegmentCloud dependent on the order of the calls
+	//int mean_x = imcalc.getmean(0,0);
+	//int mean_y = imcalc.getmean(0,1);
+	int mean_x = ROI.x + ROI.width / 2;
+	int mean_y = ROI.y + ROI.height / 2;
+
+	//int boxWidth  = static_cast<int>(imcalc.getRegions(0,0)*1.2);
+	//int boxHeight = static_cast<int>(imcalc.getRegions(0,1)*1.2);
+	int boxWidth = ROI.width;
+	int boxHeight = ROI.height;
 	
 	int jmin = mean_x-boxWidth/2;
 	int jmax = mean_x+boxWidth/2;
@@ -97,27 +115,39 @@ void SegmentCloud::getWindowCloud()
 	int j = jmin;
 
 	for(int n=0; n < nmax ; n++ ){
-		windowCloud->points[n] = inputCloud->at(j,i);
+		windowCloud->points[n] = input->at(j,i);
 		if(i==imax){
 			j++;
 			i=imin;
 		}
 		else
-		{			i++;
+		{
+			i++;
 		}
 	}
 
-	inputCloud->swap(*windowCloud);
-
+	//inputCloud->swap(*windowCloud);
+	return windowCloud;
 }
 
-void SegmentCloud::getUnorgCloud()
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+SegmentCloud::getUnorgCloud(boost::shared_ptr<const cv::Mat> mask,
+								 pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
 {
-	int nmax;
-	BooleanMask.release();
-	BooleanMask = cv::Mat::ones( inputCloud->height, inputCloud->width, CV_8UC1);
+	int nmax = input->width * input->height;
+	//mask.release();
+	//BooleanMask = cv::Mat::ones( inputCloud->height, inputCloud->width, CV_8UC1);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
+	for(int n=0; n < nmax ; n++ ){
+		int i = n % input->width;
+		int j = ((n-i) / input->width);
+
+		if( mask->data[j*mask->step[0]+i] )
+			segmentCloud->push_back(input->at(n));
+	}
+	return segmentCloud;
+	/* doesn't depend on seg method.
 	switch( getSegMethod() ){
 	case SegBack:
 
@@ -159,74 +189,6 @@ void SegmentCloud::getUnorgCloud()
 		std::cout << "No such method yet" << std::endl;
 		break;
 	}
-
+	*/
 }
 
-// Get mask
-cv::Rect SegmentCloud::calcROI()
-{
-	IplImage ipl_bmask = BooleanMask;//cvCreateImage(cvSize(BooleanMask.size().height,BooleanMask.size().width),8,1);
-	std::cout << "Created ipl version of mask " <<  std::endl;
-	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
-	//BwImage enter(ipl_bmask);
-	imcalc.Calculate(&ipl_bmask, 10);
-
-	int mean_x = imcalc.getmean(0,0);
-	int mean_y = imcalc.getmean(0,1);
-
-	int boxWidth  = imcalc.getRegions(0,0);
-	int boxHeight = imcalc.getRegions(0,1);
-
-	boxWidth *= 1.2;
-	boxHeight *= 1.2;
-
-	ROI = cv::Rect(mean_x-(boxWidth/2), mean_y-(boxHeight/2), boxWidth, boxHeight);
-
-	return ROI;
-
-	}
-
-
-cv::Rect SegmentCloud::getROI()
-{
-	return ROI;
-}
-
-
-// Choose Segmentation method
-SegmentCloud::SegmentationMethod SegmentCloud::getSegMethod(){
-	return crtMethod;
-}
-void SegmentCloud::setSegMethod(SegmentCloud::SegmentationMethod method){
-	crtMethod = method;
-}
-
-// Set background cloud
-void SegmentCloud::setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
-{
-	backgroundCloud = cloud;
-}
-
-// Set input cloud
-void SegmentCloud::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
-{
-	inputCloud = cloud;
-}
-
-// Set threshold for difference between background and input
-void SegmentCloud::setThreshold(double thres)
-{
-	threshold = thres;
-}
-
-// Set max distance of points
-void SegmentCloud::setMaxDistanceFilter(double distFilt)
-{
-	maxDistanceFilter = distFilt;
-}
-
-// Set min distance of points
-void SegmentCloud::setMinDistanceFilter(double distFilt)
-{
-	minDistanceFilter = distFilt;
-}

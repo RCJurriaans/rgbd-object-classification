@@ -2,68 +2,84 @@
 #pragma once
 
 #include "stdafx.h"
-#include <opencv2\opencv.hpp>
 #include "ImageCalculation.h"
 
 class SegmentCloud
 {
-	// Cloud to segment
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr backgroundCloud;
-	// Optional Background image (only necessary for background subtraction)
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr inputCloud;
-	
-
-
-
 public:
-	SegmentCloud() {
-	setSegMethod(SegBack);
-	setThreshold(0.05);
-	setMaxDistanceFilter(2);
-	setMinDistanceFilter(0.1);
-	}
 
-	ImageCalculation imcalc;
-	cv::Rect ROI;
+	SegmentCloud() :
+		crtMethod(SegBack),
+		threshold(0.05),
+		maxDistanceFilter(3),
+		minDistanceFilter(0.1)
+	{}
 
 	// Method of Segmentation
 	enum SegmentationMethod { SegBack, SegObj, SegPlane, SegNormHist };
-	SegmentationMethod crtMethod;
 
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr NaNCloud;
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr WindowCloud;
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr UnorgCloud;
-
-	// Masks
-	cv::Mat BooleanMask;
 	
-	// Thresholds
+	// Mask getting function, uses internally stored background
+	boost::shared_ptr<cv::Mat>
+	getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+	
+	
+	// Main implementation of background-subtraction mask calculation
+	boost::shared_ptr<cv::Mat>
+	getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background);
+
+	
+	// Gets a Region Of Interest. Use mask as input if you have one already.
+	cv::Rect getROI(boost::shared_ptr<const cv::Mat> mask);
+	
+	cv::Rect getROI(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	{return getROI(getMask(input));}
+	
+	cv::Rect getROI(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
+	{return getROI(getMask(input, background));}
+	
+
+	// Cuts out a rectangular, organised cloud from an input cloud
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+	getWindowCloud(const cv::Rect& ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+	
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+	getWindowCloud(boost::shared_ptr<const cv::Mat> mask, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	{return getWindowCloud( getROI(mask), input);}
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+	getWindowCloud(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	{return getWindowCloud( getROI(getMask(input)), input);}
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+	getWindowCloud(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
+	{return getWindowCloud( getROI(getMask(input, background)), input);}
+
+
+	// Gets an unorganised cloud, by copying only nonzero mask-points.
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+	getUnorgCloud(boost::shared_ptr<const cv::Mat> mask, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+
+	// Getters and setters
+	inline SegmentationMethod getSegMethod(){return crtMethod;}
+	inline void setSegMethod(SegmentationMethod method) {crtMethod = method;}
+	inline void setThreshold(double thres) {threshold = thres;}
+	inline void setMaxDistanceFilter(double distFilt) {maxDistanceFilter = distFilt;}
+	inline void setMinDistanceFilter(double distFilt) {minDistanceFilter = distFilt;}
+	inline void setBackground(pcl::PointCloud<pcl::PointXYZRGB>::Ptr bg) {background = bg;}
+
+
+protected:
+
+	ImageCalculation imcalc;
+
+	// State
 	double threshold;
 	double maxDistanceFilter;
 	double minDistanceFilter;
-
-	// Get Different Cloud types
-	void getNaNCloud();
-	void getWindowCloud();
-	void getUnorgCloud();
-
-	// Choose segmentation method
-	SegmentationMethod getSegMethod();
-	void setSegMethod(SegmentationMethod);
-
-	// Get different masks
-	cv::Rect calcROI();
-	cv::Rect getROI();
+	SegmentationMethod crtMethod;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr background;
 	
-	// Set necessary clouds
-	void setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
-	void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
-
-	void setThreshold(double);
-	void setMaxDistanceFilter(double);
-	void setMinDistanceFilter(double);
-protected:
-
 private:
 
 };

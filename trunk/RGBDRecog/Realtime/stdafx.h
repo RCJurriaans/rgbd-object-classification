@@ -11,9 +11,9 @@
 #include <sstream>
 #include <tchar.h>
 
-#include <XnOS.h>
+//#include <XnOS.h>
 #include <math.h>
-#include <XnCppWrapper.h>
+//#include <XnCppWrapper.h>
 
 #include <opencv2\opencv.hpp>
 
@@ -28,6 +28,9 @@
 #include "pcl/range_image/range_image.h"
 #include <pcl/io/pcd_io.h>
 #include "pcl/visualization/pcl_visualizer.h"
+#include <pcl/point_types.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/fpfh.h>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
