@@ -188,7 +188,10 @@ cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg, con
 	return descriptors;
 }
 
-
+vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi){
+	cv::Mat roiimg = rgbimg(roi);
+	return extractRawFeatures(modes, roiimg)
+}
 
 vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask = cv::Mat()){
 	vector<cv::Mat> rawfeatures;
@@ -238,7 +241,10 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 	return rawfeatures;
 }
 
-
+cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi){
+	cv::Mat roiimg = rgbimg(roi);
+	return extractFeatures(modes, roiimg);
+}
 cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Mat mask = cv::Mat()){
 	if(!codebooksloaded){
 		cout << "ERROR: codebooks not loaded" << endl;
@@ -263,6 +269,12 @@ cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv
 	return featurevector;
 }
 
-cv::Mat FeatureExtractor::createMask(){
-
+cv::Mat FeatureExtractor::createMask(int rows, int cols, cv::Rect box){
+	cv::Mat mask = cv::Mat::ones(rows,cols,CV_8UC1);
+	for(int i = box.x; i < box.height; i++){
+		for(int j = box.y; j < box.width; j++){
+			mask.at<int>(i,j) = 0;
+		}
+	}
+	return mask;
 }

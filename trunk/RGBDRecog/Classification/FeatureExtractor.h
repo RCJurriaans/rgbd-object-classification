@@ -41,17 +41,18 @@ public:
 	// the region to extract the features from. 1 in the matrix means the pixel is used,
 	// 0 if it isn't
 	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
-
+	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
 	//extract a vector of opencv cv::Matrixes with all raw descriptors
 	//each cv::Mat in the vector contains in order the descriptors for SIFT/SURF or
 	//other descriptions. Uses the same modes string as the above feature
 	//Features are in the rows
 	// call only after loadCodebooks()
 	// for mask, see extractFeatures description
+	// also comes with ROI version, that accept a cv::Rect
 	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
 
-
-	cv::Mat createMask();
+	cv::Mat createMask(int rows, int cols, cv::Rect box);
 
 private:
 	cv::SiftDescriptorExtractor * SDE; //used for extracting the features
