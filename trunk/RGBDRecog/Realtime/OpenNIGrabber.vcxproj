@@ -68,15 +68,16 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PCL_ROOT)\3rdParty\flann\include;$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\include;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(SolutionDir)\BackgroundSubtraction</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(PCL_ROOT)\3rdParty\flann\include;$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\Boost\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(SolutionDir)\Segmentation;$(SolutionDir)\Classification</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(OPEN_NI_LIB);$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\Eigen\bin;$(PCL_ROOT)\3rdParty\Boost\lib;$(OPENCV_DIR)\lib\Release;$(SolutionDir)\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openNI.lib;pcl_io.lib;pcl_common.lib;pcl_visualization.lib;pcl_filters.lib;pcl_sample_consensus.lib;pcl_segmentation.lib;pcl_range_image.lib;pcl_kdtree.lib;pcl_features.lib;pcl_search.lib;opencv_core231.lib;opencv_highgui231.lib;opencv_video231.lib;opencv_ml231.lib;opencv_legacy231.lib;opencv_imgproc231.lib;opencv_flann231.lib;opencv_features2d231.lib;CloudSegmentation.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OPEN_NI_LIB);$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\Eigen\bin;$(PCL_ROOT)\3rdParty\qhull\lib;$(PCL_ROOT)\3rdParty\VTK 5.8.0\lib\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\lib;$(OPENCV_DIR)\lib\Release;$(SolutionDir)\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>openNI.lib;pcl_io.lib;pcl_common.lib;pcl_visualization.lib;pcl_filters.lib;pcl_sample_consensus.lib;pcl_segmentation.lib;pcl_range_image.lib;pcl_kdtree.lib;pcl_features.lib;pcl_search.lib;opencv_core231.lib;opencv_highgui231.lib;opencv_video231.lib;opencv_ml231.lib;opencv_legacy231.lib;opencv_imgproc231.lib;opencv_flann231.lib;opencv_features2d231.lib;CloudSegmentation.lib;Classification.lib;qhullstatic.lib;vtkCommon.lib;vtkRendering.lib;vtkHybrid.lib;vtkGraphics.lib;vtkverdict.lib;vtkImaging.lib;vtkIO.lib;vtkFiltering.lib;vtkDICOMParser.lib;vtkNetCDF_cxx.lib;vtkmetaio.lib;vtksys.lib;vtksqlite.lib;vtkpng.lib;vtktiff.lib;vtkzlib.lib;vtkjpeg.lib;vtkexpat.lib;vtkftgl.lib;vtkfreetype.lib;opengl32.lib;vtkexoIIc.lib;vtkNetCDF.lib;vfw32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

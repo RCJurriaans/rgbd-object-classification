@@ -43,10 +43,10 @@ public:
 		
 		// Connect callback functions
 		boost::signals2::connection c = grabber->registerCallback(I_CB);
-		//boost::signals2::connection c2 = grabber->registerCallback(D_CB);
+		boost::signals2::connection c2 = grabber->registerCallback(D_CB);
 		
-		toggleConnection(renderRGBConnection, renderRGB);
-		toggleConnection(renderCloudConnection, renderCloud);
+		//toggleConnection(renderRGBConnection, renderRGB);
+		//toggleConnection(renderCloudConnection, renderCloud);
 		//toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 
 		// Initialize classifier
@@ -190,8 +190,9 @@ public:
 	void run ()
 	{
 		// Start classification thread
-		boost::thread classify( ClassificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
-													  classificationOutputMutex, s_segmentedCloud) );
+		//boost::thread classify( ClassificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
+		//											  classificationOutputMutex, s_segmentedCloud) );
+		
 		//cout << "run" <<endl;
 		//RenderThread r( visualizationInputMutex );
 		//boost::thread visualize( &RenderThread::run, renderThread );
