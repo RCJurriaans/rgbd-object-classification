@@ -65,6 +65,25 @@ void FeatureExtractor::loadCodebooks(){
 	codebooksloaded = true;
 }
 
+void FeatureExtractor::loadCodebooks(string filepath){
+	cout << "Loading the codebooks from location " << filepath << endl;
+	codebooks = new FeatureVector[amountOfFeatures]; 
+		for(int i = 0; i < amountOfFeatures; i++){
+			cv::FileStorage fs(filepath + "codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
+			if(fs.isOpened()){
+				cout << "- Loaded " << featureNames[i] <<  " codebook" << endl;
+				cv::Mat M; fs[filepath + "codebook" + boost::lexical_cast<string>(i)] >> M;
+				fs.release();
+				codebooks[i].AddFeatures(M);
+				codebooks[i].TrainkNN();
+			}else{
+				cout << "- " << featureNames[i]  << " codebook does not exist" << endl;
+			}
+	}
+	cout << "Loaded the available codebooks" << endl;
+	codebooksloaded = true;
+}
+
 // add descriptor descriptors to tempfeaturevector
 // function also runs the descriptors throught he codebooks, making a histogram out of them
 // mode is the type of feature, firstadded simply indicates if this was the first added feature
