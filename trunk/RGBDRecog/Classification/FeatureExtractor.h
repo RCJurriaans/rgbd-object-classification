@@ -40,7 +40,7 @@ public:
 	// mask is an optional parameter (initialized as an empty mat otherwise), that specifies
 	// the region to extract the features from. 1 in the matrix means the pixel is used,
 	// 0 if it isn't
-	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
+	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask  = cv::Mat());
 	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
 
 	// extract a vector of opencv cv::Matrixes with all raw descriptors
@@ -50,7 +50,7 @@ public:
 	// call only after loadCodebooks()
 	// for mask, see extractFeatures description
 	// also comes with ROI version, that accept a cv::Rect
-	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask  = cv::Mat());
 	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
 
 	// Input the matrix dimensions (rows, cols), and a rectangle structure

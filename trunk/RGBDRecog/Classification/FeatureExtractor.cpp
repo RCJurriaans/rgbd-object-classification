@@ -187,7 +187,7 @@ cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg, con
 
 	return descriptors;
 }
-vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask = cv::Mat()){
+vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask){
 	vector<cv::Mat> rawfeatures;
 	cv::Mat grayimg;
 	cv::Mat hueimg;
@@ -239,7 +239,7 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 	return extractRawFeatures(modes, roiimg);
 }
 
-cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Mat mask = cv::Mat()){
+cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Mat mask){
 	if(!codebooksloaded){
 		cout << "ERROR: codebooks not loaded" << endl;
 		return cv::Mat();
