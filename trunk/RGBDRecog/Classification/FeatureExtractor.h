@@ -31,6 +31,7 @@ public:
 	// call this if you want to use the codebooks (for extractFeatures)
 	// check if this is loaded with the above function
 	void loadCodebooks();
+	void loadCodebooks(string filepath);
 
 	// gets all specified descriptors from an image, and cv::Matches them with the available codebooks
 	// the modes bool vector should be 'amountOfFeatures' long, with true for using the feature,
