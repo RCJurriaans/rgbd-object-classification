@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 #include "SegmentCloud.h"
+#include "FeatureExtractor.h"
 
 #include <pcl/point_types.h>
 #include <pcl/features/normal_3d.h>
@@ -19,28 +20,33 @@ public:
 		s_cloud(cloudPtr),
 		s_bgCloud(bgCloudPtr),
 		outputMutex(outmutex),
-		s_segCloud(segCloudPtr)
+		s_segCloud(segCloudPtr),
+		extractor(new FeatureExtractor())
 	{
-		//v = new pcl::visualization::CloudViewer("Cloud Viewer2");
+		cout << "ClassificationThread constructor" <<endl;
+		extractor->loadCodebooks();
 	}
 
 	void operator()()
 	{
-		//cout << "Classification Thread active" << endl;
+		cout << "Classification Thread active" << endl;
 		while(true)
 		{
 			// Get input from main thread
 			inputMutex.lock();
 			if (s_bgCloud != NULL) {
-				cout << "UPDATED!!" << endl;
+				cout << "Background received in classification thread" << endl;
 				bgCloud.reset( new pcl::PointCloud<pcl::PointXYZRGB>(*s_bgCloud) );
 				s_bgCloud.reset();
 			}
 
 			if (s_cloud != NULL) {
-				cout << "input cloud set"<< endl;
+				//cout << "input cloud set"<< endl;
 				cloud.reset( new pcl::PointCloud<pcl::PointXYZRGB>(*s_cloud));
-				//s_cloud.reset(); // s_cloud is read in other thread.
+				s_cloud.reset(); // s_cloud is read in other thread.
+			}
+			else {
+				boost::thread::yield();
 			}
 			inputMutex.unlock();
 
@@ -49,6 +55,7 @@ public:
 
 				// Segment the object
 				cout << "Segmenting.." << endl;
+				//Sleep(5000);
 				segmenter.setInputCloud(cloud);
 				segmenter.setBackgroundImage(bgCloud);
 				//segmenter.setThreshold(0.05);
@@ -58,20 +65,33 @@ public:
 				//segmenter.getROI();
 				//segmenter.getWindowCloud();
 
+
 				// Extract features
 				//pcl::PointCloud<pcl::Normal>::Ptr normals = calculateNormals(cloud);
+				boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
+				std::vector<bool> modes;
+				modes.push_back(true);
+				modes.push_back(false);
+				modes.push_back(false);
+				modes.push_back(false);
+				modes.push_back(false);
+				modes.push_back(false);
+				//extractor->extractRawFeatures( modes, img );
+
+				// Classify
 
 
 				// Classify data
 				//TODO
 				
 				// Return output to main thread
+				cout << "Sending classifier output to main thread"<<endl;
 				outputMutex.lock();
 				s_segCloud = cloud;
 				outputMutex.unlock();
 			}
-			Sleep(1);
-			//boost::thread::yield();
+			//Sleep(1);
+			boost::thread::yield();
 		}
 	}
 	
@@ -123,15 +143,18 @@ public:
 		
 		// Convert to cv::Mat (there's probably a faster way: memcpy innerloop; )
 		boost::shared_ptr<cv::Mat> outMat( new cv::Mat(33, fpfhs->points.size(), CV_32FC1) );
-		for (int p = 0; p < fpfhs->points.size(); p++)
+		for (unsigned int p = 0; p < fpfhs->points.size(); p++)
 		{
-			for (int f = 0; f < 33; f++){
+			for (unsigned int f = 0; f < 33; f++){
 				outMat->data[outMat->step[0]*f + p] = fpfhs->at(p).histogram[f];
 			}
 		}
 		return outMat;
 	}
 	
+	boost::shared_ptr<FeatureExtractor> extractor;
+
+	// Threading
 	boost::mutex& inputMutex;
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& s_cloud;
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& s_bgCloud;

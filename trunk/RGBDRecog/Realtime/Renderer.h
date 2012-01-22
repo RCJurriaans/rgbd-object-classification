@@ -16,10 +16,15 @@ public:
 		depthImage(cv::Mat(480,640, CV_32FC1)),
 		viewer(new pcl::visualization::CloudViewer("Cloud Viewer")),//NULL),
 		processInput(inputCallback),
-		cloudViewerOpen(false)
+		cloudViewerOpen(true),
+		vizCloud()//new pcl::PointCloud<pcl::PointXYZRGB>())
 	{
-		viewer->registerKeyboardCallback( &keyboardCB, &processInput );
+		//viewer->registerKeyboardCallback( &keyboardCB, &processInput );
+		boost::function1<void, pcl::visualization::PCLVisualizer&> f = boost::bind(&Renderer::visCallback, this, _1);
+		viewer->runOnVisualizationThread(f);
+		
 	}
+	void visCallback(pcl::visualization::PCLVisualizer& vis);// {cout << "vizthread"<<endl;}
 
 	void renderRGB(const boost::shared_ptr<openni_wrapper::Image>& oniRGB);
 	void renderOpenCVRGB(const boost::shared_ptr<cv::Mat>& RGBImage );
@@ -35,6 +40,9 @@ protected:
 	cv::Mat depthImage;
 	boost::function<void (int)> processInput;
 	bool cloudViewerOpen;
+
+	boost::mutex mtx;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr vizCloud;
 private:
 };
 

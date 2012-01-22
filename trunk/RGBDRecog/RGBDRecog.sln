@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual C++ Express 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGBDRecog", "RGBDRecog\RGBDRecog.vcxproj", "{EF316420-0177-46E6-BB45-98AA8C4BA99B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B} = {A0994D67-D5D5-40EC-8826-DF2DD8177E3B}
@@ -11,6 +11,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Classification", "Classification\Classification.vcxproj", "{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Realtime", "Realtime\OpenNIGrabber.vcxproj", "{3E82A144-5DE7-4917-BC2A-DDDAD20D23EA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1} = {F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}
+		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B} = {A0994D67-D5D5-40EC-8826-DF2DD8177E3B}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Segmentation", "Segmentation\Segmentation.vcxproj", "{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}"
 EndProject

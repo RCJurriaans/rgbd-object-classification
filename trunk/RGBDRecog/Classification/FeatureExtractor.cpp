@@ -279,3 +279,18 @@ cv::Mat FeatureExtractor::createMask(int rows, int cols, cv::Rect box){
 	}
 	return mask;
 }
+
+boost::shared_ptr<cv::Mat> FeatureExtractor::cloudToRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
+{
+	boost::shared_ptr<cv::Mat> rgbImage(new cv::Mat(cloud->height, cloud->width, CV_8UC3));
+	for (unsigned int x = 0; x < cloud->width; x++)
+	{
+		for (unsigned int y = 0; y < cloud->height; y++)
+		{
+			rgbImage->data[rgbImage->step[0]*y + rgbImage->step[1]*x + 2] = (*cloud)(x, y).r;
+			rgbImage->data[rgbImage->step[0]*y + rgbImage->step[1]*x + 1] = (*cloud)(x, y).g;
+			rgbImage->data[rgbImage->step[0]*y + rgbImage->step[1]*x + 0] = (*cloud)(x, y).b;
+		}
+	}
+	return rgbImage;
+}
