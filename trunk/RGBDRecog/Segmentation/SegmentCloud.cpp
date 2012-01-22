@@ -163,13 +163,33 @@ void SegmentCloud::getUnorgCloud()
 }
 
 // Get mask
-void SegmentCloud::getROI()
+cv::Rect SegmentCloud::calcROI()
 {
 	IplImage ipl_bmask = BooleanMask;//cvCreateImage(cvSize(BooleanMask.size().height,BooleanMask.size().width),8,1);
 	std::cout << "Created ipl version of mask " <<  std::endl;
 	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
 	//BwImage enter(ipl_bmask);
 	imcalc.Calculate(&ipl_bmask, 10);
+
+	int mean_x = imcalc.getmean(0,0);
+	int mean_y = imcalc.getmean(0,1);
+
+	int boxWidth  = imcalc.getRegions(0,0);
+	int boxHeight = imcalc.getRegions(0,1);
+
+	boxWidth *= 1.2;
+	boxHeight *= 1.2;
+
+	ROI = cv::Rect(mean_x-(boxWidth/2), mean_y-(boxHeight/2), boxWidth, boxHeight);
+
+	return ROI;
+
+	}
+
+
+cv::Rect SegmentCloud::getROI()
+{
+	return ROI;
 }
 
 

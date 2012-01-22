@@ -14,6 +14,7 @@ class SegmentCloud
 	
 
 
+
 public:
 	SegmentCloud() {
 	setSegMethod(SegBack);
@@ -23,6 +24,7 @@ public:
 	}
 
 	ImageCalculation imcalc;
+	cv::Rect ROI;
 
 	// Method of Segmentation
 	enum SegmentationMethod { SegBack, SegObj, SegPlane, SegNormHist };
@@ -50,7 +52,8 @@ public:
 	void setSegMethod(SegmentationMethod);
 
 	// Get different masks
-	void getROI();
+	cv::Rect calcROI();
+	cv::Rect getROI();
 	
 	// Set necessary clouds
 	void setBackgroundImage(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
