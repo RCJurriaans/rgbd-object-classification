@@ -35,15 +35,23 @@ public:
 	// gets all specified descriptors from an image, and cv::Matches them with the available codebooks
 	// the modes bool vector should be 'amountOfFeatures' long, with true for using the feature,
 	// and false otherwise
-	// call only after loadCodebooks(); !
-	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg);
+	// call only after loadCodebooks()
+	// mask is an optional parameter (initialized as an empty mat otherwise), that specifies
+	// the region to extract the features from. 1 in the matrix means the pixel is used,
+	// 0 if it isn't
+	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
 
 	//extract a vector of opencv cv::Matrixes with all raw descriptors
 	//each cv::Mat in the vector contains in order the descriptors for SIFT/SURF or
 	//other descriptions. Uses the same modes string as the above feature
 	//Features are in the rows
-	// call only after loadCodebooks(); !
-	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg);
+	// call only after loadCodebooks()
+	// for mask, see extractFeatures description
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask);
+
+
+	cv::Mat createMask();
+
 private:
 	cv::SiftDescriptorExtractor * SDE; //used for extracting the features
 	cv::SurfDescriptorExtractor * SuDE; //with the opponent color descriptors
@@ -60,12 +68,12 @@ private:
 	// these functions are used to calculate their respective descriptors
 	// These are called by the two extractFeatures functions above
 	// use those as an interface
-	cv::Mat normalSift(const cv::Mat grayimg);
-	cv::Mat hueSift(const cv::Mat grayimg,const  cv::Mat hueimg);
-	cv::Mat opSift(const cv::Mat grayimg,const  cv::Mat rgbimg);
-	cv::Mat normalSurf(const cv::Mat grayimg);
-	cv::Mat hueSurf(const cv::Mat grayimg,const  cv::Mat hueimg);
-	cv::Mat opSurf(const cv::Mat grayimg,const  cv::Mat rgbimg);
+	cv::Mat normalSift(const cv::Mat grayimg, const cv::Mat mask);
+	cv::Mat hueSift(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask);
+	cv::Mat opSift(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask);
+	cv::Mat normalSurf(const cv::Mat grayimg, const cv::Mat mask);
+	cv::Mat hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask);
+	cv::Mat opSurf(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask);
 	
 	bool codebooksloaded; //are the codebooks loaded or not?
 

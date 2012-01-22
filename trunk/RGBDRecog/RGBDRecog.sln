@@ -3,13 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGBDRecog", "RGBDRecog\RGBDRecog.vcxproj", "{EF316420-0177-46E6-BB45-98AA8C4BA99B}"
 	ProjectSection(ProjectDependencies) = postProject
-		{8A19202D-0EF3-4F41-9B75-39BFFC976A49} = {8A19202D-0EF3-4F41-9B75-39BFFC976A49}
 		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B} = {A0994D67-D5D5-40EC-8826-DF2DD8177E3B}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pcdViewer", "pcdViewer\pcdViewer.vcxproj", "{BF811064-0028-422A-9145-8CE8DE9A47DA}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CloudSegmentation", "BackgroundSubtraction\BackgroundSubtraction.vcxproj", "{8A19202D-0EF3-4F41-9B75-39BFFC976A49}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Classification", "Classification\Classification.vcxproj", "{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}"
 EndProject
@@ -37,12 +34,6 @@ Global
 		{BF811064-0028-422A-9145-8CE8DE9A47DA}.Release|Win32.ActiveCfg = Release|Win32
 		{BF811064-0028-422A-9145-8CE8DE9A47DA}.Release|Win32.Build.0 = Release|Win32
 		{BF811064-0028-422A-9145-8CE8DE9A47DA}.Release|x64.ActiveCfg = Release|Win32
-		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Debug|Win32.ActiveCfg = Debug|Win32
-		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Debug|Win32.Build.0 = Debug|Win32
-		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Debug|x64.ActiveCfg = Debug|Win32
-		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|Win32.ActiveCfg = Release|Win32
-		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|Win32.Build.0 = Release|Win32
-		{8A19202D-0EF3-4F41-9B75-39BFFC976A49}.Release|x64.ActiveCfg = Release|Win32
 		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Debug|Win32.Build.0 = Debug|Win32
 		{A0994D67-D5D5-40EC-8826-DF2DD8177E3B}.Debug|x64.ActiveCfg = Debug|Win32

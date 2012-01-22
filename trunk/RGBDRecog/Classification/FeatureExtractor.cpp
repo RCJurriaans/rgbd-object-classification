@@ -83,33 +83,9 @@ void FeatureExtractor::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevec
 	}
 }
 
-cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg){
-	if(!codebooksloaded){
-		cout << "ERROR: codebooks not loaded" << endl;
-		return cv::Mat();
-	}
-
-	vector<cv::Mat> rawfeatures = extractRawFeatures(modes,rgbimg);
-	cv::Mat featurevector;
-	bool firstadded = false;
-	
-
-	//in this loop we run each cv::Mat from the rawfeatures through the
-	//respective codebooks
-	int addedFeatures = 0;
-	for(int i = 0; i < amountOfFeatures; i++){
-		if(modes[i]){
-			addDescriptor(firstadded, featurevector, rawfeatures[addedFeatures], i);
-			addedFeatures++;
-		}
-	}
-
-	return featurevector;
-}
-
-cv::Mat FeatureExtractor::normalSift(const cv::Mat grayimg){
+cv::Mat FeatureExtractor::normalSift(const cv::Mat grayimg, const cv::Mat mask = cv::Mat()){
 	cv::Mat descriptors;
-	siftdetector->operator()(grayimg,cv::Mat(),vector<cv::KeyPoint>(),descriptors);
+	siftdetector->operator()(grayimg,mask,vector<cv::KeyPoint>(),descriptors);
 	//normalize features
 	for(int i = 0; i < descriptors.rows; i++){
 		normalize(descriptors.row(i),descriptors.row(i));
@@ -117,31 +93,31 @@ cv::Mat FeatureExtractor::normalSift(const cv::Mat grayimg){
 	
 	return descriptors;
 }
-cv::Mat FeatureExtractor::hueSift(const cv::Mat grayimg, const cv::Mat hueimg){
+cv::Mat FeatureExtractor::hueSift(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask = cv::Mat()){
 	cv::Mat descriptors;
 	vector<cv::KeyPoint> keypoints;
-	siftdetector->operator()(grayimg,cv::Mat(),keypoints,cv::Mat());
-	siftdetector->operator()(hueimg,cv::Mat(),keypoints,descriptors,true);
+	siftdetector->operator()(grayimg,mask,keypoints,cv::Mat());
+	siftdetector->operator()(hueimg,mask,keypoints,descriptors,true);
 	//normalize features
 	for(int i = 0; i < descriptors.rows; i++){
 		normalize(descriptors.row(i),descriptors.row(i));
 	}
 	return descriptors;
 }
-cv::Mat FeatureExtractor::opSift(const cv::Mat grayimg, const cv::Mat rgbimg){
+cv::Mat FeatureExtractor::opSift(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask = cv::Mat()){
 	cv::Mat descriptors;
 	vector<cv::KeyPoint> keypoints;
-	siftdetector->operator()(grayimg,cv::Mat(),keypoints,cv::Mat());
+	siftdetector->operator()(grayimg,mask,keypoints,cv::Mat());
 	des->compute(rgbimg,keypoints,descriptors);
 	for(int i = 0; i < descriptors.rows; i++){
 		normalize(descriptors.row(i),descriptors.row(i));
 	}
 	return descriptors;
 }
-cv::Mat FeatureExtractor::normalSurf(const cv::Mat grayimg){
+cv::Mat FeatureExtractor::normalSurf(const cv::Mat grayimg, const cv::Mat mask = cv::Mat()){
 	vector<float> tempfloatdesc;
 	vector<cv::KeyPoint> keypoints;
-	surfdetector->operator()(grayimg,cv::Mat(),keypoints,tempfloatdesc);
+	surfdetector->operator()(grayimg,mask,keypoints,tempfloatdesc);
 
 	unsigned int keypointsi = keypoints.size();
 	unsigned int dimensions = tempfloatdesc.size()/(keypoints.size());
@@ -158,11 +134,11 @@ cv::Mat FeatureExtractor::normalSurf(const cv::Mat grayimg){
 	keypoints.clear();
 	return descriptors;
 }
-cv::Mat FeatureExtractor::hueSurf(const cv::Mat grayimg, const cv::Mat hueimg){
+cv::Mat FeatureExtractor::hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask = cv::Mat()){
 	vector<float> tempfloatdesc;
 	vector<cv::KeyPoint> keypoints;
-	surfdetector->operator()(grayimg,cv::Mat(),keypoints,vector<float>());
-	surfdetector->operator()(hueimg,cv::Mat(),keypoints,tempfloatdesc,true);
+	surfdetector->operator()(grayimg,mask,keypoints,vector<float>());
+	surfdetector->operator()(hueimg,mask,keypoints,tempfloatdesc,true);
 	//descriptors = cv::Mat(tempfloatdesc).reshape(1,keypoints.size());
 
 	unsigned int keypointsi = keypoints.size();
@@ -182,10 +158,10 @@ cv::Mat FeatureExtractor::hueSurf(const cv::Mat grayimg, const cv::Mat hueimg){
 
 	return descriptors;
 }
-cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg){
+cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg, const cv::Mat mask = cv::Mat()){
 	vector<cv::KeyPoint> keypoints;
 	cv::Mat descriptors;
-	surfdetector->operator()(grayimg,cv::Mat(),keypoints,vector<float>());
+	surfdetector->operator()(grayimg,mask,keypoints,vector<float>());
 	desSURF->compute(rgbimg,keypoints,descriptors);
 
 	keypoints.clear();
@@ -195,7 +171,7 @@ cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg){
 
 
 
-vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg){
+vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask = cv::Mat()){
 	vector<cv::Mat> rawfeatures;
 	cv::Mat grayimg;
 	cv::Mat hueimg;
@@ -241,4 +217,33 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 	hueimg.release();
 
 	return rawfeatures;
+}
+
+
+cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Mat mask = cv::Mat()){
+	if(!codebooksloaded){
+		cout << "ERROR: codebooks not loaded" << endl;
+		return cv::Mat();
+	}
+
+	vector<cv::Mat> rawfeatures = extractRawFeatures(modes,rgbimg);
+	cv::Mat featurevector;
+	bool firstadded = false;
+	
+
+	//in this loop we run each cv::Mat from the rawfeatures through the
+	//respective codebooks
+	int addedFeatures = 0;
+	for(int i = 0; i < amountOfFeatures; i++){
+		if(modes[i]){
+			addDescriptor(firstadded, featurevector, rawfeatures[addedFeatures], i);
+			addedFeatures++;
+		}
+	}
+
+	return featurevector;
+}
+
+cv::Mat FeatureExtractor::createMask(){
+
 }
