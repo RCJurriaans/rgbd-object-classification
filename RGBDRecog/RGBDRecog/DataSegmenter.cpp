@@ -118,7 +118,7 @@ void DataSegmenter::generateBoundingBoxes(){
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
-		cout << "starting processing class: " << classNames[i] << endl;
+		cout << "starting processing class: " << classNames[i] << "_train" << endl;
 		for(int j = 1; j <= trainigPicNum[i]; j++){ //for each image
 			imagePath.clear();
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
@@ -126,10 +126,8 @@ void DataSegmenter::generateBoundingBoxes(){
 			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
 
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
-			
-			//input.release();
-			//input = cv::imread(imagePath);
-			pcl::io::loadPCDFile<pcl::PointXYZRGB> ("test_pcd.pcd", *cloud);
+
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
 
 			//get region of interest from the cloud data
 			cv::Rect rect = segmentation->getROI(cloud);
@@ -137,7 +135,25 @@ void DataSegmenter::generateBoundingBoxes(){
 			//write the rectangle to a file
 			writeRect(outputPath,rect);
 
-			input.release();
+		}
+		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
+		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
+		cout << "starting processing class: " << classNames[i] << "_test" << endl;
+		for(int j = 1; j <= testPicNum[i]; j++){ //for each image
+			imagePath.clear();
+			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
+			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
+
+			cout << "processing on image: " << classNames[i] << "_" << j << endl;
+
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
+
+			//get region of interest from the cloud data
+			cv::Rect rect = segmentation->getROI(cloud);
+
+			//write the rectangle to a file
+			writeRect(outputPath,rect);
 		}
 	}
 }
