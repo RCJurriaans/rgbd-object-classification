@@ -165,6 +165,8 @@ void Settings::menu(){
 			case 'q': case 'Q':{
 				cin.clear();
 				cin.sync();
+				cout << "saving settings..." << endl;
+				writeSettings();
 				cout << "exiting..." << endl;
 				return;
 			} break;
