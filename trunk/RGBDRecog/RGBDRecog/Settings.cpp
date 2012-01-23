@@ -50,9 +50,9 @@ bool Settings::writeSettings(){
 		return false;
 	}
 
-	out << segmentation;
+	out << segmentation << endl;
 	for(unsigned int i = 0; i < modes.size(); i++){
-		out << modes[i];
+		out << modes[i] << endl;
 	}
 	return true;
 }
