@@ -5,6 +5,8 @@
 // Blobb stuff
 #include "ImageAccess.h"
 
+#include <pcl/io/pcd_io.h>
+
 #include <pcl/ModelCoefficients.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -89,10 +91,13 @@ boost::shared_ptr<cv::Mat>
 	// Fit plane and extract points
 	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
 	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+	
 	// Create the segmentation object
 	pcl::SACSegmentation<pcl::PointXYZRGB> seg;
-	// Optional (increases results)
+	
+	// Optional (increases performance)
 	seg.setOptimizeCoefficients (true);
+	
 	// Mandatory
 	seg.setModelType (pcl::SACMODEL_PLANE);
 	seg.setMaxIterations(10);
@@ -150,13 +155,13 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 	miny = cv::max(miny, mean_y-(boxWidth/2));
 
 	if(minx+boxWidth>ipl_bmask.width){
-		boxWidth = ipl_bmask.width-minx;
+		boxWidth = (ipl_bmask.width-minx);
 	}
 		if(miny+boxHeight>ipl_bmask.height){
-		boxHeight = ipl_bmask.height-miny;
+			boxHeight = (ipl_bmask.height-miny);
 	}
 
-	return cv::Rect(mean_x-(boxWidth/2), mean_y-(boxHeight/2), boxWidth, boxHeight);
+	return cv::Rect(minx, miny, boxWidth-1, boxHeight-1);
 }
 
 
