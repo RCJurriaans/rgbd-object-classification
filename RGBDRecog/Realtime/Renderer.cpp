@@ -3,13 +3,44 @@
 #include "stdafx.h"
 #include "Renderer.h"
 
+void Renderer::setResults( cv::Rect ROI )
+{
+	cout << "Renderer input ROI: " << ROI.x << " " <<ROI.y << " " << ROI.width << " " << ROI.height << endl;
+	mtx.lock();
+		vizROI = ROI;
+	mtx.unlock();
+}
+
 
 void Renderer::renderRGB(const boost::shared_ptr<openni_wrapper::Image>& oniBGR) 
 {
 	oniBGR->fillRGB(640, 480, RGBImage.data);
 	cv::cvtColor( RGBImage, RGBImage, cv::COLOR_BGR2RGB ); //CV_BGR2RGB );
 
+	/*cv::Rect ROI;
+	cout << "rendering rgb.."<<endl;
+	//rectangle(Mat& img, Rect r, const Scalar& color, int thickness=1, int lineType=8, int shift=0)¶
+	mtx.lock();
+		ROI = vizROI;
+	mtx.unlock();*/
+	results->mtx.lock();
+	boost::shared_ptr< std::vector< boost::shared_ptr<FoundObject> > > objects = results->getObjects();
+	cv::Rect ROI;
+	boost::shared_ptr<cv::Mat> mask = results->getMask();
+	if (objects->size() > 0) {
+		cout <<"results received in renderer!"<<endl;
+		ROI = objects->at(0)->ROI;
+	}
+	results->mtx.unlock();
+
+	cout << "Renderer render ROI: " << ROI.x << " " << ROI.y << " " << ROI.width << " " << ROI.height << endl;
+	cv::rectangle(RGBImage, ROI, cv::Scalar(255,0,0));
 	cv::imshow( "RGB Display", RGBImage);
+
+	if( mask ) {
+		cout << "Rendering mask" << endl;
+		cv::imshow( "Mask display", *mask );
+	}
 }
 
 void Renderer::renderOpenCVRGB(const boost::shared_ptr<cv::Mat>& RGBImage )
@@ -87,26 +118,31 @@ void Renderer::openCloudDisplay()
 // This method runs on the visualization thread
 void Renderer::visCallback(pcl::visualization::PCLVisualizer& vis)
 {
-	if( !vizCloud ){
-		boost::this_thread::sleep (boost::posix_time::milliseconds (1));
-		return;
-	}
+	/*
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr tempCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
 	cv::Rect ROI;
 
 	mtx.lock();
-	  tempCloud.swap(vizCloud);
-	  ROI = vizROI;
+		if( !vizCloud ){
+			mtx.unlock();
+			boost::this_thread::sleep (boost::posix_time::milliseconds (1));
+			return;
+		}
+		tempCloud.swap(vizCloud);
+		ROI = vizROI;
 	mtx.unlock();
-
+	
 	if (!vis.updatePointCloud (tempCloud))
 	{	
 		vis.addPointCloud (tempCloud);
 		vis.resetCameraViewpoint ();
 	}
 	
-
-
-	vis.updatePointCloud(tempCloud);
+	if(!testCloud){
+		cout << "test cloud null"<<endl;
+		return;
+	}
+	cout << "rendering testcloud" << endl;
+	*/
 }

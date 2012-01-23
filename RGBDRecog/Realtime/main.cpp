@@ -3,8 +3,11 @@
 
 #include "stdafx.h"
 
-#include "RenderThread.h"
 #include "FeatureExtractor.h"
+#include "Renderer.h"
+#include "ClassificationThread.h"
+#include "ClassificationResults.h"
+
 //using namespace std;
 
 #ifdef WIN32
@@ -16,15 +19,16 @@ class DataDistributor
 {
 public:
 	DataDistributor() :
-		renderer(new Renderer(boost::bind(&DataDistributor::processInput, this, _1))),
 		grabber(new pcl::OpenNIGrabber()),
 		saveFolder(".\\saves\\"),
 		numSaves(0),
-		timeToSave(false),
-		NBNNClassifier(new NBNN())
+		timeToSave(false)
 		,currentCloud(new pcl::PointCloud<pcl::PointXYZRGB>())
-		//,renderThread(new RenderThread())
+		,results(new ClassificationResults())//,
+		//renderer(new Renderer(boost::bind(&DataDistributor::processInput, this, _1), results))
 	{
+		renderer = new Renderer(boost::bind(&DataDistributor::processInput, this, _1), results);
+
 		// make callback function from member function
 		boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> I_CB =
 		  boost::bind(&DataDistributor::imageCB, this, _1);
@@ -106,7 +110,9 @@ public:
 		if( s_segmentedCloud ) {
 			//cout << "rendering segmented cloud" << endl;
 			//renderer->ROI = s_ROI;
-			renderer->renderCloudRGB(s_segmentedCloud, s_ROI);
+			cout << "main ROI: " << s_ROI.x << " " << s_ROI.y << " " << s_ROI.width << " " << s_ROI.height << endl;	
+			renderer->setResults(s_ROI);
+			//renderer->renderCloudRGB(s_segmentedCloud, s_ROI);
 		}
 		classificationOutputMutex.unlock();
 
@@ -192,7 +198,8 @@ public:
 	{
 		// Start classification thread
 		ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
-													  classificationOutputMutex, s_segmentedCloud);
+													results);
+									   			  //classificationOutputMutex, s_segmentedCloud, s_ROI);
 		boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
 		//cout << "run" <<endl;
@@ -221,7 +228,6 @@ protected:
 	// System components
 	pcl::Grabber* grabber;
 	Renderer* renderer;
-	NBNN *NBNNClassifier;
 
 	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr currentCloud;
 
@@ -236,6 +242,7 @@ protected:
 
 	boost::mutex visualizationInputMutex;
 	//RenderThread* renderThread;
+	boost::shared_ptr<ClassificationResults> results;
 	
 	// Callbacks
 	boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> renderRGB;
@@ -251,14 +258,14 @@ protected:
 	boost::signals2::connection renderCloudConnection;
 	boost::signals2::connection renderCloudRGBConnection;
 };
-/*
+
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
-}*/
-
+}
+/*
 
 int
 	main (int argc, char** argv)
@@ -299,41 +306,6 @@ int
 
 	std::cout << "Ending " << cloud_img->width << " " << cloud_img->height <<  std::endl;
 
-	/*
-	int mean_x = SC.imcalc.getmean(0,0);
-	int mean_y = SC.imcalc.getmean(0,1);
-
-	int boxWidth  = SC.imcalc.getRegions(0,0);
-	int boxHeight = SC.imcalc.getRegions(0,1);
-
-	boxWidth *= 1.2;
-	boxHeight *= 1.2;
-
-
-	int xmin = mean_x-boxWidth/2;
-	int xmax = mean_x+boxWidth/2;
-	int ymin = mean_y-boxHeight/2;
-	int ymax = mean_y+boxHeight/2;
-
-	IplImage ipl_bmask = SC.BooleanMask;
-	
-	cvRectangle(&ipl_bmask,                  
-                cvPoint(xmin, ymin),        
-                cvPoint(xmax, ymax),       
-                cvScalar(255,0,0)); 
-                
-
-	//cvNamedWindow("TestMask", CV_WINDOW_AUTOSIZE); 
-	//cv::imshow("TestMask", SC.BooleanMask);
-	cvShowImage("TestMask", &ipl_bmask);
-	cv::waitKey();
-	cvDestroyWindow("TestMask");
-
-	
-
-	std::cout << "Time: " << difftime(end, start) << std::endl;
-	std::cout << "Saving "  <<  std::endl;
-	*/
 
 	pcl::io::savePCDFileASCII ("test_pcd.pcd", *cloud_img);
 	std::cerr << "Saved " << cloud_img->points.size () << " data points to test_pcd.pcd." << std::endl;
@@ -343,3 +315,4 @@ int
 
 
 }
+*/
