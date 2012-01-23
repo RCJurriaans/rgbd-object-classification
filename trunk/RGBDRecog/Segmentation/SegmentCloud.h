@@ -11,7 +11,7 @@ public:
 	SegmentCloud() :
 		crtMethod(SegBack),
 		threshold(0.05),
-		maxDistanceFilter(3),
+		maxDistanceFilter(2),
 		minDistanceFilter(0.1)
 	{}
 
@@ -27,6 +27,9 @@ public:
 	// Main implementation of background-subtraction mask calculation
 	boost::shared_ptr<cv::Mat>
 	getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background);
+
+	boost::shared_ptr<cv::Mat>
+		getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
 
 	
 	// Gets a Region Of Interest. Use mask as input if you have one already.
