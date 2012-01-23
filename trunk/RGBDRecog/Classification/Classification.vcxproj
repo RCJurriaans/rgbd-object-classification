@@ -60,6 +60,9 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
     </Link>
+    <Lib>
+      <AdditionalOptions>/MACHINE:X86 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -73,6 +76,9 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
     </Link>
+    <Lib>
+      <AdditionalOptions>/MACHINE:X86 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -80,6 +86,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FeatureData.h" />
     <ClInclude Include="FeatureExtractor.h" />
     <ClInclude Include="FeatureVector.h" />
     <ClInclude Include="resource.h" />
@@ -87,6 +94,7 @@
     <ClInclude Include="Stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FeatureData.cpp" />
     <ClCompile Include="FeatureExtractor.cpp" />
     <ClCompile Include="FeatureVector.cpp" />
     <ClCompile Include="RFClassifier.cpp" />

@@ -33,3 +33,8 @@
 #include <opencv2/legacy/legacy.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/video/video.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/common/time.h>

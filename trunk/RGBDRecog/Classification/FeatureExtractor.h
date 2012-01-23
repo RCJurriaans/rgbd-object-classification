@@ -6,6 +6,7 @@
 #include "FeatureVector.h"
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include "FeatureData.h"
 using namespace std;
 
 
@@ -21,10 +22,10 @@ public:
 
 	// returns the name of the number'th features
 	// crashes if feature number does not exist, so check with below function
-	inline string getFeatureName(int number){return featureNames[number];};
+	inline string getFeatureName(int number){return featureData->featureNames[number];};
 
 	// get the amount of total possible features
-	inline int getAmountOfFeatures(){return amountOfFeatures;};
+	inline int getAmountOfFeatures(){return featureData->amountOfFeatures;};
 
 	// check if the codebooks are loaded or not, you do not usually have to reload if
 	// the codebooks are loaded
@@ -69,8 +70,8 @@ private:
 	cv::SurfDescriptorExtractor * SuDE; //with the opponent color descriptors
 	cv::OpponentColorDescriptorExtractor * des;
 	cv::OpponentColorDescriptorExtractor * desSURF;
-	string* featureNames; //contains the names of all features
-	int amountOfFeatures; //the amount of total possible features that can be used
+
+	FeatureData * featureData;
 
 	cv::SIFT * siftdetector; //two opencv detector algorithms
 	cv::SURF * surfdetector;

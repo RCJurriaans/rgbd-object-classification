@@ -30,6 +30,9 @@
     <ClInclude Include="RFClassifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FeatureData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stdafx.cpp">
@@ -42,6 +45,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RFClassifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FeatureData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

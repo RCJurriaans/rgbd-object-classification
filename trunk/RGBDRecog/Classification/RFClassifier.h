@@ -29,6 +29,6 @@ public:
 	//read a tree with this modestring specifier
 	void read(string filename, string dataname);
 private:
-	CvRTrees* treestructure;
+	CvRTrees* treestructure; // the tree that is used :)
 };
 

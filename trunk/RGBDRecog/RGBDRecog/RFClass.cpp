@@ -12,7 +12,8 @@ using namespace std;
 
 
 
-RFClass::RFClass(void){
+RFClass::RFClass(Settings * set){
+	settings = set;
 
 	ifstream infile;
 	string filename;
@@ -106,6 +107,28 @@ string RFClass:: convertNumberToFLString(int length, int number){
 	return returnvalue;
 }
 
+cv::Rect RFClass:: getDatasetROI(string folderPath, int j){
+	string rectPath = folderPath;
+	rectPath += "imgRECT" + convertNumberToFLString(3,j) + ".txt";
+	cv::Rect roi = readRect(rectPath);
+	return roi;
+}
+
+cv::Rect RFClass::readRect(const string filePath){
+	ifstream in;
+	in.open(filePath);
+
+	cv::Rect rect;
+
+	in >> rect.x;
+	in >> rect.y;
+	in >> rect.width;
+	in >> rect.height;
+
+	in.close();
+	return rect;
+}
+
 void RFClass::createCodebook(int mode){
 	cout << "Running codebook creation with setting: " << featureExtractor->getFeatureName(mode) << endl;
 	cout << "parameters are from data_info.txt:" << endl;
@@ -148,12 +171,19 @@ void RFClass::createCodebook(int mode){
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
 			input.release();
 			input = cv::imread(imagePath);
+
 			//this should return a single cv::Mat with the descriptor, as only one value in modes is true
 			//features are in the rows
-
-
-
-			vector<cv::Mat> RawFeatures = featureExtractor->extractRawFeatures(modes,input);
+			//take the segmentation into account
+			vector<cv::Mat> RawFeatures;
+			if(settings->segmentation){
+				RawFeatures.clear();
+				cv::Rect roi = getDatasetROI(filePath,j);
+				RawFeatures = featureExtractor->extractRawFeatures(modes,input,roi);
+			}else{
+				RawFeatures.clear();
+				RawFeatures = featureExtractor->extractRawFeatures(modes,input);
+			}
 
 
 			fv->AddFeatures(RawFeatures[0]);
@@ -279,41 +309,16 @@ void RFClass::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, Feat
 	}
 }
 
-void RFClass:: trainModel(vector<int> mode){
-	vector<bool> modes;
-	//const char *_COLORNAMES[] = {"NORMALSIFT", "HUESIFT", "OPPONENTSIFT","NORMALSURF", "HUESURF", "OPPONENTSURF"};
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		modes.push_back(false);
-	}
-	for(unsigned int i = 0; i < mode.size(); i++){ //set the options of the algorithm
-		modes[mode[i]] = true;
-	}
+void RFClass:: trainModel(){
 	
 	cout << "Running training with settings: ";
-	for(unsigned int i = 0; i < modes.size(); i++){
-		if(modes[i]){
-			cout << featureExtractor->getFeatureName(i) << " ";
-		}
-	}
+	settings->outputSettings();
+	cout << endl;
 	cout << "parameters are from data_info.txt:" << endl;
 	cout << "  Dictionary size: " << dicsize << endl;
 	cout << "  SIFT Threshold Scale: " << SIFTThreshScale << endl;
 	cout << "Initializing training creation files..." << endl;
 	cout << "Assuming that the training data files are located in: " << getenv("RGBDDATA_DIR") << endl;
-
-	FeatureVector *codebooks;
-	codebooks = new FeatureVector[featureExtractor->getAmountOfFeatures()];
-
-	//load the codebook data
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		if(modes[i] == true){
-			cv::FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
-			cv::Mat M; fs["codebook" + boost::lexical_cast<string>(i)] >> M;
-			fs.release();
-			codebooks[i].AddFeatures(M);
-			codebooks[i].TrainkNN();
-		}
-	}
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
@@ -336,12 +341,18 @@ void RFClass:: trainModel(vector<int> mode){
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
 			input.release();
 			input = cv::imread(imagePath); //Load as grayscale image
-			
-			cv::Mat tempfeaturevector = featureExtractor->extractFeatures(modes,input);
+			cv::Mat tempfeaturevector;
+			if(settings->segmentation){
+				tempfeaturevector.release();
+				cv::Rect roi = getDatasetROI(filePath,j);
+				cv::Mat tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
+			}else{
+				tempfeaturevector.release();
+				cv::Mat tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
+			}
 			
 			//tempfeaturevector now contains all found feature descriptors,
 			//we can add this to this class
-
 			if(j == floor(static_cast<double>(trainigPicNum[i])/2)+1){
 				featurevector.push_back(tempfeaturevector);
 			}else{
@@ -351,21 +362,11 @@ void RFClass:: trainModel(vector<int> mode){
 	}
 
 
-	string modestring;
-	modestring.clear();
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		if(modes[i]){
-			modestring += '1';
-		}
-		else{
-			modestring += '0';
-		}
-	}
+
+	string modestring = settings->settingsString();
 
 	cout << "Done creating the feature vectors for the training set" << endl
 		 << "Saving the data to " << "trainingdata" + modestring + "RF" + ".yml";
-
-
 
 	cv::FileStorage fs2("trainingdata" + modestring + "RF" ".yml", cv::FileStorage::WRITE); //store the codebook to a yaml file
 	for(int i = 0; i < amountOfClasses;i++){
@@ -375,118 +376,19 @@ void RFClass:: trainModel(vector<int> mode){
 
 	cout << "Saved trainingdata" << endl;
 
-
-
 }
 
 void RFClass::trainModelMenu(){
-		char option = ' ';
-	vector<bool> foundCodebooks;
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		cv::FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
-		if(fs.isOpened()){
-			foundCodebooks.push_back(true);
-		}
-		else{
-			foundCodebooks.push_back(false);
-		}
-	}
-
-	vector<int> chosenOptions;
-	while(option){
-		cout << "For which feature type do you want to train the data? (multiple possible)" << endl << endl
-			 << "Chosen features: ";
-		for(unsigned int i = 0; i < chosenOptions.size(); i++){
-			cout << featureExtractor->getFeatureName(chosenOptions[i]) << " ";
-		}
-		cout << endl
-		     << "  (S) Standard SIFT " << ifBoolReturnChar(foundCodebooks[0],"codebook exists ") << endl
-			 << "  (H) Hue SIFT " << ifBoolReturnChar(foundCodebooks[1],"codebook exists ") <<  endl
-			 << "  (O) Opponent SIFT " << ifBoolReturnChar(foundCodebooks[2],"codebook exists ") <<  endl
-			 << "  (1) Normal SURF " << ifBoolReturnChar(foundCodebooks[3],"codebook exists ") << endl
-			 << "  (2) Hue SURF " << ifBoolReturnChar(foundCodebooks[4],"codebook exists ") << endl
-			 << "  (3) Opponent SURF " << ifBoolReturnChar(foundCodebooks[5],"codebook exists ") <<  endl
-			 << "  (T) rain with the current settings" << endl
-			 << "  (Q) uit" << endl;
-		option = cin.get();
-		switch(option){
-			case 'q': case 'Q':{
-				cin.clear();
-				cin.sync();
-				cout << "exiting..." << endl;
-				return;
-		} break;
-			case 's':  case 'S':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding standard SIFT to used features" << endl;
-				chosenOptions.push_back(0);
-		} break;
-			case 'h': case 'H':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding hue SIFT to used features" << endl;
-				chosenOptions.push_back(1);
-		} break;
-			case 'o': case 'O':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding opponent SIFT to used features" << endl;
-				chosenOptions.push_back(2);
-		} break;
-			case '1': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding normal SURF to used features" << endl;
-				chosenOptions.push_back(3);
-		} break;
-			case '2': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding hue SURF to used features" << endl;
-				chosenOptions.push_back(4);
-		} break;
-			case '3': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding opponent SIFT to used features" << endl;
-				chosenOptions.push_back(5);
-		} break;
-			case 't': case 'T': {
-				cin.clear();
-				cin.sync();
-				cout << "Starting training with chosen features" << endl;
-				trainModel(chosenOptions);
-		} break;
-			default:{
-				cin.clear();
-				cin.sync();
-				cout << "No such option exists" << endl;
-			}break;
-		}
-	}
+	trainModel();
 }
 
-void RFClass::generateRandomForest(vector<int> mode){
-	vector<bool> modes;//create boolean array of modes
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		modes.push_back(false);
-	}
-	for(unsigned int i = 0; i < mode.size(); i++){ //set the options of the algorithm
-		modes[mode[i]] = true;
-	}
+void RFClass::generateRandomForest(){
+	cout << "Running random forest generation with settings: ";
 	
+	settings->outputSettings();
+
 	//create a string of the modeboolean
-	string modestring;
-	modestring.clear();
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		if(modes[i]){
-			modestring += '1';
-		}
-		else{
-			modestring += '0';
-		}
-	}
+	string modestring = settings->settingsString();
 
 	vector<cv::Mat> trainingdata;
 	cv::FileStorage fs("trainingdata" + modestring +"RF" +  ".yml", cv::FileStorage::READ);
@@ -508,112 +410,21 @@ void RFClass::generateRandomForest(vector<int> mode){
 }
 
 void RFClass::rfTrainigmenu(){
-	char option = ' ';
-
-	vector<int> chosenOptions;
-	while(option){
-		cout << "For which feature type do you want to generate the random forest? (multiple possible)" << endl << endl
-			 << "Chosen features: ";
-		for(unsigned int i = 0; i < chosenOptions.size(); i++){
-			cout << featureExtractor->getFeatureName(chosenOptions[i]) << " ";
-		}
-		cout << endl
-		     << "  (S) Standard SIFT " << endl
-			 << "  (H) Hue SIFT " <<  endl
-			 << "  (O) Opponent SIFT "<<  endl
-			 << "  (1) Normal SURF "  << endl
-			 << "  (2) Hue SURF " <<  endl
-			 << "  (3) Opponent SURF " <<  endl
-			 << "  (R) andom forest creation with the current settings" << endl
-			 << "  (Q) uit" << endl;
-		option = cin.get();
-		switch(option){
-			case 'q': case 'Q':{
-				cin.clear();
-				cin.sync();
-				cout << "exiting..." << endl;
-				return;
-		} break;
-			case 's':  case 'S':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding standard SIFT to used features" << endl;
-				chosenOptions.push_back(0);
-		} break;
-			case 'h': case 'H':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding hue SIFT to used features" << endl;
-				chosenOptions.push_back(1);
-		} break;
-			case 'o': case 'O':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding opponent SIFT to used features" << endl;
-				chosenOptions.push_back(2);
-		} break;
-			case '1': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding normal SURF to used features" << endl;
-				chosenOptions.push_back(3);
-		} break;
-			case '2': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding hue SURF to used features" << endl;
-				chosenOptions.push_back(4);
-		} break;
-			case '3': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding opponent SIFT to used features" << endl;
-				chosenOptions.push_back(5);
-		} break;
-			case 'r': case 'R': {
-				cin.clear();
-				cin.sync();
-				cout << "Starting creating tree with chosen features" << endl;
-				generateRandomForest(chosenOptions);
-		} break;
-			default:{
-				cin.clear();
-				cin.sync();
-				cout << "No such option exists" << endl;
-			}break;
-		}
-	}
+	generateRandomForest();
 }
 
-void RFClass::rfTesting(vector<int> mode){
+void RFClass::rfTesting(){
 
 	if(!featureExtractor->codeBooksLoaded()){
 		featureExtractor->loadCodebooks();
 	}
 
 	cout << "Starting testing the random forest algorithm on all test data" << endl;
-	vector<bool> modes;//create boolean array of modes
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		modes.push_back(false);
-	}
-	for(unsigned int i = 0; i < mode.size(); i++){ //set the options of the algorithm
-		modes[mode[i]] = true;
-	}
-	
+	cout << "Using settings: " << endl;
+	settings->outputSettings();
 	//create a string of the modeboolean
-	string modestring;
-	modestring.clear();
-	for(int i = 0; i < featureExtractor->getAmountOfFeatures(); i++){
-		if(modes[i]){
-			modestring += '1';
-		}
-		else{
-			modestring += '0';
-		}
-	}
-	//generateRandomForest(mode);
+	string modestring = settings->settingsString();
 	//read the data of the random forest
-	//somehow, gets corrupted :( :( :(
 	rfclassifier->read("randomforestdata" + modestring + ".yml", "randomforestdata" + modestring);
 	//now we use the random forest to predict the class of each of the test images
 
@@ -626,6 +437,7 @@ void RFClass::rfTesting(vector<int> mode){
 		predictions[i] = new int [testPicNum[i]+1];
 	}
 
+
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
@@ -636,10 +448,18 @@ void RFClass::rfTesting(vector<int> mode){
 			input.release();
 			input = cv::imread(imagePath); //Load rgb image
 			result.release();
-			result = featureExtractor->extractFeatures(modes,input);
+			if(settings->segmentation){
+				cv::Rect roi = getDatasetROI(filePath,j);
+				result = featureExtractor->extractFeatures(settings->modes,input,roi);
+			}else{
+				result = featureExtractor->extractFeatures(settings->modes,input);
+			}
+
 			predictions[i][j] = rfclassifier->predict(result);
 		}
 	}
+
+
 	cout << "Classified all images, calculating the accuracy" << endl;
 	vector<float> accuracy;
 	for(int i = 0; i < amountOfClasses; i++){
@@ -669,85 +489,10 @@ void RFClass::rfTesting(vector<int> mode){
 		delete [] predictions[i];
 	}
 	delete [] predictions;
-
 }
 
 void RFClass::rfTestingmenu(){
-	char option = ' ';
-
-	vector<int> chosenOptions;
-	while(option){
-		cout << "For which feature type do you want to load the random forest for testing? (multiple possible)" << endl << endl
-			 << "Chosen features: ";
-		for(unsigned int i = 0; i < chosenOptions.size(); i++){
-			cout << featureExtractor->getFeatureName(chosenOptions[i]) << " ";
-		}
-		cout << endl
-		     << "  (S) Standard SIFT " << endl
-			 << "  (H) Hue SIFT " <<  endl
-			 << "  (O) Opponent SIFT "<<  endl
-			 << "  (1) Normal SURF "  << endl
-			 << "  (2) Hue SURF " <<  endl
-			 << "  (3) Opponent SURF " <<  endl
-			 << "  (R) andom forest testing" << endl
-			 << "  (Q) uit" << endl;
-		option = cin.get();
-		switch(option){
-			case 'q': case 'Q':{
-				cin.clear();
-				cin.sync();
-				cout << "exiting..." << endl;
-				return;
-		} break;
-			case 's':  case 'S':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding standard SIFT to used features" << endl;
-				chosenOptions.push_back(0);
-		} break;
-			case 'h': case 'H':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding hue SIFT to used features" << endl;
-				chosenOptions.push_back(1);
-		} break;
-			case 'o': case 'O':{
-				cin.clear();
-				cin.sync();
-				cout << "Adding opponent SIFT to used features" << endl;
-				chosenOptions.push_back(2);
-		} break;
-			case '1': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding normal SURF to used features" << endl;
-				chosenOptions.push_back(3);
-		} break;
-			case '2': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding hue SURF to used features" << endl;
-				chosenOptions.push_back(4);
-		} break;
-			case '3': {
-				cin.clear();
-				cin.sync();
-				cout << "Adding opponent SIFT to used features" << endl;
-				chosenOptions.push_back(5);
-		} break;
-			case 'r': case 'R': {
-				cin.clear();
-				cin.sync();
-				cout << "Starting testing with chosen random forest options" << endl;
-				rfTesting(chosenOptions);
-		} break;
-			default:{
-				cin.clear();
-				cin.sync();
-				cout << "No such option exists" << endl;
-			}break;
-		}
-	}
+	rfTesting();
 }
 
 void RFClass::menu(void){
