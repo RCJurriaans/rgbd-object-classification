@@ -3,24 +3,34 @@
 #define RENDERER_H
 
 #include "stdafx.h"
+#include "ClassificationResults.h"
 
 void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie);
 
 class Renderer
 {
 public:
-	Renderer( boost::function<void (int)> inputCallback ) : 
+	Renderer( boost::function<void (int)> inputCallback,
+			  boost::shared_ptr<ClassificationResults> res) : 
+		results(res),
 		RGBImage(cv::Mat(480, 640, CV_8UC3)),
 		depthImage(cv::Mat(480,640, CV_32FC1)),
-		viewer(new pcl::visualization::CloudViewer("Cloud Viewer")),//NULL),
+		//viewer(new pcl::visualization::CloudViewer("Cloud Viewer")),//NULL),
 		processInput(inputCallback),
 		cloudViewerOpen(true),
 		vizCloud(new pcl::PointCloud<pcl::PointXYZRGB>())
+		//,testCloud(new pcl::PointCloud<pcl::PointXYZRGB>())
 	{
-		viewer->registerKeyboardCallback( &keyboardCB, &processInput );
+		cout <<"Renderer constructor" << endl;
+		//viewer->registerKeyboardCallback( &keyboardCB, &processInput );
 		boost::function1<void, pcl::visualization::PCLVisualizer&> f = boost::bind(&Renderer::visCallback, this, _1);
-		viewer->runOnVisualizationThread(f);
+//		viewer->runOnVisualizationThread(f);
 		
+		//hacks
+		//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
+		//cout << "loader: " << pcl::io::loadPCDFile<pcl::PointXYZRGB> ("img001.pcd", *testCloud) <<endl;
+		//cout << testCloud <<endl;
+		//testCloud = cloud_back;
 	}
 	void visCallback(pcl::visualization::PCLVisualizer& vis);// {cout << "vizthread"<<endl;}
 
@@ -32,8 +42,10 @@ public:
 	void closeCloudDisplay();
 	void openCloudDisplay();
 	
+
+	void setResults( cv::Rect ROI );
 protected:
-	pcl::visualization::CloudViewer* viewer;
+	//pcl::visualization::CloudViewer* viewer;
 	cv::Mat RGBImage;
 	cv::Mat depthImage;
 	boost::function<void (int)> processInput;
@@ -43,7 +55,8 @@ protected:
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr vizCloud;
 		cv::Rect vizROI;
 
-	
+	boost::shared_ptr<ClassificationResults> results;
+	//pcl::PointCloud<pcl::PointXYZRGB>::Ptr testCloud;
 private:
 };
 
