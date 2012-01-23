@@ -16,6 +16,8 @@
 
 //#include "Winbase.h"
 #include "RFClass.h"
+#include "DataSegmenter.h"
+#include "Settings.h"
 
 using namespace std;
 //using namespace cv; //opencv namespace
@@ -26,10 +28,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	char option = ' ';
 
+	Settings * settings = new Settings();
+
 	while(option != 'q' && option != 'Q'){
 		cout << "Choose a classification method: " << endl
 			 << "  (R) andom forests" << endl
 			 << "  (N) earest neighbor" << endl
+			 << "  (D) ata segmentation" << endl
+			 << "  (S) ettings" << endl
 			 << "  (Q) uit" << endl;
 		option = cin.get();
 		switch(option){
@@ -37,12 +43,15 @@ int _tmain(int argc, _TCHAR* argv[])
 				cin.clear();
 				cin.sync();
 				cout << "Running the random forest menu" << endl;
-				RFClass* rfclass = new RFClass();
+				RFClass* rfclass = new RFClass(settings);
 				if(rfclass!= NULL){
 					rfclass->menu();
 				}
 				else{
 					cout << "Could not create the random forest." << endl;
+				}
+				if(rfclass!= NULL){
+					delete rfclass;
 				}
 			} break;
 
@@ -51,11 +60,32 @@ int _tmain(int argc, _TCHAR* argv[])
 				cin.sync();
 				cout << "Neirest neigbor is not implemented yet" << endl;
 			} break;
-			
+			case 'd': case 'D':{
+				cin.clear();
+				cin.sync();
+				cout << "Running the data segmentation menu"<< endl;
+				DataSegmenter * ds = new DataSegmenter();
+				if(ds!= NULL){
+					ds->menu();
+				}
+				else{
+					cout << "Could not create the random forest." << endl;
+				}
+				if(ds!= NULL){
+					delete ds;
+				}
+			} break;
+			case 's': case 'S':{
+				cin.clear();
+				cin.sync();
+				cout << "Running the settings menu" << endl;
+				settings->menu();
+			} break;
 			case 'q': case 'Q':{
 				cin.clear();
 				cin.sync();
 				cout << "exiting..." << endl;
+				return 0;
 			} break;
 			default:{
 				cin.clear();
@@ -64,5 +94,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			} break;
 		}
 	}
+
+	delete settings;
 	return 0;
 }

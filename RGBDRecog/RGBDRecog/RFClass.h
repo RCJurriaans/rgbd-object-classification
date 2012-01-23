@@ -3,6 +3,7 @@
 #include "FeatureVector.h"
 #include "FeatureExtractor.h" 
 #include "RFClassifier.h"
+#include "Settings.h"
 using namespace std;
 //using namespace cv;
 
@@ -11,7 +12,7 @@ using namespace std;
 class RFClass
 {
 public:
-	RFClass(void);
+	RFClass(Settings * set);
 	~RFClass(void);
 
 	void menu();
@@ -23,12 +24,15 @@ private:
 	string ifBoolReturnChar(bool in, string out);
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, FeatureVector * codebooks,cv::Mat & descriptors, int mode);
 	void trainModelMenu();
-	void trainModel(vector<int> mode);
-	void generateRandomForest(vector<int> mode);
+	void trainModel();
+	void generateRandomForest();
 
-	void rfTesting(vector<int> mode);
+	void rfTesting();
 
 	void rfTestingmenu();
+
+	cv::Rect readRect(const string filePath);
+	cv::Rect getDatasetROI(string folderpath, int j);
 
 	int amountOfClasses;
 	string fileExtension;
@@ -42,4 +46,5 @@ private:
 
 	FeatureExtractor* featureExtractor;
 	RFClassifier * rfclassifier;
+	Settings * settings;
 };
