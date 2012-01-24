@@ -134,7 +134,7 @@ boost::shared_ptr<cv::Mat>
 cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 {
 	IplImage ipl_bmask = *mask;//cvCreateImage(cvSize(BooleanMask.size().height,BooleanMask.size().width),8,1);
-	std::cout << "Created ipl version of mask " <<  std::endl;
+	//std::cout << "Created ipl version of mask " <<  std::endl;
 	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
 	//BwImage enter(ipl_bmask);
 	imcalc.Calculate(&ipl_bmask, 1);

@@ -11,9 +11,9 @@ struct FoundObject
 		cloud(c), ROI(r), classification(cl)
 	{}
 
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
-	cv::Rect ROI;
-	int classification;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;	// Cloud of the segmented object
+	cv::Rect ROI;		// Bounding box around object
+	int classification;	// Object class
 };
 
 struct ClassificationResults
@@ -21,19 +21,10 @@ struct ClassificationResults
 	boost::mutex mtx;	// Always lock first
 
 	// Setters
-	void clearObjects() {
-		objects.clear();
-	}
-
-	void addObject( boost::shared_ptr<FoundObject> obj)
-	{
-		objects.push_back(obj);
-	}
-
-	void setMask( boost::shared_ptr<cv::Mat> m )
-	{
-		mask = m;
-	}
+	void clearObjects() { objects.clear(); }
+	void addObject( boost::shared_ptr<FoundObject> obj) { objects.push_back(obj); }
+	void setMask( boost::shared_ptr<cv::Mat> m ) { mask = m; }
+	void setScene( pcl::PointCloud<pcl::PointXYZRGB>::Ptr s ) {scene = s;}
 
 	// Getters
 	boost::shared_ptr< std::vector< boost::shared_ptr<FoundObject> > > getObjects()
@@ -42,13 +33,12 @@ struct ClassificationResults
 		return copy;
 	}
 
-	boost::shared_ptr<cv::Mat> getMask()
-	{
-		return mask;
-	}
+	boost::shared_ptr<cv::Mat> getMask() { return mask; }
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr getScene() {return scene;}
 
 protected:
 	std::vector< boost::shared_ptr<FoundObject> > objects;
 	boost::shared_ptr<cv::Mat> mask;
-	
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene;
 };
