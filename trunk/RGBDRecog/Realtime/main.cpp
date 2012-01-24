@@ -7,12 +7,30 @@
 #include "Renderer.h"
 #include "ClassificationThread.h"
 #include "ClassificationResults.h"
+#include "RenderThread.h"
 
 //using namespace std;
 
 #ifdef WIN32
 # define sleep(x) Sleep((x)*1000) 
 #endif
+
+string convertNumberToFLString(int length, int number){
+	int tempnum = number;
+	string returnvalue;
+	
+	length--;
+	
+		while(tempnum/10 != 0){
+			tempnum = tempnum/10;
+			length--;
+		}
+		for(int k = 0; k < length; k++){
+			returnvalue += "0";
+		}
+		returnvalue += boost::lexical_cast<string>(number);
+	return returnvalue;
+}
 
 
 class DataDistributor
@@ -47,8 +65,8 @@ public:
 		
 		// Connect callback functions
 		boost::signals2::connection c = grabber->registerCallback(I_CB);
-		boost::signals2::connection c2 = grabber->registerCallback(D_CB);
-		boost::signals2::connection c3 = grabber->registerCallback(C_CB);
+		//boost::signals2::connection c2 = grabber->registerCallback(D_CB);
+		//boost::signals2::connection c3 = grabber->registerCallback(C_CB);
 		
 		//toggleConnection(renderRGBConnection, renderRGB);
 		//toggleConnection(renderCloudConnection, renderCloud);
@@ -75,23 +93,10 @@ public:
 		delete grabber;
 	}
 
-	void saveFrameCB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
-	{
-		if (timeToSave)
-		{
-			if ( saveCloud(cloud) && saveRGB(*FeatureExtractor::cloudToRGB(cloud)) )
-				cout << "Saved " << numSaves << endl;
-			timeToSave = false;
-			numSaves++;
-		}
-		
-		//processInput(cvWaitKey(1));
-	}
-	
 	void distributeCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
 	{
-		cout << "rendering cloud"<<endl;
-		renderer->renderCloud(cloud);
+//		cout << "rendering cloud"<<endl;
+//		renderer->renderCloud(cloud);
 	}
 
 	void distributeCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
@@ -106,7 +111,8 @@ public:
 
 		//processInput(cvWaitKey(1));
 
-		classificationOutputMutex.lock();
+		/*classificationOutputMutex.lock();
+		
 		if( s_segmentedCloud ) {
 			//cout << "rendering segmented cloud" << endl;
 			//renderer->ROI = s_ROI;
@@ -115,7 +121,7 @@ public:
 			//renderer->renderCloudRGB(s_segmentedCloud, s_ROI);
 		}
 		classificationOutputMutex.unlock();
-
+		*/
 		//processInput(cvWaitKey(10));
 	}
 
@@ -133,27 +139,36 @@ public:
 			con = grabber->registerCallback(callback);
 	}
 
-	bool saveCloud( const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud )
+	// Saving utilities
+	bool saveCloud( const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud, std::string name = "img" )
 	{
 		std::stringstream depth_filename;
-		depth_filename << saveFolder << "depth_" << numSaves << ".pcd";
+		depth_filename << saveFolder << "\\" << name << convertNumberToFLString(3, numSaves) << ".pcd";
 		return pcl::io::savePCDFile(depth_filename.str(), *cloud.get(), true) == 0;
 	}
 
-	bool saveRGB( const cv::Mat& rgbImage)
+	bool saveRGB( const cv::Mat& rgbImage, std::string name = "img")
 	{
 		std::stringstream  rgb_filename;
-		rgb_filename << saveFolder << "rgb_" << numSaves << ".bmp";
-		if(!cv::imwrite(rgb_filename.str(), rgbImage)) {
-			cout << "Could not save: " << rgb_filename.str().c_str();
-			return false;
-		}
-		return true;
+		rgb_filename << saveFolder << "\\" << name << convertNumberToFLString(3, numSaves) << ".bmp";
+		return cv::imwrite(rgb_filename.str(), rgbImage);
 	}
 
-	
-	
-	
+	void saveFrameCB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
+	{
+		if (timeToSave)
+		{
+			if ( saveCloud(cloud) && saveCloud(backgroundCloud, "bg") && saveRGB(*FeatureExtractor::cloudToRGB(cloud))) {
+				cout << "Saved " << numSaves << endl;
+				numSaves++;
+			}
+			else {
+				cout << "Could not save!" << endl; 
+			}
+			timeToSave = false;
+		}
+	}
+
 	void processInput( int key )
 	{
 		switch(key)
@@ -179,16 +194,26 @@ public:
 			toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 			break;
 		case 's':
-			cout << "Save mode on. Enter frame number to use as filename (e.g. rgb_FRAMENUM.bmp)" << endl;
-			cin >> numSaves;
+			cout << "Save mode on." << endl;
 			grabber->registerCallback( saveCB );
 			break;
 		case 'b':
 			cout << "Setting background" << endl;
 			classificationInputMutex.lock();
-			s_backgroundCloud = currentCloud;//s_cloud;
+			s_backgroundCloud = currentCloud;
+			backgroundCloud = currentCloud;
 			classificationInputMutex.unlock();
 			break;
+		case 'f':
+			cout << "Enter save folder" << endl;
+			cin >> saveFolder;
+			cout << "New save folder: " << saveFolder << endl;
+			cout << "Starting saves at one.." << endl;
+			numSaves = 1;
+			break;
+		case 'n':
+			cout << "Enter save number" << endl;
+			cin >> numSaves;
 		default:
 			return;
 		}
@@ -198,13 +223,11 @@ public:
 	{
 		// Start classification thread
 		ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
-													results);
-									   			  //classificationOutputMutex, s_segmentedCloud, s_ROI);
+												    results);
 		boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
-		//cout << "run" <<endl;
-		//RenderThread r( visualizationInputMutex );
-		//boost::thread visualize( &RenderThread::run, renderThread );
+		//RenderThread renderObject( results );
+		//boost::thread renderThread( &RenderThread::run, &renderObject );
 
 		// start receiving point clouds
 		grabber->start();
@@ -230,18 +253,18 @@ protected:
 	Renderer* renderer;
 
 	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr currentCloud;
+	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr backgroundCloud;
 
 	// Threading
 	boost::mutex classificationInputMutex; // Locks all following:
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_cloud;
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_backgroundCloud;
 
-	boost::mutex classificationOutputMutex;
-	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_segmentedCloud;
-	  cv::Rect s_ROI;
+	//boost::mutex classificationOutputMutex;
+	//  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_segmentedCloud;
+	 // cv::Rect s_ROI;
 
-	boost::mutex visualizationInputMutex;
-	//RenderThread* renderThread;
+	//boost::mutex visualizationInputMutex;
 	boost::shared_ptr<ClassificationResults> results;
 	
 	// Callbacks

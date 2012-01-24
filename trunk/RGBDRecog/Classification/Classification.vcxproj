@@ -89,6 +89,7 @@
     <ClInclude Include="FeatureData.h" />
     <ClInclude Include="FeatureExtractor.h" />
     <ClInclude Include="FeatureVector.h" />
+    <ClInclude Include="NBNN.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RFClassifier.h" />
     <ClInclude Include="Stdafx.h" />
@@ -97,6 +98,7 @@
     <ClCompile Include="FeatureData.cpp" />
     <ClCompile Include="FeatureExtractor.cpp" />
     <ClCompile Include="FeatureVector.cpp" />
+    <ClCompile Include="NBNN.cpp" />
     <ClCompile Include="RFClassifier.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
