@@ -169,7 +169,11 @@ void RFClass::createCodebook(int mode){
 		for(int j = 1; j <= floor(static_cast<double>(trainigPicNum[i])/2); j++){ //for each image
 
 			imagePath.clear();
-			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			if(!settings->segmentation){
+				imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			}else{
+				imagePath = filePath + "img" + convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+			}
 			bool found = false;
 
 			cout << "processing on image: " << classNames[i] << "_" << j;
@@ -184,15 +188,21 @@ void RFClass::createCodebook(int mode){
 				RawFeatures.clear();
 				cv::Rect roi = getDatasetROI(filePath,j);
 				if(roi.width*roi.height > 0){
-					RawFeatures = featureExtractor->extractRawFeatures(modes,input,roi);
+					//RawFeatures = featureExtractor->extractRawFeatures(modes,input,roi);
+					RawFeatures = featureExtractor->extractRawFeatures(modes,input);
 					found = true;
 				}else{
 					found = false;
 				}
 			}else{
-				RawFeatures.clear();
-				RawFeatures = featureExtractor->extractRawFeatures(modes,input);
-				found = true;
+				if(input.cols > 0){
+					RawFeatures.clear();
+					RawFeatures = featureExtractor->extractRawFeatures(modes,input);
+					found = true;
+				}
+				else{
+					found = false;
+				}
 			}
 			if(found){
 				if(RawFeatures[0].rows > 0 ){
@@ -329,7 +339,7 @@ void RFClass::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, Feat
 
 void RFClass:: trainModel(){
 	
-	cout << "Running training with settings: ";
+	cout << "Running training with settings: " << endl;
 	settings->outputSettings();
 	cout << endl;
 	cout << "parameters are from data_info.txt:" << endl;
@@ -360,7 +370,12 @@ void RFClass:: trainModel(){
 		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
 		for(int j = static_cast<int>(floor(static_cast<double>(trainigPicNum[i])/2))+1; j <= trainigPicNum[i]; j++){ //for each image
-			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			imagePath.clear();
+			if(!settings->segmentation){
+				imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			}else{
+				imagePath = filePath + "img" + convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+			}
 			cout << "processing on image: " << classNames[i] << "_" << j;
 			input.release();
 			input = cv::imread(imagePath); //Load as grayscale image
@@ -370,15 +385,20 @@ void RFClass:: trainModel(){
 				tempfeaturevector.release();
 				cv::Rect roi = getDatasetROI(filePath,j);
 				if(roi.width*roi.height > 0){
-					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
+					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
+					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
 					found = true;
 				}else{
 					found = false;
 				}
 			}else{
-				tempfeaturevector.release();
-				tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
-				found = true;
+				if(input.cols > 0){
+					tempfeaturevector.release();
+					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
+					found = true;
+				}else{
+					found = false;
+				}
 			}
 			
 			//tempfeaturevector now contains all found feature descriptors,
@@ -402,7 +422,7 @@ void RFClass:: trainModel(){
 	string modestring = settings->settingsString();
 
 	cout << "Done creating the feature vectors for the training set" << endl
-		 << "Saving the data to " << "trainingdata" + modestring + "RF" + ".yml";
+		 << "Saving the data to " << "trainingdata" + modestring + "RF" + ".yml" << endl;
 
 	cv::FileStorage fs2("trainingdata" + modestring + "RF" ".yml", cv::FileStorage::WRITE); //store the codebook to a yaml file
 	for(int i = 0; i < amountOfClasses;i++){
@@ -479,7 +499,12 @@ void RFClass::rfTesting(){
 		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
 		cout << "procesing class: " << classNames[i] << endl;
 		for(int j = 1; j <= testPicNum[i]; j++){ //for each image
-			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			imagePath.clear();
+			if(!settings->segmentation){
+				imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+			}else{
+				imagePath = filePath + "img" + convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+			}
 			cout << "processing image: " << classNames[i] << "_" << j;
 			input.release();
 			input = cv::imread(imagePath); //Load rgb image
@@ -488,15 +513,20 @@ void RFClass::rfTesting(){
 			if(settings->segmentation){
 				cv::Rect roi = getDatasetROI(filePath,j);
 				if(roi.width*roi.height > 0){
-					result = featureExtractor->extractFeatures(settings->modes,input,roi);
+					//result = featureExtractor->extractFeatures(settings->modes,input,roi);
+					result = featureExtractor->extractFeatures(settings->modes,input);
 					found = true;
 				}else{
 					found = false;
 				}
 			}else{
-				result = featureExtractor->extractFeatures(settings->modes,input);
-				found = true;
-				
+				if(input.cols > 0){
+					result = featureExtractor->extractFeatures(settings->modes,input);
+					found = true;
+				}
+				else{
+					found = false;
+				}
 			}
 			if(found && result.cols > 0){
 				predictions[i][j] = rfclassifier->predict(result);

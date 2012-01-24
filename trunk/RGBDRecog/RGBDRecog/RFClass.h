@@ -20,7 +20,7 @@ private:
 	void createCodebookMenu();
 	void rfTrainigmenu();
 	void createCodebook(int mode);
-	static string convertNumberToFLString(int length, int number);
+	string convertNumberToFLString(int length, int number);
 	string ifBoolReturnChar(bool in, string out);
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, FeatureVector * codebooks,cv::Mat & descriptors, int mode);
 	void trainModelMenu();

@@ -95,9 +95,14 @@ void FeatureExtractor::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevec
 	}
 }
 
-cv::Mat FeatureExtractor::normalSift(const cv::Mat grayimg, const cv::Mat mask = cv::Mat()){
+cv::Mat FeatureExtractor::normalSift(const cv::Mat grayimg, const cv::Mat mask = cv::Mat(),vector<cv::KeyPoint> keypoints){
 	cv::Mat descriptors;
-	siftdetector->operator()(grayimg,mask,vector<cv::KeyPoint>(),descriptors);
+
+	#ifdef DENSE_SAMPLING
+	siftdetector->operator()(grayimg,mask,keypoints,descriptors,true); //use the given keypoints
+	#else
+	siftdetector->operator()(grayimg,mask,keypoints,descriptors);
+	#endif
 	//normalize features
 	for(int i = 0; i < descriptors.rows; i++){
 		normalize(descriptors.row(i),descriptors.row(i));
@@ -105,31 +110,42 @@ cv::Mat FeatureExtractor::normalSift(const cv::Mat grayimg, const cv::Mat mask =
 	
 	return descriptors;
 }
-cv::Mat FeatureExtractor::hueSift(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask = cv::Mat()){
+cv::Mat FeatureExtractor::hueSift(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask = cv::Mat(),vector<cv::KeyPoint> keypoints){
 	cv::Mat descriptors;
-	vector<cv::KeyPoint> keypoints;
+#ifdef DENSE_SAMPLING
+	siftdetector->operator()(hueimg,mask,keypoints,descriptors,true);
+#else
 	siftdetector->operator()(grayimg,mask,keypoints,cv::Mat());
 	siftdetector->operator()(hueimg,mask,keypoints,descriptors,true);
+#endif
 	//normalize features
 	for(int i = 0; i < descriptors.rows; i++){
 		normalize(descriptors.row(i),descriptors.row(i));
 	}
 	return descriptors;
 }
-cv::Mat FeatureExtractor::opSift(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask = cv::Mat()){
+cv::Mat FeatureExtractor::opSift(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask = cv::Mat(),vector<cv::KeyPoint> keypoints){
 	cv::Mat descriptors;
-	vector<cv::KeyPoint> keypoints;
+#ifdef DENSE_SAMPLING
+	//do nothing
+#else
 	siftdetector->operator()(grayimg,mask,keypoints,cv::Mat());
+#endif
+	
 	des->compute(rgbimg,keypoints,descriptors);
 	for(int i = 0; i < descriptors.rows; i++){
 		normalize(descriptors.row(i),descriptors.row(i));
 	}
 	return descriptors;
 }
-cv::Mat FeatureExtractor::normalSurf(const cv::Mat grayimg, const cv::Mat mask = cv::Mat()){
+cv::Mat FeatureExtractor::normalSurf(const cv::Mat grayimg, const cv::Mat mask = cv::Mat(),vector<cv::KeyPoint> keypoints){
 	vector<float> tempfloatdesc;
-	vector<cv::KeyPoint> keypoints;
+#ifdef DENSE_SAMPLING
+	surfdetector->operator()(grayimg,mask,keypoints,tempfloatdesc,true);
+#else
 	surfdetector->operator()(grayimg,mask,keypoints,tempfloatdesc);
+#endif
+	
 
 	unsigned int keypointsi = keypoints.size();
 	unsigned int dimensions = tempfloatdesc.size()/(keypoints.size());
@@ -146,11 +162,15 @@ cv::Mat FeatureExtractor::normalSurf(const cv::Mat grayimg, const cv::Mat mask =
 	keypoints.clear();
 	return descriptors;
 }
-cv::Mat FeatureExtractor::hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask = cv::Mat()){
+cv::Mat FeatureExtractor::hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask = cv::Mat(),vector<cv::KeyPoint> keypoints){
 	vector<float> tempfloatdesc;
-	vector<cv::KeyPoint> keypoints;
+#ifdef DENSE_SAMPLING
+	surfdetector->operator()(hueimg,mask,keypoints,tempfloatdesc,true);
+#else
 	surfdetector->operator()(grayimg,mask,keypoints,vector<float>());
 	surfdetector->operator()(hueimg,mask,keypoints,tempfloatdesc,true);
+#endif
+
 	//descriptors = cv::Mat(tempfloatdesc).reshape(1,keypoints.size());
 
 	unsigned int keypointsi = keypoints.size();
@@ -170,10 +190,14 @@ cv::Mat FeatureExtractor::hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, c
 
 	return descriptors;
 }
-cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg, const cv::Mat mask = cv::Mat()){
-	vector<cv::KeyPoint> keypoints;
+cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg, const cv::Mat mask = cv::Mat(),vector<cv::KeyPoint> keypoints){
 	cv::Mat descriptors;
+#ifdef DENSE_SAMPLING
+	surfdetector->operator()(grayimg,mask,keypoints,vector<float>(),true);
+#else
 	surfdetector->operator()(grayimg,mask,keypoints,vector<float>());
+#endif
+	
 	desSURF->compute(rgbimg,keypoints,descriptors);
 
 	keypoints.clear();
@@ -200,26 +224,60 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 		cvtColor(rgbimg,grayimg,CV_BGR2GRAY);
 	}
 	
+	#ifdef DENSE_SAMPLING
+	vector<cv::KeyPoint> keypoints;
+	cv::DenseFeatureDetector fd;
+	fd.detect(rgbimg,keypoints);
+	#endif
 
 	//for each mode, add the features for this picture to a cv::Matrix
 	rawfeatures.clear();
 	if(modes[0]){
+	#ifdef DENSE_SAMPLING
+		rawfeatures.push_back(normalSift(grayimg,cv::Mat(),keypoints));
+	#else
 		rawfeatures.push_back(normalSift(grayimg));
+	#endif
+		
 	}
 	if(modes[1]){
+	#ifdef DENSE_SAMPLING
+		rawfeatures.push_back(hueSift(grayimg,hueimg,cv::Mat(),keypoints));
+	#else
 		rawfeatures.push_back(hueSift(grayimg,hueimg));
+	#endif
+		
 	}
 	if(modes[2]){
+	#ifdef DENSE_SAMPLING
+		rawfeatures.push_back(opSift(grayimg,rgbimg,cv::Mat(),keypoints));
+	#else
 		rawfeatures.push_back(opSift(grayimg,rgbimg));
+	#endif
+		
 	}
 	if(modes[3]){
+	#ifdef DENSE_SAMPLING
+		rawfeatures.push_back(normalSurf(grayimg,cv::Mat(),keypoints));
+	#else
 		rawfeatures.push_back(normalSurf(grayimg));
+	#endif
+		
 	}
 	if(modes[4]){
+	#ifdef DENSE_SAMPLING
+		rawfeatures.push_back(hueSurf(grayimg,hueimg,cv::Mat(),keypoints));
+	#else
 		rawfeatures.push_back(hueSurf(grayimg,hueimg));
+	#endif
+		
 	}
 	if(modes[5]){
+	#ifdef DENSE_SAMPLING
+		rawfeatures.push_back(opSurf(grayimg,rgbimg,cv::Mat(),keypoints));
+	#else
 		rawfeatures.push_back(opSurf(grayimg,rgbimg));
+	#endif	
 	}
 
 	grayimg.release();

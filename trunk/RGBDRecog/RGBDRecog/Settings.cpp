@@ -134,18 +134,15 @@ void Settings::featureSettings(){
 	}
 	cout << "Which settings do you want to change? (give the number)" << endl;
 	int option;
-	option = cin.get();
-
-	if(option < 0 || option > featureData->amountOfFeatures){
-		cout << "invalid feature";
-		return;
-	}
+	cin.clear();cin.sync();
+	option = cin.get()-'0';
 
 	if(modes[option]){
 		modes[option] = false;
 	}else{
 		modes[option] = true;
 	}
+	cin.clear();cin.sync();
 }
 
 void Settings::menu(){
