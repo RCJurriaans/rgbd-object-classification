@@ -31,12 +31,21 @@ bool Settings::readSettings(){
 		cout << "ERROR: Could not find " << settingsfile << endl;
 		return false;
 	}
-
-	in >> segmentation;
-	bool temp;
+	string option;
+	getline(in,option);
+	if(option == "true"){
+		segmentation = true;
+	}else{
+		segmentation = false;
+	}
 	for(unsigned int i = 0; i < modes.size(); i++){
-		in >> temp;
-		modes[i] = temp;
+		option.clear();
+		getline(in,option);
+		if(option == "true"){
+			modes[i] = true;
+		}else{
+			modes[i]  = false;
+		}
 	}
 	return true;
 }
@@ -50,9 +59,9 @@ bool Settings::writeSettings(){
 		return false;
 	}
 
-	out << segmentation << endl;
+	out << boolstring(segmentation) << endl;
 	for(unsigned int i = 0; i < modes.size(); i++){
-		out << modes[i] << endl;
+		out << boolstring(modes[i]) << endl;
 	}
 	return true;
 }
