@@ -33,7 +33,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "SegmentCloud.h"
+//#include "SegmentCloud.h"
 
 
 // TODO: reference additional headers your program requires here

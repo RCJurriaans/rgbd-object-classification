@@ -12,10 +12,6 @@
 //#define _AFXDLL
 //#include <afx.h>
 
-#include "FeatureExtractor.h"
-#include "FeatureVector.h"
-#include "RFClassifier.h"
-
 // TODO: reference additional headers your program requires here
 #include <boost\lexical_cast.hpp>
 //#include "Winbase.h"

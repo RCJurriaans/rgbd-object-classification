@@ -10,6 +10,8 @@
 using namespace std;
 
 
+//#define DENSE_SAMPLING
+
 //Class used to calculate features from a given image.
 //run loadCodebooks() first, then run either extractFeatures or extractRawFeatures
 //for the codebooked or raw descriptor features
@@ -81,12 +83,12 @@ private:
 	// these functions are used to calculate their respective descriptors
 	// These are called by the two extractFeatures functions above
 	// use those as an interface
-	cv::Mat normalSift(const cv::Mat grayimg, const cv::Mat mask);
-	cv::Mat hueSift(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask);
-	cv::Mat opSift(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask);
-	cv::Mat normalSurf(const cv::Mat grayimg, const cv::Mat mask);
-	cv::Mat hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask);
-	cv::Mat opSurf(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask);
+	cv::Mat normalSift(const cv::Mat grayimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
+	cv::Mat hueSift(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
+	cv::Mat opSift(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
+	cv::Mat normalSurf(const cv::Mat grayimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
+	cv::Mat hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
+	cv::Mat opSurf(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
 	
 	bool codebooksloaded; //are the codebooks loaded or not?
 

@@ -135,7 +135,7 @@ void DataSegmenter::generateBoundingBoxes(){
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
 			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
-			outputImg = filePath + "img" + convertNumberToFLString(3,j) + ".jpg";
+			outputImg = filePath + "img" + convertNumberToFLString(3,j) + "seg" + ".bmp";
 			
 			input.release();
 			input = cv::imread(imagePath);
@@ -161,7 +161,7 @@ void DataSegmenter::generateBoundingBoxes(){
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
 			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
-			outputImg = filePath + "img" + convertNumberToFLString(3,j) + ".jpg";
+			outputImg = filePath + "img" + convertNumberToFLString(3,j) + "seg" + ".bmp";
 
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
 			
