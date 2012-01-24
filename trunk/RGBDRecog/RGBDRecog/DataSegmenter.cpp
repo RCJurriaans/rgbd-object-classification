@@ -109,6 +109,7 @@ void DataSegmenter::generateBoundingBoxes(){
 	string imagePath;
 	string pcdPath;
 	string outputPath;
+	string outputImg;
 	cv::Mat input;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr background (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -134,7 +135,10 @@ void DataSegmenter::generateBoundingBoxes(){
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
 			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
+			outputImg = filePath + "img" + convertNumberToFLString(3,j) + ".jpg";
 			
+			input.release();
+			input = cv::imread(imagePath);
 
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
 
@@ -145,7 +149,9 @@ void DataSegmenter::generateBoundingBoxes(){
 
 			//write the rectangle to a file
 			writeRect(outputPath,rect);
-
+			if(rect.width*rect.height > 0){
+				cv::imwrite(outputImg, input(rect));
+			}
 		}
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
@@ -155,8 +161,12 @@ void DataSegmenter::generateBoundingBoxes(){
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
 			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
+			outputImg = filePath + "img" + convertNumberToFLString(3,j) + ".jpg";
 
 			cout << "processing on image: " << classNames[i] << "_" << j << endl;
+			
+			input.release();
+			input = cv::imread(imagePath);
 
 			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
 
@@ -165,6 +175,10 @@ void DataSegmenter::generateBoundingBoxes(){
 
 			//write the rectangle to a file
 			writeRect(outputPath,rect);
+
+			if(rect.width*rect.height > 0){
+				cv::imwrite(outputImg, input(rect));
+			}
 		}
 	}
 }

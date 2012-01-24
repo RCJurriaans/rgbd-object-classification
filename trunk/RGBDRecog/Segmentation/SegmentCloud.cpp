@@ -145,23 +145,27 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 	int boxWidth  = imcalc.getRegions(0,0);
 	int boxHeight = imcalc.getRegions(0,1);
 
-	boxWidth *= 1.2;
-	boxHeight *= 1.2;
+	//dit is beter :) Tijmen
+	boxWidth = static_cast<int>(boxWidth*1.4);
+	boxHeight = static_cast<int>(boxHeight*1.4);
 
 	int minx=0;
 	int miny=0;
 
 	minx = cv::max(minx, mean_x-(boxWidth/2));
-	miny = cv::max(miny, mean_y-(boxWidth/2));
+	miny = cv::max(miny, mean_y-(boxHeight/2)); //<- fixed to boxHeight instead of boxWidth Tijmen
 
+	//fixed these errors checks //Tijmen
 	if(minx+boxWidth>ipl_bmask.width){
-		boxWidth = (ipl_bmask.width-minx);
+		boxWidth = (ipl_bmask.width-minx)-1;
 	}
-		if(miny+boxHeight>ipl_bmask.height){
-			boxHeight = (ipl_bmask.height-miny);
+	if(miny+boxHeight>ipl_bmask.height){
+		boxHeight = (ipl_bmask.height-miny)-1;
 	}
 
-	return cv::Rect(minx, miny, boxWidth-1, boxHeight-1);
+
+
+	return cv::Rect(minx, miny, boxWidth, boxHeight);
 }
 
 

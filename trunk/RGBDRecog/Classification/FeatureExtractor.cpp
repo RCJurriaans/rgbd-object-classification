@@ -18,7 +18,7 @@ FeatureExtractor::FeatureExtractor(void)
 
 	//sift detector with specified standard parameters
 	// the 4* in the first parameter indicates the treshold, higher means less decriptors found
-	siftdetector = new cv::SIFT(4*(0.04 / cv::SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS), 10,
+	siftdetector = new cv::SIFT((0.04 / cv::SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS), 10,
           cv::SIFT::CommonParams::DEFAULT_NOCTAVES,
           cv::SIFT::CommonParams::DEFAULT_NOCTAVE_LAYERS,
           cv::SIFT::CommonParams::DEFAULT_FIRST_OCTAVE,
@@ -26,7 +26,7 @@ FeatureExtractor::FeatureExtractor(void)
 	
 	//surf detector with standard parameters, 
 	// the 4* in the first parameter indicates the treshold, higher means less decriptors found
-	surfdetector = new cv::SURF(4*100, 4, 2, false);;
+	surfdetector = new cv::SURF(100, 4, 2, false);;
 
 	cout << "Done initializing FeatureExtractor" << endl;
 }
@@ -246,7 +246,7 @@ cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv
 	//respective codebooks
 	int addedFeatures = 0;
 	for(int i = 0; i < featureData->amountOfFeatures; i++){
-		if(modes[i]){
+		if(modes[i] && rawfeatures[addedFeatures].rows>0){
 			addDescriptor(firstadded, featurevector, rawfeatures[addedFeatures], i);
 			addedFeatures++;
 		}

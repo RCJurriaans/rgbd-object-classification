@@ -20,7 +20,7 @@ private:
 	void createCodebookMenu();
 	void rfTrainigmenu();
 	void createCodebook(int mode);
-	string convertNumberToFLString(int length, int number);
+	static string convertNumberToFLString(int length, int number);
 	string ifBoolReturnChar(bool in, string out);
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, FeatureVector * codebooks,cv::Mat & descriptors, int mode);
 	void trainModelMenu();
@@ -47,4 +47,6 @@ private:
 	FeatureExtractor* featureExtractor;
 	RFClassifier * rfclassifier;
 	Settings * settings;
+	cv::RNG * rng;
+
 };
