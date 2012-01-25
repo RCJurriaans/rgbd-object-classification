@@ -5,6 +5,7 @@
 #include "FeatureExtractor.h"
 #include "RFClassifier.h"
 #include "ClassificationResults.h"
+#include "NBNN.h"
 
 class ClassificationThread
 {
@@ -18,10 +19,14 @@ public:
 		s_bgCloud(bgCloudPtr),
 		results(res)
 		,extractor(new FeatureExtractor())
-		,classifier(new RFClassifier())//"D:\\randomforestdata100000.yml", "randomforestdata100000"))//"file", "dataname"))
+		,rf(new RFClassifier())//"D:\\randomforestdata_10100000.yml", "randomforestdata_10100000"))
+		,nn()
 	{
-		//extractor->loadCodebooks();
+		extractor->loadCodebooks();
+		rf->read("D:\\randomforestdata_10000001.yml", "randomforestdata_10000001");
 		//segmenter.setSegMethod(SegmentCloud::SegPlane);
+
+
 	}
 
 	void run();
@@ -29,7 +34,8 @@ public:
 
 	// System components
 	boost::shared_ptr<FeatureExtractor> extractor;
-	boost::shared_ptr<RFClassifier> classifier;
+	boost::shared_ptr<RFClassifier> rf;
+	boost::shared_ptr<NBNN> nn;
 
 	// Threading
 	boost::mutex& inputMutex;

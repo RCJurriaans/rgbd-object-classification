@@ -222,12 +222,12 @@ public:
 	void run ()
 	{
 		// Start classification thread
-		ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
-												    results);
-		boost::thread classify( &ClassificationThread::run, &classificationThread  );
+		//ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
+		//										    results);
+		//boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
-		//RenderThread renderObject( results );
-		//boost::thread renderThread( &RenderThread::run, &renderObject );
+		RenderThread renderObject( results );
+		boost::thread renderThread( &RenderThread::run, &renderObject );
 
 		// start receiving point clouds
 		grabber->start();
@@ -282,16 +282,18 @@ protected:
 	boost::signals2::connection renderCloudRGBConnection;
 };
 
+
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
 }
-/*
 
-int
-	main (int argc, char** argv)
+
+
+/*
+int	main (int argc, char** argv)
 {
 	SegmentCloud SC;
 
@@ -303,7 +305,7 @@ int
 	std::string path_img;
 	//std::cout << "Enter image pcd file path" << std::endl;
 	//std::cin >> path_img;
-	 path_img = "img002.pcd";
+	 path_img = "img022.pcd";
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
@@ -323,8 +325,9 @@ int
 	//SC.getNaNCloud();
 	//SC.getUnorgCloud();
 	//SC.getROI();
-	cloud_img = SC.getWindowCloud(cloud_img, cloud_back);
-
+	//cloud_img = SC.getWindowCloud(cloud_img, cloud_back);
+	cv::imshow("aaa", *SC.getMask(cloud_img, cloud_back));
+	cvWaitKey();
 	time_t end = time(NULL);
 
 	std::cout << "Ending " << cloud_img->width << " " << cloud_img->height <<  std::endl;

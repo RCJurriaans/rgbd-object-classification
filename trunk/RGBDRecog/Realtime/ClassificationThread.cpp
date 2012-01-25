@@ -34,25 +34,36 @@ void ClassificationThread::run()
 			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud);
 			cv::Rect ROI = segmenter.getROI(mask);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentedCloud = segmenter.getWindowCloud(ROI, cloud);
-				
+			
+			boost::shared_ptr<pcl::ModelCoefficients> coeffs;
+
 			// Extract features
 			int predictedClass=0;
-			/*boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
+			
+			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 			std::vector<bool> modes;
+			modes.push_back(false);
+			modes.push_back(false);
+			modes.push_back(false);
+			modes.push_back(false);
+			modes.push_back(false);
+			modes.push_back(false);
 			modes.push_back(true);
-			modes.push_back(false);
-			modes.push_back(false);
-			modes.push_back(false);
-			modes.push_back(false);
-			modes.push_back(false);
-			cv::Mat features = extractor->extractFeatures( modes, *img );
 
-			// Classify
-			predictedClass = classifier->predict(features);
-			cout << "Predicted class: "<<predictedClass<<endl;*/
+			// Classify using RF classifier
+			if( ROI.x == 0 && ROI.y == 0 && ROI.width == 0 && ROI.height == 0) {
+				predictedClass = 0;
+			} else {
+				cv::Mat features = extractor->extractFeatures( modes, *img, ROI );
+				predictedClass = rf->predict(features);
+			}
 
-			boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, ROI, predictedClass) );
+			// Classify using NBNN:
+			/*vector<cv::Mat> features = extractor->extractRawFeatures(modes, *img, ROI);
+			predictedClass = nn->classify(features);*/
 
+			cout << "Predicted class: "<< predictedClass << endl;
+			boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, ROI, coeffs, predictedClass) );
 			
 			// Return output to main thread
 			results->mtx.lock();

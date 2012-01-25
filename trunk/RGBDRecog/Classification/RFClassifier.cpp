@@ -64,8 +64,8 @@ void RFClassifier::write(string filename, string dataname){
 void RFClassifier::read(string filename, string dataname){
 	CvFileStorage * input= cvOpenFileStorage(filename.c_str(), 0, CV_STORAGE_READ ) ;
 	cout << "Reading tree from: " << filename << endl;
-	treestructure->read(input, cvGetFileNodeByName(input,0,dataname.c_str()));
-	//CvFileNode* node = cvGetFileNodeByName(input,0,dataname.c_str());
-	//treestructure->read(input, node);
+//	treestructure->read(input, cvGetFileNodeByName(input,0,dataname.c_str()));
+	CvFileNode* node = cvGetFileNodeByName(input,0,dataname.c_str());
+	treestructure->read(input, node);
 	cvReleaseFileStorage(&input);
 }
