@@ -22,8 +22,8 @@ void Renderer::renderRGB(const boost::shared_ptr<openni_wrapper::Image>& oniBGR)
 		
 		boost::shared_ptr<cv::Mat> mask = results->getMask();
 		if (objects->size() > 0) {
-			ROI = objects->at(0)->ROI;
-			c = objects->at(0)->cloud;
+			ROI = objects->at(0)->getBoundingBox2D();
+			c = objects->at(0)->getCloud();
 		}
 	results->mtx.unlock();
 
