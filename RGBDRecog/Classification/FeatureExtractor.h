@@ -10,7 +10,7 @@
 using namespace std;
 
 
-//#define DENSE_SAMPLING
+#define DENSE_SAMPLING
 
 //Class used to calculate features from a given image.
 //run loadCodebooks() first, then run either extractFeatures or extractRawFeatures
