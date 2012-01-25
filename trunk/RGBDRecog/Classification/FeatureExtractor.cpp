@@ -247,6 +247,19 @@ cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes){
 	maskVal.release();
 	mask.release();
 
+	cv::Mat meanvar(2,1,CV_32FC1);
+	float mean = 0; //calculate mean
+	for(int i = 0; i < hbins; i++){
+		mean += i*hist.at<float>(i);
+	}
+	meanvar.at<float>(0) = mean;
+	//calculate variance
+	float var = 0;
+	for(int i = 0; i < hbins; i++){
+		var+= i* (hist.at<float>(i) - mean)*(hist.at<float>(i) - mean);
+	}
+
+
 	return hist;
 }
 
@@ -364,6 +377,10 @@ cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv
 
 
 cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi){
+	if(roi.height < 0 || roi.height > 0){
+		cout << "Error: invalid ROI" << endl;
+		return cv::Mat();
+	}
 	cv::Mat roiimg = rgbimg(roi);
 	return extractFeatures(modes, roiimg);
 }

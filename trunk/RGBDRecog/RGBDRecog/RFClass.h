@@ -48,5 +48,4 @@ private:
 	RFClassifier * rfclassifier;
 	Settings * settings;
 	cv::RNG * rng;
-
 };
