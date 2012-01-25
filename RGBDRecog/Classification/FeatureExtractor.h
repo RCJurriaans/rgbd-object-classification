@@ -89,7 +89,8 @@ private:
 	cv::Mat normalSurf(const cv::Mat grayimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
 	cv::Mat hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
 	cv::Mat opSurf(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
-	
+	cv::Mat colorHistogramCreator(vector<cv::Mat> hsvPlanes);
+
 	bool codebooksloaded; //are the codebooks loaded or not?
 
 	//helper function that adds a descriptor to the tempfeaturevector

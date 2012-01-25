@@ -2,6 +2,8 @@
 #include "StdAfx.h"
 #include "FeatureExtractor.h"
 
+#define SATURATION_THRESH 0.1
+#define VALUE_THRESH 0.1
 
 FeatureExtractor::FeatureExtractor(void)
 {
@@ -81,17 +83,27 @@ void FeatureExtractor::loadCodebooks(string filepath){
 // function also runs the descriptors throught he codebooks, making a histogram out of them
 // mode is the type of feature, firstadded simply indicates if this was the first added feature
 void FeatureExtractor::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector,cv::Mat & descriptors, int mode){
-	if(codebooks[mode].features->empty()){
-		cout << "ERROR: Codebook" << featureData->featureNames[mode] << " does not exist";
-		return;
+	if(mode >= 0 && mode <=5){//if this is a codebook feature
+		if(codebooks[mode].features->empty()){
+			cout << "ERROR: Codebook" << featureData->featureNames[mode] << " does not exist";
+			return;
+		}
 	}
 
 	if(!firstadded){
 		tempfeaturevector.release();
-		tempfeaturevector = codebooks[mode].GenHistogram(descriptors);
+		if(mode >= 0 && mode <=5){
+			tempfeaturevector = codebooks[mode].GenHistogram(descriptors);
+		}else if (mode ==  6){ //color histogram
+			tempfeaturevector = descriptors;
+		}
 		firstadded = true;
 	}else{
-		vconcat(tempfeaturevector,codebooks[mode].GenHistogram(descriptors),tempfeaturevector);
+		if(mode >= 0 && mode <=5){
+			vconcat(tempfeaturevector,codebooks[mode].GenHistogram(descriptors),tempfeaturevector);
+		}else if (mode == 6) {
+			vconcat(tempfeaturevector,descriptors,tempfeaturevector);
+		}
 	}
 }
 
@@ -204,22 +216,54 @@ cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg, con
 
 	return descriptors;
 }
+
+cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes){
+
+	cv::Mat maskSat = hsvPlanes[1] > SATURATION_THRESH*256;
+
+	cv::Mat maskVal = hsvPlanes[2] > VALUE_THRESH*256;
+	cv::Mat mask = cv::Mat(hsvPlanes[0].size(),CV_8UC1);
+
+	
+
+	cv::bitwise_and(maskSat, maskVal, mask); //create hue/saturation mask
+    // let's quantize the hue to 30 levels
+    int hbins = 30;
+    int histSize[] = {hbins};
+    // hue varies from 0 to 180, using integer images. see cvtColor
+    float hranges[] = { 0, 180 };
+
+    const float* ranges[] = {hranges};
+    cv::Mat hist;
+    // we compute the histogram from the 0-th and 1-st channels
+    int channels[] = {0};
+    cv::calcHist( &hsvPlanes[0], 1, channels, mask, // use mask
+        hist, 1, histSize, ranges,
+        true, // the histogram is uniform
+        false );
+
+	cv::normalize(hist,hist);
+	maskSat.release();
+	maskVal.release();
+	mask.release();
+
+	return hist;
+}
+
 vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask){
 	vector<cv::Mat> rawfeatures;
 	cv::Mat grayimg;
 	cv::Mat hueimg;
+	vector<cv::Mat> planes;
 	//for these modes we use hue inforcv::Mation, so we also make the hueimg
 	//We also get the grayimg for free :)
-	if(modes[1] || modes[4]){
+	if(modes[1] || modes[4] || modes[6]){
 		cv::Mat tempimg;
-		vector<cv::Mat> planes;
 		cvtColor(rgbimg,tempimg,CV_BGR2HSV);
-		split(rgbimg,planes);
+		split(tempimg,planes);
 		hueimg = planes[0];
 		grayimg = planes[2];
-
 		tempimg.release();
-		planes.clear();
 	}else{ //else we only need the gray img ^_^
 		cvtColor(rgbimg,grayimg,CV_BGR2GRAY);
 	}
@@ -279,9 +323,13 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 		rawfeatures.push_back(opSurf(grayimg,rgbimg));
 	#endif	
 	}
+	if(modes[6]){ //not mask ready unfortunately
+		rawfeatures.push_back(colorHistogramCreator(planes));
+	}
 
 	grayimg.release();
 	hueimg.release();
+	planes.clear();
 
 	return rawfeatures;
 }

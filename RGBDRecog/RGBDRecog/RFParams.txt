@@ -1,2 +1,2 @@
 SIFTThreshScale 4
-dicsize 500
+dicsize 80
