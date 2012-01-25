@@ -222,9 +222,9 @@ public:
 	void run ()
 	{
 		// Start classification thread
-		//ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
-		//										    results);
-		//boost::thread classify( &ClassificationThread::run, &classificationThread  );
+		ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
+												    results);
+		boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
 		RenderThread renderObject( results );
 		boost::thread renderThread( &RenderThread::run, &renderObject );

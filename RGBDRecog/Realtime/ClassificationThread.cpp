@@ -38,7 +38,7 @@ void ClassificationThread::run()
 			boost::shared_ptr<pcl::ModelCoefficients> coeffs;
 
 			// Extract features
-			int predictedClass=0;
+			int predictedClass=-1;
 			
 			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 			std::vector<bool> modes;
@@ -51,11 +51,10 @@ void ClassificationThread::run()
 			modes.push_back(true);
 
 			// Classify using RF classifier
-			if( ROI.x == 0 && ROI.y == 0 && ROI.width == 0 && ROI.height == 0) {
-				predictedClass = 0;
-			} else {
+			if( !(ROI.x == 0 && ROI.y == 0 && ROI.width == 0 && ROI.height == 0)) {
 				cv::Mat features = extractor->extractFeatures( modes, *img, ROI );
-				predictedClass = rf->predict(features);
+				if (features.rows != 0 && features.cols != 0)
+					predictedClass = rf->predict(features);
 			}
 
 			// Classify using NBNN:

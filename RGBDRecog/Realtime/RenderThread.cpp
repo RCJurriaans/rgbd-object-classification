@@ -85,6 +85,10 @@ void RenderThread::visCallback(pcl::visualization::PCLVisualizer& vis)
 		coefficients.values.push_back(1.5); // depth
 		vis.removeAllShapes();
 		vis.addCube(coefficients);*/
+
+		vis.removeText3D("ObjectN");
+		pcl::PointXYZ p(0,0,0);// Set to center of object + halfheight of bb + c
+		vis.addText3D("Classname", p, 0.1,  1,1,1,  "objectN");
 	}
 }
 

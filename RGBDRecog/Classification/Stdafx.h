@@ -26,3 +26,6 @@
 #include <opencv2/legacy/legacy.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/video/video.hpp>
+
+
+#include <pcl/features/normal_3d.h>

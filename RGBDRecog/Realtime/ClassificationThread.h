@@ -25,8 +25,6 @@ public:
 		extractor->loadCodebooks();
 		rf->read("D:\\randomforestdata_10000001.yml", "randomforestdata_10000001");
 		//segmenter.setSegMethod(SegmentCloud::SegPlane);
-
-
 	}
 
 	void run();
