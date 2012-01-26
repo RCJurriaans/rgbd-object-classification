@@ -73,6 +73,7 @@ void ClassificationThread::run()
 			results->mtx.unlock();
 
 		}
+		//Sleep(2000);
 		boost::thread::yield();
 	}
 }

@@ -104,6 +104,7 @@
   <ItemGroup>
     <ClInclude Include="DataSegmenter.h" />
     <ClInclude Include="ImageWrapper.h" />
+    <ClInclude Include="NNMenu.h" />
     <ClInclude Include="RFClass.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="stdafx.h" />
@@ -111,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataSegmenter.cpp" />
+    <ClCompile Include="NNMenu.cpp" />
     <ClCompile Include="RFClass.cpp" />
     <ClCompile Include="RGBDRecog.cpp" />
     <ClCompile Include="Settings.cpp" />
