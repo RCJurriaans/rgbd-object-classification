@@ -7,7 +7,7 @@
 
 #include <pcl/io/pcd_io.h>
 
-#include <pcl/ModelCoefficients.h>
+
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
@@ -18,13 +18,11 @@
 #include <pcl/range_image/range_image.h>
 
 boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
-	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
+	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, boost::shared_ptr<pcl::PointIndices> inliers, boost::shared_ptr<pcl::ModelCoefficients> coeff)
 {
 	int nmax;
-	//boost::shared_ptr<cv::Mat> mask( &static_cast<cv::Mat>(cv::Mat::zeros( input->height, input->width, CV_8UC1)) );
+
 	boost::shared_ptr<cv::Mat> mask(new cv::Mat( input->height, input->width, CV_8UC1 ) );
-	//mask = cv::Mat::zeros( input->height, input->width, CV_8UC1 );
-	//mask->setTo(cv::Scalar(0));
 
 	float point_backz;
 	float point_imgz;
@@ -48,6 +46,7 @@ boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZR
 		}
 		else {
 			mask->data[j*mask->step[0]+i*mask->step[1]] = 255;
+			//inliers->indices.push_back(n); 
 		}
 	}
 
@@ -55,26 +54,58 @@ boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZR
 }
 
 boost::shared_ptr<cv::Mat>
-	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
+{
+	boost::shared_ptr<pcl::PointIndices> inliers;
+	boost::shared_ptr<pcl::ModelCoefficients> coeff;
+
+	return getMask(input, background, inliers, coeff);
+}
+
+boost::shared_ptr<cv::Mat>
+	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers, boost::shared_ptr<pcl::ModelCoefficients> coeff)
 {
 	switch( crtMethod ) {
 	case SegBack:
-		return getMask(input, this->background);
+		return getMask(input, this->background, inliers, coeff);
 		break;
 	case SegObj:
 		break;
 	case SegPlane:
-		return getPlaneMask(input);
+		return getPlaneMask(input);//, inliers, coeff);
 		break;
 	case SegNormHist:
 		break;
+	default:
+		std::cerr << "Invallid segmentation method" << std::endl;
+		return boost::shared_ptr<cv::Mat>();
 	}
 
-	return boost::shared_ptr<cv::Mat>(); // Pleasing compiler
 }
 
 boost::shared_ptr<cv::Mat>
-	SegmentCloud::getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::ModelCoefficients> coeff, boost::shared_ptr<pcl::PointIndices> inliers)
+{
+	return getMask(input, inliers, coeff);
+}
+
+boost::shared_ptr<cv::Mat>
+	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers)
+{
+	boost::shared_ptr<pcl::ModelCoefficients> coeff;
+	return getMask(input, inliers, coeff);
+}
+
+boost::shared_ptr<cv::Mat>
+	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+{
+	boost::shared_ptr<pcl::PointIndices> inliers;
+	boost::shared_ptr<pcl::ModelCoefficients> coeff;
+	return getMask(input, inliers, coeff);
+}
+
+boost::shared_ptr<cv::Mat>
+	SegmentCloud::getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input) //,  boost::shared_ptr<pcl::PointIndices> objectinliers, boost::shared_ptr<pcl::ModelCoefficients> coeff)
 {
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -88,16 +119,18 @@ boost::shared_ptr<cv::Mat>
 	//pass.setFilterLimitsNegative (true);
 	pass.filter (*cloud_filtered);
 
+	boost::shared_ptr<cv::Mat> mask(new cv::Mat( cloud_filtered->height, cloud_filtered->width, CV_8UC1 ) );
+
 	// Fit plane and extract points
 	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
 	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-	
+
 	// Create the segmentation object
 	pcl::SACSegmentation<pcl::PointXYZRGB> seg;
-	
+
 	// Optional (increases performance)
 	seg.setOptimizeCoefficients (true);
-	
+
 	// Mandatory
 	seg.setModelType (pcl::SACMODEL_PLANE);
 	seg.setMaxIterations(10);
@@ -107,17 +140,15 @@ boost::shared_ptr<cv::Mat>
 	seg.setInputCloud (cloud_filtered);
 	seg.segment (*inliers, *coefficients);
 
-	boost::shared_ptr<cv::Mat> mask(new cv::Mat( input->height, input->width, CV_8UC1 ) );
-
-	int nmax = input->size();
+	int nmax = cloud_filtered->size();
 	int i;
 	int j;
 	int inliercount = 0;
 	for(int n= 0; n<nmax; n++){
-				// Recalculate indices in matrix from n
+		// Recalculate indices in matrix from n
 		i = n % input->width;
 		j = ((n-i) / input->width);
-		if(inliers->indices[inliercount]==n){
+		if( inliers->indices[inliercount]==n){
 			mask->data[j*mask->step[0]+i*mask->step[1]] = 0;
 			inliercount++;
 		}
@@ -145,15 +176,23 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 	int boxWidth  = imcalc.getRegions(0,0);
 	int boxHeight = imcalc.getRegions(0,1);
 
-	//dit is beter :) Tijmen
 	boxWidth = static_cast<int>(boxWidth*1.5);
 	boxHeight = static_cast<int>(boxHeight*1.5);
 
-	int minx=0;
-	int miny=0;
+	int minx;
+	int miny;
 
-	minx = cv::max(minx, mean_x-(boxWidth/2));
-	miny = cv::max(miny, mean_y-(boxHeight/2)); //<- fixed to boxHeight instead of boxWidth Tijmen
+	minx = mean_x-(boxWidth/2);
+	miny = mean_y-(boxHeight/2); 
+
+	if(minx<0){
+		boxWidth -= minx;
+		minx = 0;
+	}
+	if(miny<0){
+		boxHeight -= miny;
+		miny = 0;
+	}
 
 	//fixed these errors checks //Tijmen
 	if(minx+boxWidth>ipl_bmask.width){
@@ -211,7 +250,6 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getWindowCloud(const cv::Re
 		}
 	}
 
-	//inputCloud->swap(*windowCloud);
 	return windowCloud;
 }
 
