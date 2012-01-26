@@ -5,19 +5,20 @@
 
 #include "NBNN.h"
 #include <opencv2\ml\ml.hpp>
+#include <limits>
 
 using namespace std;
 
 bool NBNN::loadTrainingData(std::string filename, std::string dataname, int numClasses)
 {
-	CvFileStorage *dataset= cvOpenFileStorage(filename.c_str(), 0, CV_STORAGE_READ ) ;
+	//CvFileStorage *dataset= cvOpenFileStorage(filename.c_str(), 0, CV_STORAGE_READ ) ;
 
-	for (unsigned int i = 0; i < numClasses; i++){
-		stringstream nodeName;
-		nodeName << dataname << i;
-		CvFileNode* node = cvGetFileNodeByName(dataset, 0, nodeName.str().c_str());
-		
-	}
+	//for (unsigned int i = 0; i < numClasses; i++){
+	//	stringstream nodeName;
+	//	nodeName << dataname << i;
+	//	CvFileNode* node = cvGetFileNodeByName(dataset, 0, nodeName.str().c_str());
+	//	
+	//}
 
 
 	//std::numeric_limits<float>::q
@@ -54,7 +55,7 @@ unsigned int NBNN::addInstancesToClass(const vector<cv::Mat>& descriptors, int c
 unsigned int NBNN::classify(const cv::Mat& queryDescriptors)
 {
 	vector<double> classScores; // Might be useful to return these at some point.
-	double minScore = 99999999999999999.0;
+	double minScore = numeric_limits<double>::max( );
 	int minClass = -1;
 	for (unsigned int C = 0; C < numClasses; C++)
 	{

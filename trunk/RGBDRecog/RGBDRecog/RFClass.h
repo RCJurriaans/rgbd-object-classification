@@ -16,11 +16,13 @@ public:
 	~RFClass(void);
 
 	void menu();
+
+	static string convertNumberToFLString(int length, int number);
 private:
 	void createCodebookMenu();
 	void rfTrainigmenu();
 	void createCodebook(int mode);
-	string convertNumberToFLString(int length, int number);
+	
 	string ifBoolReturnChar(bool in, string out);
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector, FeatureVector * codebooks,cv::Mat & descriptors, int mode);
 	void trainModelMenu();

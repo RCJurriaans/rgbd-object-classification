@@ -9,6 +9,8 @@
 #include "ClassificationResults.h"
 #include "RenderThread.h"
 
+#include <boost\filesystem\convenience.hpp>
+
 //using namespace std;
 
 #ifdef WIN32
@@ -207,9 +209,14 @@ public:
 		case 'f':
 			cout << "Enter save folder" << endl;
 			cin >> saveFolder;
-			cout << "New save folder: " << saveFolder << endl;
-			cout << "Starting saves at one.." << endl;
-			numSaves = 1;
+
+			//if (!boost::filesystem::exists( saveFolder ))
+			//	cout << "EPIC FAIL: INVALID FOLDER, please try again or press esc to give up."<<endl;
+			//else {
+				cout << "New save folder: " << saveFolder << endl;
+				cout << "Starting saves at one.." << endl;
+				numSaves = 1;
+			//}
 			break;
 		case 'n':
 			cout << "Enter save number" << endl;
