@@ -18,6 +18,7 @@
 #include "RFClass.h"
 #include "DataSegmenter.h"
 #include "Settings.h"
+#include "NNMenu.h"
 
 using namespace std;
 //using namespace cv; //opencv namespace
@@ -58,9 +59,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			case 'n': case 'N':{
 				cin.clear();
 				cin.sync();
+				//cout << "Not implemented; use RF menu" <<endl;
 				cout << "Running the nearest neighbour menu" << endl;
-				boost::shared_ptr<NNMenu> nnmenu(new NNMenu());
-				nnmenu->showMenu();
+				boost::shared_ptr<NNMenu> nnmenu(new NNMenu(settings));
+				nnmenu->menu();
 			} break;
 			case 'd': case 'D':{
 				cin.clear();

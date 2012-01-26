@@ -381,12 +381,16 @@ void RFClass:: trainModel(){
 			input = cv::imread(imagePath); //Load as grayscale image
 			cv::Mat tempfeaturevector;
 			bool found = false;
+
+			std::vector<cv::Mat> rawFeatures;
+
 			if(settings->segmentation){
 				tempfeaturevector.release();
 				cv::Rect roi = getDatasetROI(filePath,j);
 				if(roi.width*roi.height > 0){
 					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
 					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
+
 					found = true;
 				}else{
 					found = false;
@@ -395,6 +399,8 @@ void RFClass:: trainModel(){
 				if(input.cols > 0){
 					tempfeaturevector.release();
 					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
+
+
 					found = true;
 				}else{
 					found = false;

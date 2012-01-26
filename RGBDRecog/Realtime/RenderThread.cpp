@@ -143,6 +143,7 @@ void RenderThread::run()
 			}
 		}
 
+		/*
 		pcl::ModelCoefficients coefficients;
 		coefficients.values.push_back(1); // Tx
 		coefficients.values.push_back(.5); // Ty
@@ -160,7 +161,7 @@ void RenderThread::run()
 		v.removeText3D("objectN");
 		pcl::PointXYZ* p = new pcl::PointXYZ(1, .5 + .5, 0);// Set to center of object + halfheight of bb + c
 		v.addText3D("Classname", *p, 0.1,  1,1,1,  "objectN");
-
+		*/
 
 		v.spinOnce (1);
 		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
