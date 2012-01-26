@@ -58,7 +58,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			case 'n': case 'N':{
 				cin.clear();
 				cin.sync();
-				cout << "Neirest neigbor is not implemented yet" << endl;
+				cout << "Running the nearest neighbour menu" << endl;
+				boost::shared_ptr<NNMenu> nnmenu(new NNMenu());
+				nnmenu->showMenu();
 			} break;
 			case 'd': case 'D':{
 				cin.clear();

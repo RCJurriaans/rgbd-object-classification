@@ -235,7 +235,7 @@ public:
 		// wait until user quits program with Ctrl-C, but no busy-waiting -> sleep (1);
 		while (true)
 			sleep(1);
-			processInput(cvWaitKey(33));
+			processInput(cvWaitKey(1));
 
 		// stop the grabber
 		grabber->stop();

@@ -8,10 +8,20 @@
 
 using namespace std;
 
-bool NBNN::loadTrainingData(vector<string> classDescriptorPaths)
+bool NBNN::loadTrainingData(std::string filename, std::string dataname, int numClasses)
 {
+	CvFileStorage *dataset= cvOpenFileStorage(filename.c_str(), 0, CV_STORAGE_READ ) ;
+
+	for (unsigned int i = 0; i < numClasses; i++){
+		stringstream nodeName;
+		nodeName << dataname << i;
+		CvFileNode* node = cvGetFileNodeByName(dataset, 0, nodeName.str().c_str());
+		
+	}
+
+
 	//std::numeric_limits<float>::q
-	for (vector<string>::iterator descPath = classDescriptorPaths.begin(); descPath != classDescriptorPaths.end(); ++descPath)
+/*	for (vector<string>::iterator descPath = classDescriptorPaths.begin(); descPath != classDescriptorPaths.end(); ++descPath)
 	{
 		// Type of the file is determined from the content
 		cv::FileStorage fs(*descPath, cv::FileStorage::READ);
@@ -22,7 +32,7 @@ bool NBNN::loadTrainingData(vector<string> classDescriptorPaths)
 		fs["descriptors"] >> fileDescriptors;
 		
 		addInstancesToClass(fileDescriptors);
-	}
+	}*/
 	return true;
 }
 

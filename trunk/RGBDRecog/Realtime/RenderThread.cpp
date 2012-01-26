@@ -42,16 +42,6 @@ void RenderThread::visCallback(pcl::visualization::PCLVisualizer& vis)
 		cout << "pos: " <<cameras[0].pos[0] << " " << cameras[0].pos[1] << " " << cameras[0].pos[2] << endl;
 		cout << "view: " << cameras[0].view[0] << " " << cameras[0].view[1] << " " << cameras[0].view[2] << endl;
 
-		//cameras[0].focal[0] = 1;
-		//vis.setCameraPosition(cameras[0].pos[0], cameras[0].pos[1], cameras[0].pos[2],
-		//						cameras[0].view[0], cameras[0].view[1], cameras[0].view[2]);
-		//vis.setCameraPosition(0,0,25,  1,1,0);
-		//vis.resetCameraViewpoint();
-		//vis.getViewerPose
-		//vis.updateCamera();
-		//cout << "focal: " << cameras[0].focal[0] << " " << cameras[0].focal[1] << " " << cameras[0].focal[2] << endl;
-		//cout << "pos: " <<cameras[0].pos[0] << " " << cameras[0].pos[1] << " " << cameras[0].pos[2] << endl;
-		//cout << "view: " << cameras[0].view[0] << " " << cameras[0].view[1] << " " << cameras[0].view[2] << endl;
 
 	}
 
@@ -70,11 +60,14 @@ void RenderThread::visCallback(pcl::visualization::PCLVisualizer& vis)
 	if(renderResult) {
 		if(!vis.updatePointCloud(cloudCopy)) {
 			vis.addPointCloud(cloudCopy);
+			//vis.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+			vis.addCoordinateSystem (1.0);
+			vis.initCameraParameters ();
 		}
 
-		/*pcl::ModelCoefficients coefficients;
-		coefficients.values.push_back(0); // Tx
-		coefficients.values.push_back(0); // Ty
+		pcl::ModelCoefficients coefficients;
+		coefficients.values.push_back(1); // Tx
+		coefficients.values.push_back(.5); // Ty
 		coefficients.values.push_back(0); // Tz
 		coefficients.values.push_back(0); // Qx
 		coefficients.values.push_back(0); // Qy
@@ -84,11 +77,11 @@ void RenderThread::visCallback(pcl::visualization::PCLVisualizer& vis)
 		coefficients.values.push_back(.5); // height
 		coefficients.values.push_back(1.5); // depth
 		vis.removeAllShapes();
-		vis.addCube(coefficients);*/
+		vis.addCube(coefficients);
 
-		vis.removeText3D("ObjectN");
-		pcl::PointXYZ p(0,0,0);// Set to center of object + halfheight of bb + c
-		vis.addText3D("Classname", p, 0.1,  1,1,1,  "objectN");
+		vis.removeText3D("objectN");
+		pcl::PointXYZ* p = new pcl::PointXYZ(1, .5 + .5, 0);// Set to center of object + halfheight of bb + c
+		vis.addText3D("Classname", *p, 0.1,  1,1,1,  "objectN");
 	}
 }
 
@@ -100,9 +93,14 @@ void RenderThread::run()
 	//cout << "renderthread loading file: " << pcl::io::loadPCDFile<pcl::PointXYZRGB> ("img001.pcd", *cloud_back) <<endl;
 	//cloud = cloud_back;
 
+
+	/*
 	viewer = new pcl::visualization::CloudViewer("VIEWER");
 	//viewer->showCloud(cloud);
 	
+
+
+
 	// Register visualization callback that does the rendering
 	boost::function1<void, pcl::visualization::PCLVisualizer&> f = boost::bind(&RenderThread::visCallback, this, _1);
 	viewer->runOnVisualizationThread(f);
@@ -116,47 +114,56 @@ void RenderThread::run()
 	bool renderResult = false;
 	while(true)
 	{
-		/*
+		boost::thread::yield();
+	}*/
+
+	pcl::visualization::PCLVisualizer v;
+	v.setBackgroundColor (0, 0, 0);
+	//v.addPointCloud<pcl::PointXYZ> (cloud, "sample cloud");
+	//v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+	v.addCoordinateSystem (1.0);
+	v.initCameraParameters ();
+	
+
+	while (!v.wasStopped ())
+	{
+		bool renderResult = false;
 		results->mtx.lock();
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudCopy( new pcl::PointCloud<pcl::PointXYZRGB>());
-			
-			//if( results->getObjects()->size() > 0 )
-			//{
-			//	
-			//	if (results->getObjects()->at(0)->cloud) {
-			//		pcl::PointCloud<pcl::PointXYZRGB>::Ptr toCopy = results->getObjects()->at(0)->cloud;
-			//		//pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZRGB>(*toCopy, *cloudCopy);
-			//		cloudCopy = toCopy;
-			//		renderResult=true;
-
-			//	}
-			//	else
-			//		renderResult=false;
-			//}
-			//else
-			//	renderResult=false;
-			
-			
 			if (results->getScene() ) {
 				cloudCopy = results->getScene();
 				renderResult = true;
 			}
-			else{
-				renderResult = false;
-			}
-
 		results->mtx.unlock();
 
-		if (renderResult) {
-			cout << "rendering copy" << endl;
-			viewer->showCloud(cloudCopy);
+		if(renderResult) {
+			if(!v.updatePointCloud(cloudCopy)) {
+				v.addPointCloud(cloudCopy);
+				v.resetCameraViewpoint();
+			}
 		}
-		else {
-			//cout << "rendering scene"<<endl;
-			//viewer->showCloud(cloud);
-		}*/
-		
-		boost::thread::yield();
+
+		pcl::ModelCoefficients coefficients;
+		coefficients.values.push_back(1); // Tx
+		coefficients.values.push_back(.5); // Ty
+		coefficients.values.push_back(0); // Tz
+		coefficients.values.push_back(0); // Qx
+		coefficients.values.push_back(0); // Qy
+		coefficients.values.push_back(0); // Qz
+		coefficients.values.push_back(0); // Qw
+		coefficients.values.push_back(1); // width
+		coefficients.values.push_back(.5); // height
+		coefficients.values.push_back(1.5); // depth
+		v.removeAllShapes();
+		v.addCube(coefficients);
+
+		v.removeText3D("objectN");
+		pcl::PointXYZ* p = new pcl::PointXYZ(1, .5 + .5, 0);// Set to center of object + halfheight of bb + c
+		v.addText3D("Classname", *p, 0.1,  1,1,1,  "objectN");
+
+
+		v.spinOnce (1);
+		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 	}
 }
 
