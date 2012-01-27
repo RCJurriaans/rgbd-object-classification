@@ -18,7 +18,7 @@
 #include <pcl/range_image/range_image.h>
 
 boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
-	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, boost::shared_ptr<pcl::PointIndices> inliers, boost::shared_ptr<pcl::ModelCoefficients> coeff)
+	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, boost::shared_ptr<pcl::PointIndices> inliers)
 {
 	int nmax;
 
@@ -46,7 +46,7 @@ boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZR
 		}
 		else {
 			mask->data[j*mask->step[0]+i*mask->step[1]] = 255;
-			//inliers->indices.push_back(n); 
+			inliers->indices.push_back(n);
 		}
 	}
 
@@ -56,23 +56,21 @@ boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZR
 boost::shared_ptr<cv::Mat>
 	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
 {
-	boost::shared_ptr<pcl::PointIndices> inliers;
-	boost::shared_ptr<pcl::ModelCoefficients> coeff;
-
-	return getMask(input, background, inliers, coeff);
+	boost::shared_ptr<pcl::PointIndices> inliers(new pcl::PointIndices);
+	return getMask(input, background, inliers);
 }
 
 boost::shared_ptr<cv::Mat>
-	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers, boost::shared_ptr<pcl::ModelCoefficients> coeff)
+	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers)
 {
 	switch( crtMethod ) {
 	case SegBack:
-		return getMask(input, this->background, inliers, coeff);
+		return getMask(input, this->background, inliers);
 		break;
 	case SegObj:
 		break;
 	case SegPlane:
-		return getPlaneMask(input);//, inliers, coeff);
+		return getPlaneMask(input, inliers);
 		break;
 	case SegNormHist:
 		break;
@@ -84,28 +82,14 @@ boost::shared_ptr<cv::Mat>
 }
 
 boost::shared_ptr<cv::Mat>
-	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::ModelCoefficients> coeff, boost::shared_ptr<pcl::PointIndices> inliers)
-{
-	return getMask(input, inliers, coeff);
-}
-
-boost::shared_ptr<cv::Mat>
-	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers)
-{
-	boost::shared_ptr<pcl::ModelCoefficients> coeff;
-	return getMask(input, inliers, coeff);
-}
-
-boost::shared_ptr<cv::Mat>
 	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
 {
-	boost::shared_ptr<pcl::PointIndices> inliers;
-	boost::shared_ptr<pcl::ModelCoefficients> coeff;
-	return getMask(input, inliers, coeff);
+	boost::shared_ptr<pcl::PointIndices> inliers(new pcl::PointIndices);
+	return getMask(input, inliers);
 }
 
 boost::shared_ptr<cv::Mat>
-	SegmentCloud::getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input) //,  boost::shared_ptr<pcl::PointIndices> objectinliers, boost::shared_ptr<pcl::ModelCoefficients> coeff)
+	SegmentCloud::getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,  boost::shared_ptr<pcl::PointIndices> objectinliers)
 {
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -154,6 +138,7 @@ boost::shared_ptr<cv::Mat>
 		}
 		else{
 			mask->data[j*mask->step[0]+i*mask->step[1]] = 255;
+			objectinliers->indices.push_back(n);
 		}
 	}
 

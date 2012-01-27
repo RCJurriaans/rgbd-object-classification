@@ -24,20 +24,12 @@ public:
 
 	  // Mask getting function, uses internally stored background
 	  boost::shared_ptr<cv::Mat>
-		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers,  boost::shared_ptr<pcl::ModelCoefficients> coeff);
+		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers);
 
 	  // Overloaded functions
+	 
 	  boost::shared_ptr<cv::Mat>
-		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::ModelCoefficients> coeff, boost::shared_ptr<pcl::PointIndices> inliers);
-
-	  boost::shared_ptr<cv::Mat>
-		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::ModelCoefficients> coeff);	
-
-	  boost::shared_ptr<cv::Mat>
-		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers);	
-
-	  boost::shared_ptr<cv::Mat>
-		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);	
 
 	  boost::shared_ptr<cv::Mat>
 		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background);
@@ -45,14 +37,13 @@ public:
 
 	  // Main implementation of background-subtraction mask calculation
 	  boost::shared_ptr<cv::Mat>
-		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, boost::shared_ptr<pcl::PointIndices> inliers, boost::shared_ptr<pcl::ModelCoefficients> coeff);
+		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, boost::shared_ptr<pcl::PointIndices> inliers);
 
 
 	  // Main implementation of plane-subtraction mask calculation
 	  boost::shared_ptr<cv::Mat>
-		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
-	  //,  boost::shared_ptr<pcl::PointIndices> inliers, boost::shared_ptr<pcl::ModelCoefficients> coeff);
-
+		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> objectinliers);
+	  
 
 	  // Gets a Region Of Interest. Use mask as input if you have one already.
 	  cv::Rect getROI(boost::shared_ptr<const cv::Mat> mask);
