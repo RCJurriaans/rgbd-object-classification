@@ -27,7 +27,6 @@ public:
 		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers);
 
 	  // Overloaded functions
-	 
 	  boost::shared_ptr<cv::Mat>
 		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);	
 
@@ -54,6 +53,18 @@ public:
 	  cv::Rect getROI(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
 	  {return getROI(getMask(input, background));}
 
+
+	  // Returns a vector of cv::rects containing all regions of interest
+	  boost::shared_ptr<std::vector<cv::Rect> > 
+		  getROIS(boost::shared_ptr<const cv::Mat> mask);
+
+	  boost::shared_ptr<std::vector<cv::Rect> >
+		  getROIS(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	  {return getROIS(getMask(input));}
+
+	  boost::shared_ptr<std::vector<cv::Rect> >
+		  getROIS(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
+	  {return getROIS(getMask(input, background));}
 
 	  // Cuts out a rectangular, organised cloud from an input cloud
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
