@@ -64,7 +64,7 @@ void RenderThread::visCallback(pcl::visualization::PCLVisualizer& vis)
 			vis.addCoordinateSystem (1.0);
 			vis.initCameraParameters ();
 		}
-
+		/*
 		pcl::ModelCoefficients coefficients;
 		coefficients.values.push_back(1); // Tx
 		coefficients.values.push_back(.5); // Ty
@@ -78,10 +78,11 @@ void RenderThread::visCallback(pcl::visualization::PCLVisualizer& vis)
 		coefficients.values.push_back(1.5); // depth
 		vis.removeAllShapes();
 		vis.addCube(coefficients);
-
+		
 		vis.removeText3D("objectN");
 		pcl::PointXYZ* p = new pcl::PointXYZ(1, .5 + .5, 0);// Set to center of object + halfheight of bb + c
 		vis.addText3D("Classname", *p, 0.1,  1,1,1,  "objectN");
+		*/
 	}
 }
 
@@ -142,7 +143,7 @@ void RenderThread::run()
 				v.resetCameraViewpoint();
 			}
 		}
-
+		/*
 		/*
 		pcl::ModelCoefficients coefficients;
 		coefficients.values.push_back(1); // Tx
@@ -157,7 +158,7 @@ void RenderThread::run()
 		coefficients.values.push_back(1.5); // depth
 		v.removeAllShapes();
 		v.addCube(coefficients);
-
+		
 		v.removeText3D("objectN");
 		pcl::PointXYZ* p = new pcl::PointXYZ(1, .5 + .5, 0);// Set to center of object + halfheight of bb + c
 		v.addText3D("Classname", *p, 0.1,  1,1,1,  "objectN");

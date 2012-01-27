@@ -49,19 +49,19 @@ void ClassificationThread::run()
 			modes.push_back(false);
 			modes.push_back(false);
 			modes.push_back(true);
-
+			/*
 			// Classify using RF classifier
 			if( !(ROI.x == 0 && ROI.y == 0 && ROI.width == 0 && ROI.height == 0)) {
 				cv::Mat features = extractor->extractFeatures( modes, *img, ROI );
 				if (features.rows != 0 && features.cols != 0)
 					predictedClass = rf->predict(features);
 			}
-
+			*/
 			// Classify using NBNN:
 			/*vector<cv::Mat> features = extractor->extractRawFeatures(modes, *img, ROI);
 			predictedClass = nn->classify(features);*/
 
-			cout << "Predicted class: "<< predictedClass << endl;
+			//cout << "Predicted class: "<< predictedClass << endl;
 			boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, ROI, coeffs, predictedClass) );
 			
 			// Return output to main thread
