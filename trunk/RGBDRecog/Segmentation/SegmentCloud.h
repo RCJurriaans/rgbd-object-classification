@@ -67,13 +67,6 @@ public:
 	  {return getROIS(getMask(input, background));}
 
 
-	  // get coefficients by supplying a ROI or a vector of ROIS
-	  pcl::ModelCoefficients
-		  getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
-
-	  boost::shared_ptr<std::vector<pcl::ModelCoefficients> >
-		  getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
-
 	  // Cuts out a rectangular, organised cloud from an input cloud
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		  getWindowCloud(const cv::Rect& ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
@@ -90,6 +83,13 @@ public:
 		  getWindowCloud(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
 	  {return getWindowCloud( getROI(getMask(input, background)), input);}
 
+
+	  // get coefficients by supplying a ROI or a vector of ROIS
+	  pcl::ModelCoefficients
+		  getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+
+	  boost::shared_ptr<std::vector<pcl::ModelCoefficients> >
+		  getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
 
 	  // Gets an unorganised cloud, by copying only nonzero mask-points.
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr

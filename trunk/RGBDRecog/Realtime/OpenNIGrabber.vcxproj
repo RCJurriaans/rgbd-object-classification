@@ -57,7 +57,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OPEN_NI_LIB);$(PCL_ROOT)\lib;$(PCL_ROOT)\3rdParty\Eigen\bin;$(PCL_ROOT)\3rdParty\qhull\lib;$(PCL_ROOT)\3rdParty\VTK 5.8.0\lib\vtk-5.8;$(PCL_ROOT)\3rdParty\Boost\lib;$(OPENCV_DIR)\lib\Debug;$(SolutionDir)\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openNI.lib;pcl_io-gd.lib;pcl_common-gd.lib;pcl_visualization-gd.lib;pcl_filters-gd.lib;pcl_sample_consensus-gd.lib;pcl_segmentation-gd.lib;pcl_range_image-gd.lib;pcl_kdtree-gd.lib;pcl_features-gd.lib;pcl_search-gd.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;opencv_flann231d.lib;opencv_features2d231d.lib;Segmentation.lib;Classification.lib;qhullstatic_d.lib;vtkCommon-gd.lib;vtkRendering-gd.lib;vtkHybrid-gd.lib;vtkGraphics-gd.lib;vtkverdict-gd.lib;vtkImaging-gd.lib;vtkIO-gd.lib;vtkFiltering-gd.lib;vtkDICOMParser-gd.lib;vtkNetCDF_cxx-gd.lib;vtkmetaio-gd.lib;vtksys-gd.lib;vtksqlite-gd.lib;vtkpng-gd.lib;vtktiff-gd.lib;vtkzlib-gd.lib;vtkjpeg-gd.lib;vtkexpat-gd.lib;vtkftgl-gd.lib;vtkfreetype-gd.lib;opengl32.lib;vtkexoIIc-gd.lib;vtkNetCDF-gd.lib;vfw32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openNI.lib;pcl_io-gd.lib;pcl_common-gd.lib;pcl_visualization-gd.lib;pcl_filters-gd.lib;pcl_sample_consensus-gd.lib;pcl_segmentation-gd.lib;pcl_kdtree-gd.lib;pcl_features-gd.lib;pcl_search-gd.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;opencv_flann231d.lib;opencv_features2d231d.lib;Segmentation.lib;Classification.lib;qhullstatic_d.lib;vtkCommon-gd.lib;vtkRendering-gd.lib;vtkHybrid-gd.lib;vtkGraphics-gd.lib;vtkverdict-gd.lib;vtkImaging-gd.lib;vtkIO-gd.lib;vtkFiltering-gd.lib;vtkDICOMParser-gd.lib;vtkNetCDF_cxx-gd.lib;vtkmetaio-gd.lib;vtksys-gd.lib;vtksqlite-gd.lib;vtkpng-gd.lib;vtktiff-gd.lib;vtkzlib-gd.lib;vtkjpeg-gd.lib;vtkexpat-gd.lib;vtkftgl-gd.lib;vtkfreetype-gd.lib;opengl32.lib;vtkexoIIc-gd.lib;vtkNetCDF-gd.lib;vfw32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -69,7 +69,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(PCL_ROOT)\3rdParty\flann\include;$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\Boost\include;$(PCL_ROOT)\3rdParty\VTK 5.8.0\include\vtk-5.8;$(OPEN_NI_INCLUDE);$(OPENCV_DIR)\include\;$(SolutionDir)\Segmentation;$(SolutionDir)\Classification</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Zm300 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm600 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

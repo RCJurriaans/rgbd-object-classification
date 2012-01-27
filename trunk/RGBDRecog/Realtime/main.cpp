@@ -289,17 +289,17 @@ protected:
 	boost::signals2::connection renderCloudRGBConnection;
 };
 
-
+/*
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
 }
+*/
 
 
 
-/*
 int	main (int argc, char** argv)
 {
 	SegmentCloud SC;
@@ -333,8 +333,11 @@ int	main (int argc, char** argv)
 	//SC.getUnorgCloud();
 	//SC.getROI();
 	//cloud_img = SC.getWindowCloud(cloud_img, cloud_back);
-	cv::imshow("aaa", *SC.getMask(cloud_img, cloud_back));
+	cv::imshow("Mask", *SC.getMask(cloud_img, cloud_back));
+	SC.getCoefficients(SC.getROI(cloud_img, cloud_back), cloud_img);
+	
 	cvWaitKey();
+	cv::destroyWindow("Mask");
 	time_t end = time(NULL);
 
 	std::cout << "Ending " << cloud_img->width << " " << cloud_img->height <<  std::endl;
@@ -348,4 +351,3 @@ int	main (int argc, char** argv)
 
 
 }
-*/

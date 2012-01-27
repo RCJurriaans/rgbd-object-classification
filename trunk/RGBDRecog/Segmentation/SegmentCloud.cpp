@@ -251,7 +251,7 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 }
 
 	  pcl::ModelCoefficients
-		  getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+		  SegmentCloud::getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
 	  {
 		  pcl::ModelCoefficients coeff;
 
@@ -272,7 +272,7 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 		  {
 			  for(int j=jmin; j<jmax; j++)
 			  {
-				  crtPoint = input->at(j,i);
+				  crtPoint = input->at(i,j);
 				  if(crtPoint.x<minx){minx=crtPoint.x;}
 				  if(crtPoint.y<miny){miny=crtPoint.y;}
 				  if(crtPoint.z<minz){minz=crtPoint.z;}
@@ -281,10 +281,12 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 				  if(crtPoint.y>maxy){maxy=crtPoint.y;}
 				  if(crtPoint.z>maxz){maxz=crtPoint.z;}
 
+				  if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
 				  avgx+=crtPoint.x;
 				  avgy+=crtPoint.y;
 				  avgz+=crtPoint.z;
 				  pointcount++;
+				  }
 
 			  }
 		  }
@@ -300,11 +302,13 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 		  coeff.values.push_back(maxy-miny); // height
 		  coeff.values.push_back(maxz-minz); // depth
 
+		  std::cout << coeff << std::endl;
+
 		  return coeff;
 	  }
 
 	  boost::shared_ptr<std::vector<pcl::ModelCoefficients> >
-		  getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+		  SegmentCloud::getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
 	  {
 		  boost::shared_ptr<std::vector<pcl::ModelCoefficients> > coeffs;
 		  for(int i=0; i<ROIS->size() ; i++)
