@@ -250,6 +250,70 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 	return cv::Rect(minx, miny, boxWidth, boxHeight);
 }
 
+	  pcl::ModelCoefficients
+		  getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	  {
+		  pcl::ModelCoefficients coeff;
+
+		  float minx=0, miny=0, minz=0;
+		  float maxx=0, maxy=0, maxz=0;
+		  float avgx=0, avgy=0, avgz=0;
+
+		  int imin = ROI.x;
+		  int imax = imin+ROI.width;
+		  int jmin = ROI.y;
+		  int jmax = jmin+ROI.height;
+		  
+		  int pointcount=0;
+
+
+		  pcl::PointXYZRGB crtPoint;
+		  for(int i=imin; i<imax; i++)
+		  {
+			  for(int j=jmin; j<jmax; j++)
+			  {
+				  crtPoint = input->at(j,i);
+				  if(crtPoint.x<minx){minx=crtPoint.x;}
+				  if(crtPoint.y<miny){miny=crtPoint.y;}
+				  if(crtPoint.z<minz){minz=crtPoint.z;}
+
+				  if(crtPoint.x>maxx){maxx=crtPoint.x;}
+				  if(crtPoint.y>maxy){maxy=crtPoint.y;}
+				  if(crtPoint.z>maxz){maxz=crtPoint.z;}
+
+				  avgx+=crtPoint.x;
+				  avgy+=crtPoint.y;
+				  avgz+=crtPoint.z;
+				  pointcount++;
+
+			  }
+		  }
+
+		  coeff.values.push_back(avgx / pointcount); // Tx
+		  coeff.values.push_back(avgy / pointcount); // Ty
+		  coeff.values.push_back(avgz / pointcount); // Tz
+		  coeff.values.push_back(0); // Qx
+		  coeff.values.push_back(0); // Qy
+		  coeff.values.push_back(0); // Qz
+		  coeff.values.push_back(0); // Qw
+		  coeff.values.push_back(maxx-minx); // width
+		  coeff.values.push_back(maxy-miny); // height
+		  coeff.values.push_back(maxz-minz); // depth
+
+		  return coeff;
+	  }
+
+	  boost::shared_ptr<std::vector<pcl::ModelCoefficients> >
+		  getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	  {
+		  boost::shared_ptr<std::vector<pcl::ModelCoefficients> > coeffs;
+		  for(int i=0; i<ROIS->size() ; i++)
+		  {
+			  coeffs->push_back(getCoefficients(ROIS->at(i), input));
+		  }
+		  return coeffs;
+	  }
+
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getWindowCloud(const cv::Rect& ROI,
 	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)

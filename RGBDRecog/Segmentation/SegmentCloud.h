@@ -42,7 +42,7 @@ public:
 	  // Main implementation of plane-subtraction mask calculation
 	  boost::shared_ptr<cv::Mat>
 		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> objectinliers);
-	  
+
 
 	  // Gets a Region Of Interest. Use mask as input if you have one already.
 	  cv::Rect getROI(boost::shared_ptr<const cv::Mat> mask);
@@ -65,6 +65,14 @@ public:
 	  boost::shared_ptr<std::vector<cv::Rect> >
 		  getROIS(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background)
 	  {return getROIS(getMask(input, background));}
+
+
+	  // get coefficients by supplying a ROI or a vector of ROIS
+	  pcl::ModelCoefficients
+		  getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+
+	  boost::shared_ptr<std::vector<pcl::ModelCoefficients> >
+		  getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
 
 	  // Cuts out a rectangular, organised cloud from an input cloud
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
