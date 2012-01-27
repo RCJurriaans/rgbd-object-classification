@@ -147,6 +147,64 @@ boost::shared_ptr<cv::Mat>
 }
 
 
+boost::shared_ptr<std::vector<cv::Rect> > SegmentCloud::getROIS(boost::shared_ptr<const cv::Mat> mask)
+{
+	boost::shared_ptr<std::vector<cv::Rect> > rois(new std::vector<cv::Rect>);
+	IplImage ipl_bmask = *mask;//cvCreateImage(cvSize(BooleanMask.size().height,BooleanMask.size().width),8,1);
+	//std::cout << "Created ipl version of mask " <<  std::endl;
+	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
+	//BwImage enter(ipl_bmask);
+	imcalc.Calculate(&ipl_bmask, 25);
+		
+	int minx;
+	int miny;
+	int mean_x;
+	int mean_y;
+	int boxWidth;
+	int boxHeight;
+	int rc;
+
+	for(rc = 0; rc<25 ; rc++){
+
+
+		mean_x = imcalc.getmean(rc,0);
+		if(mean_x==0){break;}
+
+		mean_y = imcalc.getmean(rc,1);
+
+		boxWidth  = imcalc.getRegions(rc,0);
+		boxHeight = imcalc.getRegions(rc,1);
+
+		boxWidth = static_cast<int>(boxWidth*1.5);
+		boxHeight = static_cast<int>(boxHeight*1.5);
+
+		minx = mean_x-(boxWidth/2);
+		miny = mean_y-(boxHeight/2); 
+
+		if(minx<0){
+			boxWidth -= minx;
+			minx = 0;
+		}
+		if(miny<0){
+			boxHeight -= miny;
+			miny = 0;
+		}
+
+		//fixed these errors checks //Tijmen
+		if(minx+boxWidth>ipl_bmask.width){
+			boxWidth = (ipl_bmask.width-minx)-1;
+		}
+		if(miny+boxHeight>ipl_bmask.height){
+			boxHeight = (ipl_bmask.height-miny)-1;
+		}
+
+		rois->push_back(cv::Rect(minx, miny, boxWidth, boxHeight));
+	}
+
+	std::cout << "Found " << rc << " regions" << std::endl;
+	return rois;
+}
+
 cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 {
 	IplImage ipl_bmask = *mask;//cvCreateImage(cvSize(BooleanMask.size().height,BooleanMask.size().width),8,1);
@@ -208,9 +266,9 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getWindowCloud(const cv::Re
 	int boxHeight = ROI.height;
 
 	int jmin = mean_x-boxWidth/2;
-	int jmax = mean_x+boxWidth/2;
+	int jmax = mean_x+boxWidth/2-1;
 	int imin = mean_y-boxHeight/2;
-	int imax = mean_y+boxHeight/2;
+	int imax = mean_y+boxHeight/2-1;
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr windowCloud  (new pcl::PointCloud<pcl::PointXYZRGB>);
 
