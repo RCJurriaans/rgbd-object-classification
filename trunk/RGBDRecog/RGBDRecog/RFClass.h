@@ -33,6 +33,8 @@ private:
 
 	void rfTestingmenu();
 
+	vector<int> DrawWithReplacement(int maxrange, int amount);
+
 	cv::Rect readRect(const string filePath);
 	cv::Rect getDatasetROI(string folderpath, int j);
 
@@ -41,6 +43,10 @@ private:
 	vector<string> classNames;
 	vector<int> trainigPicNum;
 	vector<int> testPicNum;
+
+	vector<vector<int>> trainingdataID;
+	vector<vector<int>> testdataID;
+
 	int SIFTThreshScale;
 	int dicsize;
 

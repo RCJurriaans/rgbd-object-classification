@@ -4,8 +4,6 @@
 // stdafx.h
 #include <string>
 #include "FeatureVector.h"
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include "FeatureData.h"
 using namespace std;
 
@@ -95,5 +93,8 @@ private:
 
 	//helper function that adds a descriptor to the tempfeaturevector
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector,cv::Mat & descriptors, int mode);
+
+	boost::shared_ptr<cv::Mat> calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals);
+	pcl::PointCloud<pcl::Normal>::Ptr calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud);
 };
 
