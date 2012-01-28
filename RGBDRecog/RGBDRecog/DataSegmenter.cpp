@@ -114,12 +114,9 @@ void DataSegmenter::generateBoundingBoxes(){
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr background (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-	//background pathname
-	string backgroundPath = getenv("RGBDDATA_DIR");
-	backgroundPath += "\\Background\\img001.pcd";
+	string backgroundPath;
 
-	//load the background data
-	pcl::io::loadPCDFile<pcl::PointXYZRGB> (backgroundPath, *background);
+
 
 	//set the proper segmentation method to background subtraction
 	segmentation->setSegMethod(segmentation->SegBack); //set to back projection
@@ -127,16 +124,20 @@ void DataSegmenter::generateBoundingBoxes(){
 
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
-		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
+		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << "_train" << endl;
 
-		for(int j = 1; j <= trainigPicNum[i]; j++){ //for each image
+		for(int j = 1; j <= trainigPicNum[i] + testPicNum[i]; j++){ //for each image
 			imagePath.clear();
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
 			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
 			outputImg = filePath + "img" + convertNumberToFLString(3,j) + "seg" + ".bmp";
-			
+			backgroundPath = filePath + "bg" + convertNumberToFLString(3,j) + ".pcd";
+
+			//load the background data
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (backgroundPath, *background);
+
 			input.release();
 			input = cv::imread(imagePath);
 
@@ -149,34 +150,7 @@ void DataSegmenter::generateBoundingBoxes(){
 
 			//write the rectangle to a file
 			writeRect(outputPath,rect);
-			if(rect.width*rect.height > 0){
-				cv::imwrite(outputImg, input(rect));
-			}
-		}
-		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
-		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
-		cout << "starting processing class: " << classNames[i] << "_test" << endl;
-		for(int j = 1; j <= testPicNum[i]; j++){ //for each image
-			imagePath.clear();
-			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
-			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
-			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
-			outputImg = filePath + "img" + convertNumberToFLString(3,j) + "seg" + ".bmp";
-
-			cout << "processing on image: " << classNames[i] << "_" << j << endl;
-			
-			input.release();
-			input = cv::imread(imagePath);
-
-			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
-
-			//get region of interest from the cloud data
-			cv::Rect rect = segmentation->getROI(cloud, background);
-
-			//write the rectangle to a file
-			writeRect(outputPath,rect);
-
-			if(rect.width*rect.height > 0){
+			if(rect.width > 0 && rect.height > 0){
 				cv::imwrite(outputImg, input(rect));
 			}
 		}

@@ -27,5 +27,8 @@
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/video/video.hpp>
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 #include <pcl/features/normal_3d.h>
+#include <pcl/features/fpfh.h>

@@ -51,11 +51,12 @@ void ClassificationThread::run()
 			modes.push_back(true);
 			/*
 			// Classify using RF classifier
-			if( !(ROI.x == 0 && ROI.y == 0 && ROI.width == 0 && ROI.height == 0)) {
-				cv::Mat features = extractor->extractFeatures( modes, *img, ROI );
-				if (features.rows != 0 && features.cols != 0)
-					predictedClass = rf->predict(features);
-			}
+			//if( ROI.x == 0 && ROI.y == 0 && ROI.width == 0 && ROI.height == 0) {
+			//	predictedClass = 0;
+			//} else {
+			//	cv::Mat features = extractor->extractFeatures( modes, *img, ROI );
+			//	predictedClass = rf->predict(features);
+			//}
 			*/
 			// Classify using NBNN:
 			/*vector<cv::Mat> features = extractor->extractRawFeatures(modes, *img, ROI);

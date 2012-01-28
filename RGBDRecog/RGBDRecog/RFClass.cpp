@@ -82,9 +82,55 @@ RFClass::RFClass(Settings * set){
 
 	featureExtractor = new FeatureExtractor();
 	rfclassifier = new RFClassifier();
+
+
+	for(int i = 0; i < amountOfClasses; i++){
+		int picNumSum = testPicNum[i] + trainigPicNum[i];
+		testdataID.push_back(DrawWithReplacement(picNumSum,testPicNum[i]));
+		vector<int> temptrainingIDs;
+		for(int j = 1; j <= picNumSum; j++){
+			bool found = false;
+			for(unsigned int k = 0; k < testdataID[i].size(); k++){
+				if(testdataID[i][k] == j){
+					found = true;
+				}
+			}
+			if(!found){
+				temptrainingIDs.push_back(j);
+			}
+		}
+		for (int j=1; j<(trainigPicNum[i]); j++) { //randomly shuffle
+            int r = j + (rand() % (trainigPicNum[i]-j)); // Random remaining position.
+            int temp = temptrainingIDs[j]; temptrainingIDs[j] = temptrainingIDs[r]; temptrainingIDs[r] = temp;
+        }
+		trainingdataID.push_back(temptrainingIDs);
+	}
 }
 
+//works for range [1,maxrange]
+vector<int> RFClass:: DrawWithReplacement(int maxrange, int amount){
+	vector<int> returnvalues;
+	if(maxrange <= amount){
+		return returnvalues; //makes certain that the function stops
+	}
 
+	while(returnvalues.size() < amount){
+		int drawnValue = rng->operator()(maxrange);
+		bool found = false;
+		for(unsigned int j = 0; j < returnvalues.size(); j++){
+			if(returnvalues[j] == drawnValue){
+				found = true;
+			}
+		}
+		if(!found){
+			returnvalues.push_back(drawnValue);
+		}
+	}
+	for(unsigned int i = 0; i < returnvalues.size(); i++){
+		returnvalues[i] ++;
+	}
+	return returnvalues;
+}
 
 RFClass::~RFClass(void){
 	delete rng;
@@ -164,19 +210,19 @@ void RFClass::createCodebook(int mode){
 
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
-		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
+		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = 1; j <= floor(static_cast<double>(trainigPicNum[i])/2); j++){ //for each image
-
+		for(int j = 0; j < floor(static_cast<double>(trainigPicNum[i])/2); j++){ //for each image
+			int chosenImgID = trainingdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
-				imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
 			}else{
-				imagePath = filePath + "img" + convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
 			}
 			bool found = false;
 
-			cout << "processing on image: " << classNames[i] << "_" << j;
+			cout << "processing on image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath);
 
@@ -186,7 +232,7 @@ void RFClass::createCodebook(int mode){
 			vector<cv::Mat> RawFeatures;
 			if(settings->segmentation){
 				RawFeatures.clear();
-				cv::Rect roi = getDatasetROI(filePath,j);
+				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//RawFeatures = featureExtractor->extractRawFeatures(modes,input,roi);
 					RawFeatures = featureExtractor->extractRawFeatures(modes,input);
@@ -367,16 +413,17 @@ void RFClass:: trainModel(){
 
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
-		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
+		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = static_cast<int>(floor(static_cast<double>(trainigPicNum[i])/2))+1; j <= trainigPicNum[i]; j++){ //for each image
+		for(int j = static_cast<int>(floor(static_cast<double>(trainigPicNum[i])/2)); j < trainigPicNum[i]; j++){ //for each image
+			int chosenImgID = trainingdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
-				imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
 			}else{
-				imagePath = filePath + "img" + convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
 			}
-			cout << "processing on image: " << classNames[i] << "_" << j;
+			cout << "processing on image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath); //Load as grayscale image
 			cv::Mat tempfeaturevector;
@@ -386,7 +433,7 @@ void RFClass:: trainModel(){
 
 			if(settings->segmentation){
 				tempfeaturevector.release();
-				cv::Rect roi = getDatasetROI(filePath,j);
+				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
 					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
@@ -502,22 +549,23 @@ void RFClass::rfTesting(){
 
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
-		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
+		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "procesing class: " << classNames[i] << endl;
-		for(int j = 1; j <= testPicNum[i]; j++){ //for each image
+		for(int j = 0; j < testPicNum[i]; j++){ //for each image
+			int chosenImgID = testdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
-				imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
 			}else{
-				imagePath = filePath + "img" + convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
 			}
-			cout << "processing image: " << classNames[i] << "_" << j;
+			cout << "processing image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath); //Load rgb image
 			result.release();
 			bool found = false;
 			if(settings->segmentation){
-				cv::Rect roi = getDatasetROI(filePath,j);
+				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//result = featureExtractor->extractFeatures(settings->modes,input,roi);
 					result = featureExtractor->extractFeatures(settings->modes,input);
