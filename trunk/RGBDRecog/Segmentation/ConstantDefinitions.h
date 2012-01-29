@@ -10,6 +10,6 @@
 #define _XMEAN 0
 #define _YMEAN 1
 #define _CLUSTERSPERCOLOR 2
-#define _SMOOTHRANGE 5
-#define _PIXEL_LIMIT 20
+#define _SMOOTHRANGE 15
+#define _PIXEL_LIMIT 300
 #define _BOXFACTOR 40

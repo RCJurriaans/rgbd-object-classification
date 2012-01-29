@@ -13,8 +13,8 @@ public:
 
 	SegmentCloud() :
 	  crtMethod(SegBack),
-		  threshold(0.05),
-		  maxDistanceFilter(2),
+		  threshold(0.03),
+		  maxDistanceFilter(3),
 		  minDistanceFilter(0.1)
 	  {}
 
@@ -98,6 +98,9 @@ public:
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		  getUnorgCloud(boost::shared_ptr<const cv::Mat> mask, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
 
+	  //
+	  boost::shared_ptr<cv::Mat> denoizeMask( boost::shared_ptr<cv::Mat> latestMask );
+
 	  // Getters and setters
 	  inline SegmentationMethod getSegMethod(){return crtMethod;}
 	  inline void setSegMethod(SegmentationMethod method) {crtMethod = method;}
@@ -117,6 +120,8 @@ protected:
 	double minDistanceFilter;
 	SegmentationMethod crtMethod;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr background;
+
+	std::vector<boost::shared_ptr<cv::Mat> > maskHistory;
 
 private:
 

@@ -30,11 +30,16 @@ void ClassificationThread::run()
 
 			segmenter.setBackground(bgCloud);
 			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud);
+			mask = segmenter.denoizeMask( mask );
 			boost::shared_ptr<std::vector<cv::Rect> > ROIs = segmenter.getROIS(mask);
 			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 
+			
 
 			//for (int obj = 0; obj < ROIs->size(); obj++)
+
+			vector<boost::shared_ptr<FoundObject> > objs;
+
 			for(vector<cv::Rect>::iterator ROI = ROIs->begin(); ROI != ROIs->end(); ROI++)
 			{
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentedCloud = segmenter.getWindowCloud(*ROI, cloud);
@@ -66,21 +71,22 @@ void ClassificationThread::run()
 
 				//cout << "Predicted class (RF): "<< predictedClass << endl;
 				//cout << "Predicted class (NN): "<< predictedClass2 << endl;
-				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassNN) );
+				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
+				objs.push_back(object);
 
 
+				
+				//break;
+			}
 
-				// Return output to main thread
+			// Return output to main thread
 			results->mtx.lock();
 				results->clearObjects();
-				results->addObject(object);
+				for(int i=0; i < objs.size();i++)
+					results->addObject(objs.at(i));
 				results->setMask(mask);
 				results->setScene(cloud);
 			results->mtx.unlock();
-				break;
-			}
-
-			
 
 		}
 		//Sleep(2000);

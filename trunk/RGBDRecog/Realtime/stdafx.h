@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <tchar.h>
-
+#include <algorithm>
 #include <math.h>
 
 #include <opencv2\opencv.hpp>
