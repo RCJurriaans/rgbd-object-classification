@@ -366,9 +366,9 @@ SegmentCloud::getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::C
 	coeff.values.push_back(0); // Qy
 	coeff.values.push_back(0); // Qz
 	coeff.values.push_back(0); // Qw
-	coeff.values.push_back(sqrt(std::max(avg2x - avgx*avgx, 0.001))*3);//maxx-minx);//(sqrt(sigmax)*3);//; // width
-	coeff.values.push_back(sqrt(std::max(avg2y - avgy*avgy, 0.001))*3);//maxy-miny);//(sqrt(sigmay)*3);//maxy-miny); // height
-	coeff.values.push_back(sqrt(std::max(avg2z - avgz*avgz, 0.001))*3);//maxz-minz);//(sqrt(sigmaz)*3);//maxz-minz); // depth
+	coeff.values.push_back(sqrt(std::max(avg2x - avgx*avgx, 0.001))*4);//maxx-minx);//(sqrt(sigmax)*3);//; // width
+	coeff.values.push_back(sqrt(std::max(avg2y - avgy*avgy, 0.001))*4);//maxy-miny);//(sqrt(sigmay)*3);//maxy-miny); // height
+	coeff.values.push_back(sqrt(std::max(avg2z - avgz*avgz, 0.001))*4);//maxz-minz);//(sqrt(sigmaz)*3);//maxz-minz); // depth
 	//coeff.values.push_back(maxx-minx); // width
 	//coeff.values.push_back(maxy-miny); // height
 	//coeff.values.push_back(maxz-minz); // depth
@@ -487,3 +487,30 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 	*/
 }
 
+boost::shared_ptr<cv::Mat> SegmentCloud::denoizeMask( boost::shared_ptr<cv::Mat> latestMask )
+{
+	boost::shared_ptr<cv::Mat> smoothed( new cv::Mat(latestMask->clone()) );
+
+	maskHistory.push_back( latestMask );
+
+	static const int maxHist = 3;
+	if(maskHistory.size() > maxHist) {
+		maskHistory.erase(maskHistory.begin());
+	}
+
+	for( int i = 0; i < smoothed->cols; i++) {
+		for( int j = 0; j < smoothed->rows; j++) {
+
+			bool hasZero = false;
+			for( int k = 0; k < maskHistory.size(); k++ ){
+				if(maskHistory.at(k)->data[j * smoothed->step[0] + i] == 0)
+					hasZero = true;
+			}
+
+			if(hasZero)
+				smoothed->data[j * smoothed->step[0] + i] = 0;
+		}
+	}
+
+	return smoothed;
+}

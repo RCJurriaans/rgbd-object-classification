@@ -2,9 +2,12 @@
 #include "stdafx.h"
 #include "RenderThread.h"
 
+#include <algorithm>
+using namespace std;
+
 void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie)
 {
-	cout <<"keyboard cb: " << (int)e.getKeyCode() << endl;
+	/*cout <<"keyboard cb: " << (int)e.getKeyCode() << endl;
 	RenderThread* r = static_cast<RenderThread*>(cookie);
 	
 	switch( e.getKeyCode() ) {
@@ -21,7 +24,7 @@ void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie)
 		r->downPressed = r->downPressed == false;
 		break;
 	}
-	r->shiftPressed = e.isShiftPressed();
+	r->shiftPressed = e.isShiftPressed();*/
 	
 	//boost::function<void (int)>* processInput = (boost::function<void (int)>*)cookie;
 	//if(e.keyDown()) {
@@ -29,6 +32,58 @@ void keyboardCB(const pcl::visualization::KeyboardEvent& e, void* cookie)
 	//}
 }
 
+float clamp(float val, float min, float max) {
+	if( val < min ) return min;
+	if( val > max ) return max;
+	return val;
+}
+
+
+inline void addLine( const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, float x1, float y1, float z1, float x2, float y2, float z2, int r = 255, int g = 255, int b = 255)
+{
+	float dx = x2 - x1;
+	float dy = y2 - y1;
+	float dz = z2 - z1;
+	int numpts = sqrt(dx*dx+dy*dy+dz*dz) * 100;
+	for( int i = 0; i < numpts; i++ ) {
+
+		pcl::PointXYZRGB pt;
+		pt.x = x1 + dx * ((float)i / (numpts-1));
+		pt.y = y1 + dy * ((float)i / (numpts-1));
+		pt.z = z1 + dz * ((float)i / (numpts-1));
+
+		uint32_t rgb = (static_cast<uint32_t>(r) << 16 |
+              static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+		pt.rgb = *reinterpret_cast<float*>(&rgb);
+
+		cloud->push_back(pt);
+	}
+}
+
+void addBox( const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, const pcl::ModelCoefficients& m, int r = 255, int g = 255, int b = 255)
+{
+	// Corners (center plus and minus width)
+	float xp = m.values[0] + m.values[7] * 0.5f;
+	float xm = m.values[0] - m.values[7] * 0.5f;
+	float yp = m.values[1] + m.values[8] * 0.5f;
+	float ym = m.values[1] - m.values[8] * 0.5f;
+	float zp = m.values[2] + m.values[9] * 0.5f;
+	float zm = m.values[2] - m.values[9] * 0.5f;
+
+	// Lines between corners
+	addLine( cloud, xp, yp, zp, xm, yp, zp, r, g, b );
+	addLine( cloud, xp, yp, zp, xp, ym, zp, r, g, b );
+	addLine( cloud, xp, yp, zp, xp, yp, zm, r, g, b );
+	addLine( cloud, xm, yp, zm, xm, yp, zp, r, g, b );
+	addLine( cloud, xm, yp, zm, xp, yp, zm, r, g, b );
+	addLine( cloud, xm, yp, zm, xm, ym, zm, r, g, b );
+	addLine( cloud, xm, ym, zm, xm, ym, zp, r, g, b );
+	addLine( cloud, xm, ym, zm, xp, ym, zm, r, g, b );
+	addLine( cloud, xp, ym, zm, xp, yp, zm, r, g, b );
+	addLine( cloud, xm, ym, zp, xm, yp, zp, r, g, b );
+	addLine( cloud, xp, ym, zm, xp, ym, zp, r, g, b );
+	addLine( cloud, xm, ym, zp, xp, ym, zp, r, g, b );
+}
 
 void RenderThread::run()
 {
@@ -81,38 +136,39 @@ void RenderThread::run()
 			for(int i=0; i < prevNumObj; i++) {
 				// Remove bounding boxes
 				std::string objName = "box" + boost::lexical_cast<std::string>(i);
-				v.removeShape(objName);
+				v.removePointCloud(objName);
 
 				// Remove class texts
 				std::string textName = "text" + boost::lexical_cast<std::string>(i);
 				v.removeText3D(textName);
-
-				//cout << "Removing " << textName << endl;
 			}
 
-			cout << "Num objects: " << objects->size() << endl;
+			//cout << "Num objects: " << objects->size() << endl;
 			for(int i=0; i < objects->size(); i++) {
 
 				// Get bounding box coeffs
 				coefficients = objects->at(i)->getBoundingBox3D();
-				pcl::ModelCoefficients m = coefficients;
+				//pcl::ModelCoefficients* m = new pcl::ModelCoefficients(coefficients);
 
 				// Add bounding box
-				float w = std::max(coefficients.values.at(7), std::max( coefficients.values.at(8), coefficients.values.at(9)));
-				pcl::PointXYZ center(coefficients.values.at(0),coefficients.values.at(1),coefficients.values.at(2));
 				std::string objName = "box" + boost::lexical_cast<std::string>(i);
-				v.addSphere(center, w,.5,.5,.5, objName);
-				//v.addCube(m, objName);
-				//pcl::PointXYZ pt2(coefficients.values.at(0) + .5f,coefficients.values.at(1)+ .5f,coefficients.values.at(2));
-				//v.addLine(center, pt2, objName);
+				//float w = std::max(coefficients.values.at(7), std::max( coefficients.values.at(8), coefficients.values.at(9)));
+				//pcl::PointXYZ center(coefficients.values.at(0),coefficients.values.at(1),coefficients.values.at(2));
+				//v.addSphere(center, w,.2,.2,.2, objName);
+				//v.addCube(coefficients, objName, 0);
+
+				pcl::PointCloud<pcl::PointXYZRGB>::Ptr box( new pcl::PointCloud<pcl::PointXYZRGB>());
+				addBox(box, coefficients);
+				v.addPointCloud(box, objName);
+				v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, objName);
 
 				// Add class text
-				pcl::PointXYZ textLoc( coefficients.values.at(0), coefficients.values.at(1) + coefficients.values.at(8) * 0.5f, coefficients.values.at(2));
 				std::string textName = "text" + boost::lexical_cast<std::string>(i);
-				std::string className = "class " + boost::lexical_cast<std::string>(objects->at(i)->getClassification());
+				std::string className = classNames.at( objects->at(i)->getClassification() );
+				pcl::PointXYZ textLoc( coefficients.values[0] - className.length() * 0.02, coefficients.values[1] - coefficients.values[8] * 0.5 - 0.15, coefficients.values[2]);
 				v.addText3D(className, textLoc, 0.05,  1,1,1,  textName);
 
-				cout << "Adding " << textName << endl;
+				//cout << "Adding " << textName << endl;
 			}
 		}
 		
@@ -121,7 +177,7 @@ void RenderThread::run()
 		prevNumObj = objects->size();
 
 		v.spinOnce (100);
-		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+		boost::this_thread::sleep (boost::posix_time::microseconds (1000));
 //		boost::thread::yield();
 	}
 }
