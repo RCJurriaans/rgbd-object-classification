@@ -20,11 +20,22 @@ public:
 		results(res)
 		,extractor(new FeatureExtractor())
 		,rf(new RFClassifier())//"D:\\randomforestdata_10100000.yml", "randomforestdata_10100000"))
-		,nn()
+		,nn(new NBNN())
 	{
 		extractor->loadCodebooks();
 		rf->read("randomforestdata_10000001.yml", "randomforestdata_10000001");
 		//segmenter.setSegMethod(SegmentCloud::SegPlane);
+
+		cv::FileStorage f("NBNN_10000001.yml", cv::FileStorage::READ);
+		nn->read(f);
+
+		modes.push_back(false);
+		modes.push_back(false);
+		modes.push_back(false);
+		modes.push_back(false);
+		modes.push_back(false);
+		modes.push_back(false);
+		modes.push_back(true);
 	}
 
 	void run();
@@ -34,6 +45,12 @@ public:
 	boost::shared_ptr<FeatureExtractor> extractor;
 	boost::shared_ptr<RFClassifier> rf;
 	boost::shared_ptr<NBNN> nn;
+	SegmentCloud segmenter;
+
+	// State variables
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr bgCloud;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
+	std::vector<bool> modes;
 
 	// Threading
 	boost::mutex& inputMutex;
@@ -41,10 +58,6 @@ public:
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& s_bgCloud;
 
 	boost::shared_ptr<ClassificationResults> results;
-
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr bgCloud;
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
-	SegmentCloud segmenter;
 
 private:
 	ClassificationThread( const ClassificationThread& other ); // non construction-copyable

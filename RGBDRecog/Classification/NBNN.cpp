@@ -9,58 +9,71 @@
 
 using namespace std;
 
-bool NBNN::loadTrainingData(std::string filename, std::string dataname, int numClasses)
+void NBNN::write( cv::FileStorage& f )
 {
-	//CvFileStorage *dataset= cvOpenFileStorage(filename.c_str(), 0, CV_STORAGE_READ ) ;
-
-	//for (unsigned int i = 0; i < numClasses; i++){
-	//	stringstream nodeName;
-	//	nodeName << dataname << i;
-	//	CvFileNode* node = cvGetFileNodeByName(dataset, 0, nodeName.str().c_str());
-	//	
-	//}
-
-
-	//std::numeric_limits<float>::q
-/*	for (vector<string>::iterator descPath = classDescriptorPaths.begin(); descPath != classDescriptorPaths.end(); ++descPath)
+	f << "numClasses" << (int)numClasses;
+	//f << "classes" << "[";
+	for(unsigned int i = 0; i < numClasses; i++)
 	{
-		// Type of the file is determined from the content
-		cv::FileStorage fs(*descPath, cv::FileStorage::READ);
-		
-		//cv::Mat M;
-		//fs["descriptors"] >> M;
-		vector<cv::Mat> fileDescriptors;
-		fs["descriptors"] >> fileDescriptors;
-		
-		addInstancesToClass(fileDescriptors);
-	}*/
-	return true;
+		stringstream classDataName;
+		classDataName << "class" << i;
+		//f << classDataName.str() << classMatchers[i]->getTrainDescriptors() ;
+		f << classDataName.str() <<  "[" << classMatchers[i]->getTrainDescriptors() << "]";
+		//for (int j = 0; j < classMatchers[i]->getTrainDescriptors().size(); j++)
+		//	f << classMatchers[i]->getTrainDescriptors().at(j);
+//		f << "]";
+	}
+	//f << "]";
 }
+
+void NBNN::read( const cv::FileStorage& f )
+{
+	int nc;
+	f["numClasses"] >> nc;
+	cout << "numClasses: " << nc;
+
+	//cv::FileNode classes = f["classes"];
+//	CV_Assert(classes.type() == cv::FileNode::SEQ && classes.size() == numClasses);
+	vector<cv::Mat> classInstances;
+	for(unsigned int i = 0; i < nc; i++)
+	{
+		classInstances.clear();
+		
+		stringstream classDataName;
+		classDataName << "class" << (int)i;
+		f[classDataName.str()] >> classInstances;
+
+		//int a;
+		//f["class3"] >> classInstances;
+		//cout << "aaa" << a;
+		addInstancesToClass(classInstances);
+	}
+}
+
 
 unsigned int NBNN::addInstancesToClass(const vector<cv::Mat>& descriptors, int classNum)
 {
 	if (classNum == -1) // Make a new class
 	{
-		classMatchers[numClasses] = new cv::FlannBasedMatcher();
+		classMatchers.push_back(new cv::FlannBasedMatcher());
 		classNum = numClasses;
 		numClasses++;
 	}
 	
 	classMatchers[classNum]->add(descriptors);
-	//classMatchers[classNum]->train();
-
+	classMatchers[classNum]->train();
 	return classNum;
 }
 
 unsigned int NBNN::classify(const cv::Mat& queryDescriptors)
 {
 	vector<double> classScores; // Might be useful to return these at some point.
-	double minScore = numeric_limits<double>::max( );
-	int minClass = -1;
+	double minScore = numeric_limits<double>::max( );	// Distance of closest class found
+	int minClass = -1;	// Id of closest class
 	for (unsigned int C = 0; C < numClasses; C++)
 	{
+		// Find matches for each 
 		std::vector< cv::DMatch > matches;
-		
 		classMatchers[C]->match(queryDescriptors, matches);
 
 		classScores.push_back(0);

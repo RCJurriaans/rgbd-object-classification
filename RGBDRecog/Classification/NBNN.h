@@ -3,7 +3,7 @@
 #include <vector>
 #include "opencv2\features2d\features2d.hpp"
 
-class NBNN //: public Classifier
+class NBNN
 {
 public:
 
@@ -17,9 +17,12 @@ public:
 //		loadTrainingData(classDescriptorPaths);
 	}
 
-	bool NBNN::loadTrainingData(std::string filename, std::string dataname, int numClasses);
+	//bool NBNN::loadTrainingData(std::string filename, std::string dataname, int numClasses);
 	unsigned int addInstancesToClass(const std::vector<cv::Mat>& descriptors, int classNum = -1);
 	unsigned int classify(const cv::Mat& queryDescriptors);
+
+	void write( cv::FileStorage& f );
+	void read( const cv::FileStorage& f );
 
 protected:
 	unsigned int numClasses;

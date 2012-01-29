@@ -131,16 +131,10 @@ void NNMenu::trainData()
 	string filePath; //filepath for each image
 	cv::Mat input; //stores the image data
 
-	vector<cv::Mat> tempfeaturevector;
-	vector<cv::Mat> featurevector;
-
-	vector<bool> addedClass;
 	for(int i = 0; i < amountOfClasses; i++){
-		addedClass.push_back(false);
-		featurevector.push_back(cv::Mat());
-	}
 
-	for(int i = 0; i < amountOfClasses; i++){
+		vector<cv::Mat> featurevectors; // Contains a mat for each image
+
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
@@ -154,10 +148,11 @@ void NNMenu::trainData()
 			cout << "processing on image: " << classNames[i] << "_" << j;
 			input.release();
 			input = cv::imread(imagePath); //Load as grayscale image
-			vector<cv::Mat> tempfeaturevector;
+			
 			bool found = false;
+			vector<cv::Mat> tempfeaturevector;
 			if(settings->segmentation){
-				tempfeaturevector.clear();
+				//tempfeaturevector.clear();
 				cv::Rect roi = getDatasetROINN(filePath,j);
 				if(roi.width*roi.height > 0){
 					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
@@ -168,7 +163,7 @@ void NNMenu::trainData()
 				}
 			}else{
 				if(input.cols > 0){
-					tempfeaturevector.clear();
+					//tempfeaturevector.clear();
 					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input);
 					found = true;
 				}else{
@@ -179,20 +174,28 @@ void NNMenu::trainData()
 			//tempfeaturevector now contains all found feature descriptors,
 			//we can add this to the neirest neihbour classifier
 			if(found && tempfeaturevector[0].cols > 0){
-				if(featurevector[0].cols == 0){
+				featurevectors.push_back( tempfeaturevector[0] );
+
+				/*if(featurevector[0].cols == 0){
 					featurevector[0].release();
 					featurevector[0] = tempfeaturevector[0];
 				}else{
 					hconcat(featurevector[0],tempfeaturevector[0],featurevector[0]);
-				}
+				*/
 				cout <<  " using image" << endl;
 			}else{
 				cout << " image discarded" << endl;
 			}
 		}
-		nbnn->addInstancesToClass(featurevector,i);
-		featurevector.clear();
+		nbnn->addInstancesToClass(featurevectors);//,i);
+		//featurevector.clear();
 	}
+
+	string savePath = "NBNN" + settings->settingsString() + ".yml";
+	cout << "Writing NN data to: " << savePath << endl;
+	cv::FileStorage f(savePath, cv::FileStorage::WRITE);
+	nbnn->write(f);
+	cout << "Done writing NN." << endl;
 }
 
 void NNMenu::NNTesting(){

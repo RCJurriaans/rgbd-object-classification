@@ -289,16 +289,16 @@ protected:
 	boost::signals2::connection renderCloudRGBConnection;
 };
 
-/*
+
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
 }
-*/
 
 
+/*
 
 int	main (int argc, char** argv)
 {
@@ -351,3 +351,4 @@ int	main (int argc, char** argv)
 
 
 }
+*/

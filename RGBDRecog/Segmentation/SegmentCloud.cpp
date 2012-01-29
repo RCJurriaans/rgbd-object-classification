@@ -5,17 +5,6 @@
 // Blobb stuff
 #include "ImageAccess.h"
 
-#include <pcl/io/pcd_io.h>
-
-
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/filters/extract_indices.h>
-
-#include <pcl/filters/passthrough.h>
-
-#include <pcl/range_image/range_image.h>
 
 boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
 	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, boost::shared_ptr<pcl::PointIndices> inliers)
@@ -201,7 +190,7 @@ boost::shared_ptr<std::vector<cv::Rect> > SegmentCloud::getROIS(boost::shared_pt
 		rois->push_back(cv::Rect(minx, miny, boxWidth, boxHeight));
 	}
 
-	std::cout << "Found " << rc << " regions" << std::endl;
+	//std::cout << "Found " << rc << " regions" << std::endl;
 	return rois;
 }
 
@@ -318,6 +307,78 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 		  return coeffs;
 	  }
 
+
+pcl::ModelCoefficients
+SegmentCloud::getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<const cv::Mat> mask)
+{
+	pcl::ModelCoefficients coeff;
+
+	double minx=0, miny=0, minz=0;
+	double maxx=0, maxy=0, maxz=0;
+	double avgx=0, avgy=0, avgz=0;
+	double avg2x=0,avg2y=0,avg2z=0;
+	int imin = ROI.x;
+	int imax = imin+ROI.width;
+	int jmin = ROI.y;
+	int jmax = jmin+ROI.height;
+		  
+	int pointcount=0;
+
+
+	pcl::PointXYZRGB crtPoint;
+	for(int i=imin; i<imax; i++)
+	{
+		for(int j=jmin; j<jmax; j++)
+		{
+			if( mask->data[j*mask->step[0]+i] != 0 ) {
+				crtPoint = input->at(i,j);
+				if(crtPoint.x<minx){minx=crtPoint.x;}
+				if(crtPoint.y<miny){miny=crtPoint.y;}
+				if(crtPoint.z<minz){minz=crtPoint.z;}
+
+				if(crtPoint.x>maxx){maxx=crtPoint.x;}
+				if(crtPoint.y>maxy){maxy=crtPoint.y;}
+				if(crtPoint.z>maxz){maxz=crtPoint.z;}
+
+				if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
+					avgx+=crtPoint.x;
+					avgy+=crtPoint.y;
+					avgz+=crtPoint.z;
+					avg2x+= crtPoint.x*crtPoint.x;
+					avg2y+= crtPoint.y*crtPoint.y;
+					avg2z+= crtPoint.z*crtPoint.z;
+					pointcount++;
+				}
+			}
+		}
+	}
+	avgx /= pointcount;
+	avgy /= pointcount;
+	avgz /= pointcount;
+	avg2x /= pointcount;
+	avg2y /= pointcount;
+	avg2z /= pointcount;
+
+	coeff.values.push_back(avgx); // Tx
+	coeff.values.push_back(avgy); // Ty
+	coeff.values.push_back(avgz); // Tz
+	coeff.values.push_back(0); // Qx
+	coeff.values.push_back(0); // Qy
+	coeff.values.push_back(0); // Qz
+	coeff.values.push_back(0); // Qw
+	coeff.values.push_back(sqrt(std::max(avg2x - avgx*avgx, 0.001))*3);//maxx-minx);//(sqrt(sigmax)*3);//; // width
+	coeff.values.push_back(sqrt(std::max(avg2y - avgy*avgy, 0.001))*3);//maxy-miny);//(sqrt(sigmay)*3);//maxy-miny); // height
+	coeff.values.push_back(sqrt(std::max(avg2z - avgz*avgz, 0.001))*3);//maxz-minz);//(sqrt(sigmaz)*3);//maxz-minz); // depth
+	//coeff.values.push_back(maxx-minx); // width
+	//coeff.values.push_back(maxy-miny); // height
+	//coeff.values.push_back(maxz-minz); // depth
+	//coeff.values.push_back(sqrt(std::max(avg2z - avgz*avgz, 0.001))*3);//maxz-minz);//(sqrt(sigmaz)*3);//maxz-minz); // depth
+
+	//std::cout << coeff << std::endl;
+	//std::cout << sigmaz << " " << avg2z-avgz*avgz << std::endl;
+
+	return coeff;
+}
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getWindowCloud(const cv::Rect& ROI,
 	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)

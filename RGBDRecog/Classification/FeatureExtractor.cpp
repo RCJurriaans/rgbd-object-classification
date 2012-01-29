@@ -379,7 +379,7 @@ cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv
 
 
 cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi){
-	if(roi.height < 0 || roi.height > 0){
+	if(roi.width == 0 && roi.height == 0){
 		cout << "Error: invalid ROI" << endl;
 		return cv::Mat();
 	}
