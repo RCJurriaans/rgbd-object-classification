@@ -46,7 +46,7 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(PCL_ROOT)\include\pcl-1.4;$(PCL_ROOT)\3rdParty\Eigen\include;$(PCL_ROOT)\3rdParty\Boost\include;$(OPENCV_DIR)\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zm1000 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

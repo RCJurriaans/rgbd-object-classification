@@ -91,6 +91,9 @@ public:
 	  boost::shared_ptr<std::vector<pcl::ModelCoefficients> >
 		  getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
 
+		pcl::ModelCoefficients
+			getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<const cv::Mat> mask);
+
 	  // Gets an unorganised cloud, by copying only nonzero mask-points.
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		  getUnorgCloud(boost::shared_ptr<const cv::Mat> mask, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);

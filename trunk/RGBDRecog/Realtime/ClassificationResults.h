@@ -9,21 +9,22 @@ struct FoundObject
 {
 	FoundObject(	pcl::PointCloud<pcl::PointXYZRGB>::Ptr c,
 					cv::Rect bb2d,
-					boost::shared_ptr<pcl::ModelCoefficients> bb3d,
+					pcl::ModelCoefficients bb3d,
 					int cl ) :
 		cloud(c), boundingBox2D(bb2d), boundingBox3D(bb3d), classification(cl)
 	{}
 	
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCloud() {return cloud;}
 	cv::Rect getBoundingBox2D() {return boundingBox2D;}
-	boost::shared_ptr<pcl::ModelCoefficients> getBoundingBox3D() {return boundingBox3D;}
+	pcl::ModelCoefficients getBoundingBox3D() {return boundingBox3D;}
 	int getClassification() {return classification;}
 
 private:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;				// Cloud of the segmented object
 	cv::Rect boundingBox2D;										// 2D Bounding box around object
-	boost::shared_ptr<pcl::ModelCoefficients> boundingBox3D;	// 3D Bounding box 
+	pcl::ModelCoefficients boundingBox3D;	// 3D Bounding box 
 	int classification;											// Object class
+
 };
 
 struct ClassificationResults
@@ -33,6 +34,7 @@ struct ClassificationResults
 	// Setters
 	void clearObjects() { objects.clear(); }
 	void addObject( boost::shared_ptr<FoundObject> obj) { objects.push_back(obj); }
+	//void addObjects( 
 	void setMask( boost::shared_ptr<cv::Mat> m ) { mask = m; }
 	void setScene( pcl::PointCloud<pcl::PointXYZRGB>::Ptr s ) {scene = s;}
 
