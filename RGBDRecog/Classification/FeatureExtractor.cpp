@@ -47,7 +47,9 @@ void FeatureExtractor::loadCodebooks(){
 	cout << "Loading the codebooks" << endl;
 	codebooks = new FeatureVector[featureData->amountOfFeatures]; 
 		for(int i = 0; i < featureData->amountOfFeatures; i++){
-			cv::FileStorage fs("codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
+			string cbPath = getenv("RGBDDATA_DIR");
+			cbPath += "\\codebook" + boost::lexical_cast<string>(i) + ".yml";
+			cv::FileStorage fs(cbPath, cv::FileStorage::READ);
 			if(fs.isOpened()){
 				cout << "- Loaded " << featureData->featureNames[i] <<  " codebook" << endl;
 				cv::Mat M; fs["codebook" + boost::lexical_cast<string>(i)] >> M;
@@ -66,6 +68,7 @@ void FeatureExtractor::loadCodebooks(string filepath){
 	cout << "Loading the codebooks from location " << filepath << endl;
 	codebooks = new FeatureVector[featureData->amountOfFeatures]; 
 		for(int i = 0; i < featureData->amountOfFeatures; i++){
+			
 			cv::FileStorage fs(filepath + "codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
 			if(fs.isOpened()){
 				cout << "- Loaded " << featureData->featureNames[i] <<  " codebook" << endl;
