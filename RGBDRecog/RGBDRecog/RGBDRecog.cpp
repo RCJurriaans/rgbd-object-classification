@@ -34,9 +34,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	while(option != 'q' && option != 'Q'){
 		cout << "Choose a classification method: " << endl
 			 << "  (R) andom forests" << endl
+			 << "  (S) VM classification" << endl
 			 << "  (N) earest neighbor" << endl
 			 << "  (D) ata segmentation" << endl
-			 << "  (S) ettings" << endl
+			 << "  (O) ptions" << endl
 			 << "  (Q) uit" << endl;
 		option = cin.get();
 		switch(option){
@@ -44,12 +45,27 @@ int _tmain(int argc, _TCHAR* argv[])
 				cin.clear();
 				cin.sync();
 				cout << "Running the random forest menu" << endl;
-				RFClass* rfclass = new RFClass(settings);
+				RFClass* rfclass = new RFClass(settings,0);
 				if(rfclass!= NULL){
 					rfclass->menu();
 				}
 				else{
 					cout << "Could not create the random forest." << endl;
+				}
+				if(rfclass!= NULL){
+					delete rfclass;
+				}
+			} break;
+			case 's': case 'S':{
+				cin.clear();
+				cin.sync();
+				cout << "Running the SVM menu" << endl;
+				RFClass* rfclass = new RFClass(settings,1);
+				if(rfclass!= NULL){
+					rfclass->menu();
+				}
+				else{
+					cout << "Could not create the SVM menu." << endl;
 				}
 				if(rfclass!= NULL){
 					delete rfclass;
@@ -79,10 +95,10 @@ int _tmain(int argc, _TCHAR* argv[])
 					delete ds;
 				}
 			} break;
-			case 's': case 'S':{
+			case 'o': case 'O':{
 				cin.clear();
 				cin.sync();
-				cout << "Running the settings menu" << endl;
+				cout << "Running the options menu" << endl;
 				settings->menu();
 			} break;
 			case 'q': case 'Q':{

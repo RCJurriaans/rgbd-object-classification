@@ -32,3 +32,4 @@
 
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/fpfh.h>
+#include <pcl/kdtree/kdtree_flann.h>

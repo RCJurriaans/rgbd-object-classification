@@ -4,6 +4,9 @@
 #include "FeatureExtractor.h" 
 #include "RFClassifier.h"
 #include "Settings.h"
+#include "SVMClassifier.h"
+#include <NBNN.h>
+
 using namespace std;
 //using namespace cv;
 
@@ -12,7 +15,7 @@ using namespace std;
 class RFClass
 {
 public:
-	RFClass(Settings * set);
+	RFClass(Settings * set, int classmethod = 0);
 	~RFClass(void);
 
 	void menu();
@@ -49,11 +52,13 @@ private:
 
 	int SIFTThreshScale;
 	int dicsize;
+	int classificationmethod;
 
 	static vector<string> colornames;
 
 	FeatureExtractor* featureExtractor;
 	RFClassifier * rfclassifier;
+	SVMClassifier * svmclassifier;
 	Settings * settings;
 	cv::RNG * rng;
 };
