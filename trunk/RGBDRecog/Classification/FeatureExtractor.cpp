@@ -349,7 +349,7 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 		rawfeatures.push_back(colorHistogramCreator(planes,mask));
 	}
 	if(modes[7]){
-		rawfeatures.push_back(*calculateFPFH(cloud,calculateNormals(cloud)));
+		rawfeatures.push_back(calculateFPFH(cloud,calculateNormals(cloud)));
 		//cout << rawfeatures[0];
 	}
 	grayimg.release();
@@ -447,14 +447,14 @@ pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointC
 
 	 //Compute the features
 	ne.compute (*cloud_normals);
-	std::cout << endl;
-	for(int i = 0; i < cloud_normals->size(); i++){
-		std:: cout << cloud_normals->at(i).normal_x << " " << cloud_normals->at(i).normal_y << " " << cloud_normals->at(i).normal_z << endl;
-	}
+	//std::cout << endl;
+	//for(int i = 0; i < cloud_normals->size(); i++){
+	//	std:: cout << cloud_normals->at(i).normal_x << " " << cloud_normals->at(i).normal_y << " " << cloud_normals->at(i).normal_z << endl;
+	//}
 	return cloud_normals;
 }
 
-boost::shared_ptr<cv::Mat> FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals){
+cv::Mat FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals){
 	 //Create the FPFH estimation class, and pass the input dataset+normals to it
 	pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh;
 	fpfh.setInputCloud (cloud);
@@ -477,14 +477,12 @@ boost::shared_ptr<cv::Mat> FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::
 	fpfh.compute (*fpfhs);
 		
 	 //Convert to cv::Mat (there's probably a faster way: memcpy innerloop; )
-	boost::shared_ptr<cv::Mat> outMat( new cv::Mat(fpfhs->points.size(), 33,  CV_32FC1) );
+	cv::Mat outMat =  cv::Mat(fpfhs->points.size(), 33,  CV_32FC1);
 	
-	cout << endl;
-	for (unsigned int p = 0; p < fpfhs->points.size(); p++)
+	for (unsigned int p = 0; p < fpfhs->points.size(); p++){
 		for (unsigned int f = 0; f < 33; f++){
-		{
-			outMat->data[outMat->step[0]*f + p] = fpfhs->at(p).histogram[f];
-			cout << fpfhs->at(p).histogram[f] << " ";
+			outMat.at<float>(p,f) = fpfhs->at(p).histogram[f];
+			//cout << fpfhs->at(p).histogram[f] << " ";
 		}
 	}
 	return outMat;
