@@ -191,7 +191,8 @@ void NNMenu::trainData()
 		//featurevector.clear();
 	}
 
-	string savePath = "NBNN" + settings->settingsString() + ".yml";
+	string savePath = getenv("RGBDDATA_DIR");
+	savePath += "\\NBNN" + settings->settingsString() + ".yml";
 	cout << "Writing NN data to: " << savePath << endl;
 	cv::FileStorage f(savePath, cv::FileStorage::WRITE);
 	nbnn->write(f);
