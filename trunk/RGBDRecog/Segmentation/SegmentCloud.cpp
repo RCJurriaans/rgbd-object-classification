@@ -500,9 +500,14 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		int i = n % input->width;
 		int j = ((n-i) / input->width);
 
-		if( mask->data[j*mask->step[0]+i] && input->at(n).x!=input->at(n).x && input->at(n).x!=input->at(n).y && input->at(n).x!=input->at(n).z)
+		if( mask->data[j*mask->step[0]+i] && input->at(n).x==input->at(n).x && input->at(n).y==input->at(n).y && input->at(n).z==input->at(n).z)
 			segmentCloud->push_back(input->at(n));
 	}
+
+
+	//std::vector<int> a;
+	//pcl::removeNaNFromPointCloud(*segmentCloud,*segmentCloud,a);
+
 	return segmentCloud;
 	/* doesn't depend on seg method.
 	switch( getSegMethod() ){
