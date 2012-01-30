@@ -1642,6 +1642,7 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
         }*/
 
     //printf( "sort( %d, %d, comp )\n", 1, in.size() );
+
     sort( in.begin() + 1, in.end(), comp );
     remove_consecutive_dup( in );
     
@@ -1675,7 +1676,7 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
             continue;
         }
         last = out.size();
-        assert( last > 1 );
+		assert( last > 1 );
 
         if ( Left( *(out[ last - 2 ]),
                    *(out[ last - 1 ]),
@@ -2445,8 +2446,8 @@ gdiam_point  * gdiam_convex_sample( gdiam_point  * start, int  size,
 
     // we want the grid to be on the two minor dimensions.
     bb.set_third_dim_longest();
-
-    grid_size = (int)sqrt( sample_size *0.5f );
+	float test = (sample_size /2);
+    grid_size = (int)sqrt( test );
 
     grid_entries = grid_size * grid_size;
     mem_size = (int)( sizeof( gdiam_point ) * grid_size * grid_size );

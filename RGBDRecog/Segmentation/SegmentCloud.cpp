@@ -8,52 +8,63 @@
 #include "gdiam.h"
 
 
-	//        1 ----- 2
-	//      / |      /|
-	//     0 ----- 3  |
-	//	   |  5 ---|- 6  
-	//     |/      | /
-	//     4 ------7
-	// 0.x 0.y 0.z 1.x 1.y 1.z 2.x 2.y ...
+//        1 ----- 2
+//      / |      /|
+//     0 ----- 3  |
+//	   |  5 ---|- 6  
+//     |/      | /
+//     4 ------7
+// 0.x 0.y 0.z 1.x 1.y 1.z 2.x 2.y ...
 pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input){
 	pcl::ModelCoefficients coeffs;
-	
+
 	gdiam_real  * points;
 	int num=input->size();
 
 	points = (gdiam_point)malloc( sizeof( gdiam_point_t ) * num );
-    assert( points != NULL );
+	assert( points != NULL );
 
 	// Initialize points in vector
 	for  ( int  ind = 0; ind < num; ind++ ) {
-        points[ ind * 3 + 0 ] = input->at(ind).x;
-        points[ ind * 3 + 1 ] = input->at(ind).y;
-        points[ ind * 3 + 2 ] = input->at(ind).z;
-    }
+		points[ ind * 3 + 0 ] = (double) input->at(ind).x;
+		points[ ind * 3 + 1 ] = (double) input->at(ind).y;
+		points[ ind * 3 + 2 ] = (double) input->at(ind).z;
+		//points[ ind * 3 + 0 ] = ((double) rand() / (RAND_MAX+1));
+        //points[ ind * 3 + 1 ] = ((double) rand() / (RAND_MAX+1));
+        //points[ ind * 3 + 2 ] = ((double) rand() / (RAND_MAX+1));
+	}
 
+	/*
 	GPointPair   pair;
 
-    printf( "Computing the diameter for %d points selected "
-            "uniformly from the unit cube\n", num );
-    pair = gdiam_approx_diam_pair( (gdiam_real *)points, num, 0.0 );
-    printf( "Diameter distance: %g\n", pair.distance );
-    printf( "Points realizing the diameter\n"
-            "\t(%g, %g, %g) - (%g, %g, %g)\n",
-            pair.p[ 0 ], pair.p[ 1 ], pair.p[ 2 ],
-            pair.q[ 0 ], pair.q[ 1 ], pair.q[ 2 ] );
+	pair = gdiam_approx_diam_pair( (gdiam_real *)points, num, 0.0 );
+	printf( "Points realizing the diameter\n"
+		"\t(%g, %g, %g) - (%g, %g, %g)\n",
+		pair.p[ 0 ], pair.p[ 1 ], pair.p[ 2 ],
+		pair.q[ 0 ], pair.q[ 1 ], pair.q[ 2 ] );
 
-    
-    gdiam_point  * pnt_arr;
-    gdiam_bbox   bb;
+		*/
 
-    pnt_arr = gdiam_convert( (gdiam_real *)points, num );
+		/*
+	    printf( "Axis parallel bounding box\n" );
+    GBBox   bbx;
+    bbx.init();
+    for  ( int  ind = 0; ind < num; ind++ )
+        bbx.bound( points + (ind * 3) );
+    bbx.dump();
+	*/
 
-    printf( "Computing a tight-fitting bounding box of the point-set\n" );
-    bb = gdiam_approx_mvbb_grid_sample( pnt_arr, num, 5, 400 );
 
-    printf( "Resulting bounding box:\n" );
-    bb.dump();
+	gdiam_point  * pnt_arr;
+	gdiam_bbox   bb;
 
+	pnt_arr = gdiam_convert( (gdiam_real *)points, num );
+
+	printf( "Computing a tight-fitting bounding box of the point-set\n" );
+	bb = gdiam_approx_mvbb_grid_sample( pnt_arr, num, 5, 400 );
+
+	printf( "Resulting bounding box:\n" );
+	bb.dump();
 
 	return coeffs;
 
@@ -187,7 +198,7 @@ boost::shared_ptr<cv::Mat>
 			objectinliers->indices.push_back(n);
 		}
 		else{
-			
+
 			if(inliercount<inliers->indices.size() && inliers->indices.at(inliercount)==n){inliercount++;}
 		}
 	}
@@ -500,7 +511,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		int i = n % input->width;
 		int j = ((n-i) / input->width);
 
-		if( mask->data[j*mask->step[0]+i] && input->at(n).x==input->at(n).x && input->at(n).y==input->at(n).y && input->at(n).z==input->at(n).z)
+		if( mask->data[j*mask->step[0]+i] && input->at(n).x==input->at(n).x && input->at(n).x==input->at(n).y && input->at(n).x==input->at(n).z)
 			segmentCloud->push_back(input->at(n));
 	}
 

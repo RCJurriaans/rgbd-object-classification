@@ -495,7 +495,37 @@ public:
                 + c_coef * dir_3[ ind ];
     }
 
+	gdiam_real getPoint(double  sel1, double  sel2, double  sel3, int returnval ) const {
+		gdiam_real  coef1, coef2, coef3;
+		coef1 = low_1 + sel1 * ( high_1 - low_1 );
+        coef2 = low_2 + sel2 * ( high_2 - low_2 );
+        coef3 = low_3 + sel3 * ( high_3 - low_3 );
 
+		gdiam_point_t  pnt;
+        pnt_zero( pnt );
+        
+        //printf( "starting...\n" );
+        //pnt_dump( pnt );
+        pnt_scale_and_add( pnt, coef1, dir_1 );
+        //pnt_dump( pnt );
+        pnt_scale_and_add( pnt, coef2, dir_2 );
+        //pnt_dump( pnt );
+        pnt_scale_and_add( pnt, coef3, dir_3 );
+
+		switch(returnval){
+		case 0:
+			return pnt[0];
+			break;
+		case 1:
+			return pnt[1];
+			break;
+		case 2:
+			return pnt[2];
+			break;
+
+
+		}
+	}
 
     void  dump_vertex( double  sel1, double  sel2, double  sel3 ) const {
         gdiam_real  coef1, coef2, coef3;
