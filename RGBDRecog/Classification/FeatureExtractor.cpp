@@ -47,17 +47,19 @@ void FeatureExtractor::loadCodebooks(){
 	cout << "Loading the codebooks" << endl;
 	codebooks = new FeatureVector[featureData->amountOfFeatures]; 
 		for(int i = 0; i < featureData->amountOfFeatures; i++){
-			string cbPath = getenv("RGBDDATA_DIR");
-			cbPath += "\\codebook" + boost::lexical_cast<string>(i) + ".yml";
-			cv::FileStorage fs(cbPath, cv::FileStorage::READ);
-			if(fs.isOpened()){
-				cout << "- Loaded " << featureData->featureNames[i] <<  " codebook" << endl;
-				cv::Mat M; fs["codebook" + boost::lexical_cast<string>(i)] >> M;
-				fs.release();
-				codebooks[i].AddFeatures(M);
-				codebooks[i].TrainkNN();
-			}else{
-				cout << "- " << featureData->featureNames[i]  << " codebook does not exist" << endl;
+			if((i >= 0 && i<6) || i == 7){
+				string cbPath = getenv("RGBDDATA_DIR");
+				cbPath += "\\codebook" + boost::lexical_cast<string>(i) + ".yml";
+				cv::FileStorage fs(cbPath, cv::FileStorage::READ);
+				if(fs.isOpened()){
+					cout << "- Loaded " << featureData->featureNames[i] <<  " codebook" << endl;
+					cv::Mat M; fs["codebook" + boost::lexical_cast<string>(i)] >> M;
+					fs.release();
+					codebooks[i].AddFeatures(M);
+					codebooks[i].TrainkNN();
+				}else{
+					cout << "- " << featureData->featureNames[i]  << " codebook does not exist" << endl;
+				}
 			}
 	}
 	cout << "Loaded the available codebooks" << endl;
@@ -445,7 +447,10 @@ pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointC
 
 	 //Compute the features
 	ne.compute (*cloud_normals);
-	//cout << cloud_normals;
+	std::cout << endl;
+	for(int i = 0; i < cloud_normals->size(); i++){
+		std:: cout << cloud_normals->at(i).normal_x << " " << cloud_normals->at(i).normal_y << " " << cloud_normals->at(i).normal_z << endl;
+	}
 	return cloud_normals;
 }
 
@@ -473,12 +478,13 @@ boost::shared_ptr<cv::Mat> FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::
 		
 	 //Convert to cv::Mat (there's probably a faster way: memcpy innerloop; )
 	boost::shared_ptr<cv::Mat> outMat( new cv::Mat(fpfhs->points.size(), 33,  CV_32FC1) );
-	for (unsigned int f = 0; f < 33; f++){
-		//cout << endl;
-		for (unsigned int p = 0; p < fpfhs->points.size(); p++)
+	
+	cout << endl;
+	for (unsigned int p = 0; p < fpfhs->points.size(); p++)
+		for (unsigned int f = 0; f < 33; f++){
 		{
 			outMat->data[outMat->step[0]*f + p] = fpfhs->at(p).histogram[f];
-			//cout << fpfhs->at(p).histogram[f] << " ";
+			cout << fpfhs->at(p).histogram[f] << " ";
 		}
 	}
 	return outMat;

@@ -39,7 +39,7 @@ void FeatureVector::AddFeatures(cv::Mat& descriptorIn){
 cv::Mat* FeatureVector::kmeans(int dicsize){
 	cv::Mat* centers = new cv::Mat;
 
-	//cout << *features;
+	cout << *features;
 	//features is the list with features, the second argument is for returning the labels of each points (not used)
 	//Termcriteria has in the 2nd argument the amount of steps (ignore the third, the fifth variable has the amount of random
 	//reinitializations (not needed because of the used initialization method), and KMEANS_PP_CENTERS implements a smart
