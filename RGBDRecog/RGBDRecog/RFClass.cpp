@@ -219,7 +219,7 @@ void RFClass::createCodebook(int mode){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = 1; j < floor(static_cast<double>(trainigPicNum[i])/10); j++){ //for each image
+		for(int j = 1; j < floor(static_cast<double>(trainigPicNum[i])/4); j++){ //for each image
 			int chosenImgID = trainingdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
@@ -281,7 +281,7 @@ void RFClass::createCodebook(int mode){
 	}
 	cout << "found " << fv->features->rows << " descriptors."<< endl;
 	cout << "Running kmeans" << endl;
- 	cv::Mat* codebook = fv->kmeans(50); //run kmeans on the data for dicsize clusters
+ 	cv::Mat* codebook = fv->kmeans(dicsize); //run kmeans on the data for dicsize clusters
 
 	string savePath = getenv("RGBDDATA_DIR");
 	savePath += "\\codebook" + boost::lexical_cast<string>(mode) + ".yml";
