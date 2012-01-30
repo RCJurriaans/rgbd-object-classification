@@ -38,6 +38,8 @@ void FeatureVector::AddFeatures(cv::Mat& descriptorIn){
 //apply kmeans with dicsize clusters on the feature set
 cv::Mat* FeatureVector::kmeans(int dicsize){
 	cv::Mat* centers = new cv::Mat;
+
+	//cout << *features;
 	//features is the list with features, the second argument is for returning the labels of each points (not used)
 	//Termcriteria has in the 2nd argument the amount of steps (ignore the third, the fifth variable has the amount of random
 	//reinitializations (not needed because of the used initialization method), and KMEANS_PP_CENTERS implements a smart
@@ -77,7 +79,7 @@ cv::Mat FeatureVector::GenHistogram(const cv::Mat descriptors){
 	int histSize[] = {hbins};
 	calcHist(&nearest,1,channels,cv::Mat(),histogram,1,histSize,ranges,true,false);
 	
-	normalize(histogram,histogram);
+	normalize(histogram,histogram,1,cv::NORM_L1);
 
 	//nearest.release();
 	//delete ranges;

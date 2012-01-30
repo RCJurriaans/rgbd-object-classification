@@ -13,7 +13,7 @@ public:
 
 	SegmentCloud() :
 	  crtMethod(SegBack),
-		  threshold(0.03),
+		  threshold(0.05),
 		  maxDistanceFilter(3),
 		  minDistanceFilter(0.1)
 	  {}
@@ -109,14 +109,15 @@ public:
 
 	  // 
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr tijmenLikesHacking(
-		boost::shared_ptr<cv::Mat> maskOut,
+		boost::shared_ptr<cv::Mat> &maskOut,
 		cv::Rect& ROIOut,
 		pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud) {
 			boost::shared_ptr<cv::Mat> fullMask = getMask(cloud);
 			ROIOut = getROI(fullMask);
-			boost::shared_ptr<cv::Mat> croppedMask(&( (*fullMask)(ROIOut) ));
+			cv::Mat * masky = new cv::Mat((*fullMask)(ROIOut));
+			maskOut.reset(masky);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr windowCloud = this->getWindowCloud(ROIOut, cloud);
-			return this->getUnorgCloud(croppedMask, windowCloud);
+			return this->getUnorgCloud(maskOut, windowCloud);
 	  }
 
 	  // Getters and setters

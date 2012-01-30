@@ -43,8 +43,8 @@ public:
 	// mask is an optional parameter (initialized as an empty mat otherwise), that specifies
 	// the region to extract the features from. 1 in the matrix means the pixel is used,
 	// 0 if it isn't
-	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask  = cv::Mat());
-	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
+	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, const cv::Mat mask  = cv::Mat());
+	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background);
 
 	// extract a vector of opencv cv::Matrixes with all raw descriptors
 	// each cv::Mat in the vector contains in order the descriptors for SIFT/SURF or
@@ -53,9 +53,8 @@ public:
 	// call only after loadCodebooks()
 	// for mask, see extractFeatures description
 	// also comes with ROI version, that accept a cv::Rect
-	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask  = cv::Mat());
-	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi);
-
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, const cv::Mat mask  = cv::Mat());
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background);
 	// Input the matrix dimensions (rows, cols), and a rectangle structure
 	// with x and width the row directions, and y and height the column directions
 	// Outputs a boolean mask to be used with all functions
@@ -87,7 +86,7 @@ private:
 	cv::Mat normalSurf(const cv::Mat grayimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
 	cv::Mat hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
 	cv::Mat opSurf(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
-	cv::Mat colorHistogramCreator(vector<cv::Mat> hsvPlanes);
+	cv::Mat colorHistogramCreator(vector<cv::Mat> hsvPlanes, cv::Mat inputmask);
 
 	bool codebooksloaded; //are the codebooks loaded or not?
 
@@ -95,6 +94,6 @@ private:
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector,cv::Mat & descriptors, int mode);
 
 	boost::shared_ptr<cv::Mat> calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals);
-	pcl::PointCloud<pcl::Normal>::Ptr calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud);
+	pcl::PointCloud<pcl::Normal>::Ptr calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
 };
 

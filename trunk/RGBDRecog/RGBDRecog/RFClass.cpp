@@ -12,8 +12,10 @@ using namespace std;
 
 
 
-RFClass::RFClass(Settings * set){
+RFClass::RFClass(Settings * set,int classmethod){
 	settings = set;
+
+	classificationmethod = classmethod;
 
 	rng = new cv::RNG(1337);
 
@@ -75,13 +77,14 @@ RFClass::RFClass(Settings * set){
 	}
 	infile >> dicsize;
 	infile.close();
-	cout << "Read RF parameters: " << endl;
+	cout << "Read parameters: " << endl;
 	cout << "  " << "Sift Treshold Scale: " << SIFTThreshScale << endl;
 	cout << "  " << "Codebook size: " << dicsize << endl;
 	cout << endl;
 
 	featureExtractor = new FeatureExtractor();
 	rfclassifier = new RFClassifier();
+	svmclassifier = new SVMClassifier();
 
 
 	for(int i = 0; i < amountOfClasses; i++){
@@ -136,6 +139,7 @@ RFClass::~RFClass(void){
 	delete rng;
 	delete featureExtractor;
 	delete rfclassifier;
+	delete svmclassifier;
 }
 
 //converts a number to a fixed length string, adding zeros in front
@@ -191,6 +195,9 @@ void RFClass::createCodebook(int mode){
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
+	string pcdPath; //for the pcd data
+	string maskOutPath;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	cv::Mat input; //stores the image data
 	FeatureVector* fv = new FeatureVector; //this contains all features that are extacted
 
@@ -212,19 +219,25 @@ void RFClass::createCodebook(int mode){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = 0; j < floor(static_cast<double>(trainigPicNum[i])/2); j++){ //for each image
+		for(int j = 1; j < floor(static_cast<double>(trainigPicNum[i])/4); j++){ //for each image
 			int chosenImgID = trainingdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
 				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + ".pcd";
+				maskOutPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}else{
 				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + ".pcd";
+				maskOutPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
 			bool found = false;
 
 			cout << "processing on image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath);
+			cv::Mat mask = cv::imread(maskOutPath);
 
 			//this should return a single cv::Mat with the descriptor, as only one value in modes is true
 			//features are in the rows
@@ -235,7 +248,7 @@ void RFClass::createCodebook(int mode){
 				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//RawFeatures = featureExtractor->extractRawFeatures(modes,input,roi);
-					RawFeatures = featureExtractor->extractRawFeatures(modes,input);
+					RawFeatures = featureExtractor->extractRawFeatures(modes,input, cloud,mask);
 					found = true;
 				}else{
 					found = false;
@@ -243,7 +256,7 @@ void RFClass::createCodebook(int mode){
 			}else{
 				if(input.cols > 0){
 					RawFeatures.clear();
-					RawFeatures = featureExtractor->extractRawFeatures(modes,input);
+					RawFeatures = featureExtractor->extractRawFeatures(modes,input,cloud,mask);
 					found = true;
 				}
 				else{
@@ -268,7 +281,7 @@ void RFClass::createCodebook(int mode){
 	}
 	cout << "found " << fv->features->rows << " descriptors."<< endl;
 	cout << "Running kmeans" << endl;
-	cv::Mat* codebook = fv->kmeans(dicsize); //run kmeans on the data for dicsize clusters
+ 	cv::Mat* codebook = fv->kmeans(dicsize); //run kmeans on the data for dicsize clusters
 
 	string savePath = getenv("RGBDDATA_DIR");
 	savePath += "\\codebook" + boost::lexical_cast<string>(mode) + ".yml";
@@ -311,6 +324,7 @@ void RFClass::createCodebookMenu(){
 			 << "  (1) Normal SURF " << ifBoolReturnChar(foundCodebooks[3],"existing") << endl
 			 << "  (2) Hue SURF " << ifBoolReturnChar(foundCodebooks[4],"existing") << endl
 			 << "  (3) Opponent SURF " << ifBoolReturnChar(foundCodebooks[5],"existing") << endl
+			 << "  (4) PFPH " << ifBoolReturnChar(foundCodebooks[6],"existing") << endl
 			 << "  (A) ll" << endl
 			 << "  (Q) uit" << endl;
 		option = cin.get();
@@ -349,6 +363,7 @@ void RFClass::createCodebookMenu(){
 				createCodebook(3);
 				createCodebook(4);
 				createCodebook(5);
+				createCodebook(6);
 		} break;
 			case '1': {
 				cin.clear();
@@ -367,6 +382,12 @@ void RFClass::createCodebookMenu(){
 				cin.sync();
 				cout << "Creating Opponent SURF codebook" << endl;
 				createCodebook(5);
+		} break;
+			case '4': {
+				cin.clear();
+				cin.sync();
+				cout << "Creating FPFH codebook" << endl;
+				createCodebook(7);
 		} break;
 			default:{
 				cin.clear();
@@ -400,6 +421,9 @@ void RFClass:: trainModel(){
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
+	string pcdPath; //for the pcd data
+	string maskOutPath;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	cv::Mat input; //stores the image data
 
 	vector<bool> addedClass;
@@ -419,18 +443,24 @@ void RFClass:: trainModel(){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
 		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = static_cast<int>(floor(static_cast<double>(trainigPicNum[i])/2)); j < trainigPicNum[i]; j++){ //for each image
+		for(int j = static_cast<int>(floor(static_cast<double>(trainigPicNum[i])/4)); j < trainigPicNum[i]; j++){ //for each image
 			int chosenImgID = trainingdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
 				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + ".pcd";
+				maskOutPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}else{
 				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + ".pcd";
+				maskOutPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
 			cout << "processing on image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath); //Load as grayscale image
 			cv::Mat tempfeaturevector;
+			cv::Mat mask = cv::imread(maskOutPath);
 			bool found = false;
 
 			std::vector<cv::Mat> rawFeatures;
@@ -440,7 +470,7 @@ void RFClass:: trainModel(){
 				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
-					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
+					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input, cloud,mask);
 
 					found = true;
 				}else{
@@ -449,7 +479,7 @@ void RFClass:: trainModel(){
 			}else{
 				if(input.cols > 0){
 					tempfeaturevector.release();
-					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input);
+					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input, cloud,mask);
 
 
 					found = true;
@@ -500,7 +530,11 @@ void RFClass::trainModelMenu(){
 }
 
 void RFClass::generateRandomForest(){
-	cout << "Running random forest generation with settings: ";
+	if(classificationmethod == 0){
+		cout << "Running random forest generation with settings: ";
+	} else if (classificationmethod == 1){
+		cout << "Running SVM training with settings: ";
+	}
 	
 	settings->outputSettings();
 
@@ -519,15 +553,22 @@ void RFClass::generateRandomForest(){
 	}
 	fs.release();
 
-	cout << "Starting training of random forest" << endl;
-	rfclassifier->trainTree(trainingdata);
-
 	string savePath = getenv("RGBDDATA_DIR");
-	savePath += "\\randomforestdata" + modestring + ".yml";
-	cout << "Starting output of random forest data" << endl;
-	rfclassifier->write(savePath, "randomforestdata" + modestring);
-	
-	cout << "Done with the random forest creation and saving" << endl;
+	if(classificationmethod == 0){
+		savePath += "\\randomforestdata" + modestring + ".yml";
+		cout << "Starting training of random forest" << endl;
+		rfclassifier->trainTree(trainingdata);
+		cout << "Starting output of random forest data" << endl;
+		rfclassifier->write(savePath, "randomforestdata" + modestring);
+		cout << "Done with the random forest creation and saving" << endl;
+	}else if (classificationmethod == 1){
+		savePath += "\\SVMdata" + modestring + ".yml";
+		cout << "Starting training of SVM" << endl;
+		svmclassifier->trainSVM(trainingdata);
+		cout << "Starting output of SVM" << endl;
+		svmclassifier->write(savePath, "SVMdata" + modestring);
+		cout << "Done with the SVM training and saving" << endl;
+	}
 }
 
 void RFClass::rfTrainigmenu(){
@@ -540,20 +581,34 @@ void RFClass::rfTesting(){
 		featureExtractor->loadCodebooks();
 	}
 
-	cout << "Starting testing the random forest algorithm on all test data" << endl;
+	if(classificationmethod == 0){
+		cout << "Starting testing the random forest algorithm on all test data" << endl;
+	}else if (classificationmethod == 1){
+		cout << "Starting testing the SVM algorithm on all test data" << endl;
+	}
 	cout << "Using settings: " << endl;
 	settings->outputSettings();
 	//create a string of the modeboolean
 	string modestring = settings->settingsString();
 	//read the data of the random forest
+
+
 	string path = getenv("RGBDDATA_DIR");
-	path +=  "randomforestdata" + modestring + ".yml";
-	rfclassifier->read( path, "randomforestdata" + modestring);
-	//now we use the random forest to predict the class of each of the test images
+	if(classificationmethod == 0){
+		path +=  "\\randomforestdata" + modestring + ".yml";
+		rfclassifier->read(path, "randomforestdata" + modestring);
+	}else if (classificationmethod == 1){
+		path +=  "\\SVMdata" + modestring + ".yml";
+		svmclassifier->read(path, "SVMdata" + modestring);
+	}
+	//now we use the random forest / SVM to predict the class of each of the test images
 
 	cv::Mat input;
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
+	string pcdPath; //for the pcd data
+	string maskOutPath;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	cv::Mat result;
 	int** predictions = new int*[amountOfClasses];
 	for(int i = 0; i < amountOfClasses; i++){
@@ -570,26 +625,33 @@ void RFClass::rfTesting(){
 			imagePath.clear();
 			if(!settings->segmentation){
 				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + ".pcd";
+				maskOutPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
+
 			}else{
 				imagePath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "seg" + ".pcd";
+				maskOutPath = filePath + "img" + convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
 			cout << "processing image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath); //Load rgb image
 			result.release();
+			cv::Mat mask = cv::imread(maskOutPath);
 			bool found = false;
 			if(settings->segmentation){
 				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//result = featureExtractor->extractFeatures(settings->modes,input,roi);
-					result = featureExtractor->extractFeatures(settings->modes,input);
+					result = featureExtractor->extractFeatures(settings->modes,input, cloud, mask);
 					found = true;
 				}else{
 					found = false;
 				}
 			}else{
 				if(input.cols > 0){
-					result = featureExtractor->extractFeatures(settings->modes,input);
+					result = featureExtractor->extractFeatures(settings->modes,input, cloud, mask);
 					found = true;
 				}
 				else{
@@ -597,7 +659,11 @@ void RFClass::rfTesting(){
 				}
 			}
 			if(found && result.cols > 0){
-				predictions[i][j] = rfclassifier->predict(result);
+				if(classificationmethod == 0){
+					predictions[i][j] = rfclassifier->predict(result);
+				}else if (classificationmethod == 1){
+					predictions[i][j] = svmclassifier->predict(result);
+				}
 				cout << " classified as: " << classNames[predictions[i][j]] << endl;
 			}else{
 				predictions[i][j] = rng->operator()(featureExtractor->getAmountOfFeatures());
@@ -647,9 +713,15 @@ void RFClass::menu(void){
 	while(option){
 		cout << "Choose an option: " << endl
 			 << "  (C) odebook creation" << endl
-			 << "  (T) raining the model" << endl
-			 << "  (R) andom Forest training" << endl
-			 << "  (A) pply model to test set" << endl
+			 << "  (T) raining the model" << endl;
+
+		if(classificationmethod == 0){
+			cout << "  (R) andom Forest training" << endl;
+		}else if (classificationmethod == 1){
+			cout << "  (R) SVM training" << endl;
+		}
+
+		cout << "  (A) pply model to test set" << endl
 			 << "  (Q) uit" << endl ;
 		cin.clear();
 		cin.sync();
@@ -676,7 +748,11 @@ void RFClass::menu(void){
 			 case 'r': case 'R':{
 				cin.clear();
 				cin.sync();
-				cout << "Loading random forest training menu" << endl;
+				if(classificationmethod == 0){
+					cout << "Loading random forest training" << endl;
+				}else if (classificationmethod == 1){
+					cout << "Loading SVM training" << endl;
+				}
 				rfTrainigmenu();
 		} break;
 			case 'a': case 'A':{

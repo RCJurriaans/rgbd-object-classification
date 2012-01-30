@@ -5,7 +5,7 @@
 FeatureData::FeatureData(void)
 {
 	// edit the names and possible feature parameters for the whole function here!
-	amountOfFeatures = 7;
+	amountOfFeatures = 8;
 	featureNames = new string[amountOfFeatures];
 	featureNames[0] = "SIFT"; 
 	featureNames[1] = "Hue SIFT";
@@ -14,6 +14,7 @@ FeatureData::FeatureData(void)
 	featureNames[4] = "Hue SURF";
 	featureNames[5] = "Opponent SURF";
 	featureNames[6] = "Color Histogram";
+	featureNames[7] = "FPFH";
 }
 
 

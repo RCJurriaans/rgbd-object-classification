@@ -110,9 +110,12 @@ void DataSegmenter::generateBoundingBoxes(){
 	string pcdPath;
 	string outputPath;
 	string outputImg;
+	string pcdOutPath;
+	string maskOutPath;
 	cv::Mat input;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr background (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentedCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
 	string backgroundPath;
 
@@ -132,8 +135,10 @@ void DataSegmenter::generateBoundingBoxes(){
 			imagePath = filePath + "img" + convertNumberToFLString(3,j) + fileExtension; //get the proper filename
 			pcdPath = filePath + "img" + convertNumberToFLString(3,j) + ".pcd";
 			outputPath = filePath + "imgRECT" + convertNumberToFLString(3,j) + ".txt";
-			outputImg = filePath + "img" + convertNumberToFLString(3,j) + "seg" + ".bmp";
+			outputImg = filePath + "img" + convertNumberToFLString(3,j) + "seg" + fileExtension;
 			backgroundPath = filePath + "bg" + convertNumberToFLString(3,j) + ".pcd";
+			pcdOutPath = filePath + "img" + convertNumberToFLString(3,j) + "seg" + ".pcd";
+			maskOutPath = filePath + "img" + convertNumberToFLString(3,j) + "mask" + fileExtension;
 
 			//load the background data
 			pcl::io::loadPCDFile<pcl::PointXYZRGB> (backgroundPath, *background);
@@ -146,13 +151,24 @@ void DataSegmenter::generateBoundingBoxes(){
 			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
 
 			//get region of interest from the cloud data
-			cv::Rect rect = segmentation->getROI(cloud, background);
+			cv::Rect rect; // = segmentation->getROI(cloud, background);
+			cv::Rect expectedROI = segmentation->getROI(cloud, background);
+			boost::shared_ptr<cv::Mat> mask;
+			segmentation->setBackground(background);
+			segmentedCloud = segmentation->tijmenLikesHacking(mask, rect,cloud);
 
 			//write the rectangle to a file
 			writeRect(outputPath,rect);
 			if(rect.width > 0 && rect.height > 0){
 				cv::imwrite(outputImg, input(rect));
 			}
+			//write the mask away
+			imwrite(maskOutPath,*mask);
+
+			//write the segmented point cloud to a file too
+			pcl::io::savePCDFile<pcl::PointXYZRGB> (pcdOutPath,*segmentedCloud); //*segmentation->getWindowCloud(cloud,background));
+
+
 		}
 	}
 }

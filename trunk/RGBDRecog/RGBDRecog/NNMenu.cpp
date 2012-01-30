@@ -156,7 +156,7 @@ void NNMenu::trainData()
 				cv::Rect roi = getDatasetROINN(filePath,j);
 				if(roi.width*roi.height > 0){
 					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
-					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input);
+					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
 					found = true;
 				}else{
 					found = false;
@@ -164,7 +164,7 @@ void NNMenu::trainData()
 			}else{
 				if(input.cols > 0){
 					//tempfeaturevector.clear();
-					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input);
+					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
 					found = true;
 				}else{
 					found = false;
@@ -244,14 +244,14 @@ void NNMenu::NNTesting(){
 				cv::Rect roi = getDatasetROINN(filePath,j);
 				if(roi.width*roi.height > 0){
 					//result = featureExtractor->extractFeatures(settings->modes,input,roi);
-					result = featureExtractor->extractRawFeatures(settings->modes,input);
+					result = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
 					found = true;
 				}else{
 					found = false;
 				}
 			}else{
 				if(input.cols > 0){
-					result = featureExtractor->extractRawFeatures(settings->modes,input);
+					result = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
 					found = true;
 				}
 				else{

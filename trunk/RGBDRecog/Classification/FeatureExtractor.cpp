@@ -88,7 +88,7 @@ void FeatureExtractor::loadCodebooks(string filepath){
 // function also runs the descriptors throught he codebooks, making a histogram out of them
 // mode is the type of feature, firstadded simply indicates if this was the first added feature
 void FeatureExtractor::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector,cv::Mat & descriptors, int mode){
-	if(mode >= 0 && mode <=5){//if this is a codebook feature
+	if(mode >= 0 && mode <=5 || mode == 7){//if this is a codebook feature
 		if(codebooks[mode].features->empty()){
 			cout << "ERROR: Codebook" << featureData->featureNames[mode] << " does not exist";
 			return;
@@ -97,14 +97,14 @@ void FeatureExtractor::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevec
 
 	if(!firstadded){
 		tempfeaturevector.release();
-		if(mode >= 0 && mode <=5){
+		if(mode >= 0 && mode <=5 || mode == 7){ //descriptors + depth features
 			tempfeaturevector = codebooks[mode].GenHistogram(descriptors);
 		}else if (mode ==  6){ //color histogram
 			tempfeaturevector = descriptors;
 		}
 		firstadded = true;
 	}else{
-		if(mode >= 0 && mode <=5){
+		if(mode >= 0 && mode <=5 || mode == 7){
 			vconcat(tempfeaturevector,codebooks[mode].GenHistogram(descriptors),tempfeaturevector);
 		}else if (mode == 6) {
 			vconcat(tempfeaturevector,descriptors,tempfeaturevector);
@@ -122,7 +122,7 @@ cv::Mat FeatureExtractor::normalSift(const cv::Mat grayimg, const cv::Mat mask =
 	#endif
 	//normalize features
 	for(int i = 0; i < descriptors.rows; i++){
-		normalize(descriptors.row(i),descriptors.row(i));
+		normalize(descriptors.row(i),descriptors.row(i),1,cv::NORM_L1);
 	}
 	
 	return descriptors;
@@ -137,7 +137,7 @@ cv::Mat FeatureExtractor::hueSift(const cv::Mat grayimg, const cv::Mat hueimg, c
 #endif
 	//normalize features
 	for(int i = 0; i < descriptors.rows; i++){
-		normalize(descriptors.row(i),descriptors.row(i));
+		normalize(descriptors.row(i),descriptors.row(i),1,cv::NORM_L1);
 	}
 	return descriptors;
 }
@@ -151,7 +151,7 @@ cv::Mat FeatureExtractor::opSift(const cv::Mat grayimg, const cv::Mat rgbimg, co
 	
 	des->compute(rgbimg,keypoints,descriptors);
 	for(int i = 0; i < descriptors.rows; i++){
-		normalize(descriptors.row(i),descriptors.row(i));
+		normalize(descriptors.row(i),descriptors.row(i),1,cv::NORM_L1);
 	}
 	return descriptors;
 }
@@ -222,7 +222,7 @@ cv::Mat FeatureExtractor::opSurf(const cv::Mat grayimg,const cv::Mat rgbimg, con
 	return descriptors;
 }
 
-cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes){
+cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes, cv::Mat inputmask){
 
 	cv::Mat maskSat = hsvPlanes[1] > SATURATION_THRESH*256;
 
@@ -232,6 +232,7 @@ cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes){
 	
 
 	cv::bitwise_and(maskSat, maskVal, mask); //create hue/saturation mask
+	//cv::bitwise_and(mask,inputmask, mask); //apply the input mask to the mask as well :)
     // let's quantize the hue to 30 levels
     int hbins = 30;
     int histSize[] = {hbins};
@@ -247,7 +248,7 @@ cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes){
         true, // the histogram is uniform
         false );
 
-	cv::normalize(hist,hist);
+	cv::normalize(hist,hist,1,0,cv::NORM_L1);
 	maskSat.release();
 	maskVal.release();
 	mask.release();
@@ -261,14 +262,16 @@ cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes){
 	//calculate variance
 	float var = 0;
 	for(int i = 0; i < hbins; i++){
-		var+= i* (hist.at<float>(i) - mean)*(hist.at<float>(i) - mean);
+		var+= hist.at<float>(i)* (i - mean)*(i - mean);
 	}
+	var = cv::sqrt(var);
+	meanvar.at<float>(1) = var;
 
-
+	vconcat(hist,meanvar,hist);
 	return hist;
 }
 
-vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, const cv::Mat mask){
+vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud ,const cv::Mat mask){
 	vector<cv::Mat> rawfeatures;
 	cv::Mat grayimg;
 	cv::Mat hueimg;
@@ -300,7 +303,6 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 	#else
 		rawfeatures.push_back(normalSift(grayimg));
 	#endif
-		
 	}
 	if(modes[1]){
 	#ifdef DENSE_SAMPLING
@@ -342,27 +344,30 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 	#endif	
 	}
 	if(modes[6]){ //not mask ready unfortunately
-		rawfeatures.push_back(colorHistogramCreator(planes));
+		rawfeatures.push_back(colorHistogramCreator(planes,mask));
 	}
-
+	if(modes[7]){
+		rawfeatures.push_back(*calculateFPFH(cloud,calculateNormals(cloud)));
+		cout << rawfeatures[0];
+	}
 	grayimg.release();
 	hueimg.release();
 	planes.clear();
 
 	return rawfeatures;
 }
-vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi){
+vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud){
 	cv::Mat roiimg = rgbimg(roi);
-	return extractRawFeatures(modes, roiimg);
+	return extractRawFeatures(modes, roiimg, cloud);
 }
 
-cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Mat mask){
+cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, cv::Mat mask){
 	if(!codebooksloaded){
 		cout << "ERROR: codebooks not loaded" << endl;
 		return cv::Mat();
 	}
 
-	vector<cv::Mat> rawfeatures = extractRawFeatures(modes,rgbimg);
+	vector<cv::Mat> rawfeatures = extractRawFeatures(modes,rgbimg,cloud,mask);
 	cv::Mat featurevector;
 	bool firstadded = false;
 	
@@ -381,13 +386,13 @@ cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv
 }
 
 
-cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi){
+cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud){
 	if(roi.width == 0 && roi.height == 0){
 		cout << "Error: invalid ROI" << endl;
 		return cv::Mat();
 	}
 	cv::Mat roiimg = rgbimg(roi);
-	return extractFeatures(modes, roiimg);
+	return extractFeatures(modes, roiimg, cloud);
 }
 
 
@@ -417,57 +422,65 @@ boost::shared_ptr<cv::Mat> FeatureExtractor::cloudToRGB(const pcl::PointCloud<pc
 }
 
 
-//pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud){
-//	 Create the normal estimation class, and pass the input dataset to it
-//	pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
-//	ne.setInputCloud (cloud);
-//
-//	 Create an empty kdtree representation, and pass it to the normal estimation object.
-//	 Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-//	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
-//	ne.setSearchMethod (tree);
-//
-//	 Output datasets
-//	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
-//
-//	 Use all neighbors in a sphere of radius 3cm
-//	ne.setRadiusSearch (0.03);
-//
-//	 Compute the features
-//	ne.compute (*cloud_normals);
-//
-//	return cloud_normals;
-//}
-//
-//boost::shared_ptr<cv::Mat> FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals){
-//	 Create the FPFH estimation class, and pass the input dataset+normals to it
-//	pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh;
-//	fpfh.setInputCloud (cloud);
-//	fpfh.setInputNormals (normals);
-//	 alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);
-//
-//	 Create an empty kdtree representation, and pass it to the FPFH estimation object.
-//	 Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-//	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
-//	fpfh.setSearchMethod (tree);
-//
-//	 Output datasets
-//	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
-//
-//	 Use all neighbors in a sphere of radius 5cm
-//	 IMPORTANT: the radius used here has to be larger than the radius used to estimate the surface normals!!!
-//	fpfh.setRadiusSearch (0.05);
-//
-//	 Compute the features
-//	fpfh.compute (*fpfhs);
-//		
-//	 Convert to cv::Mat (there's probably a faster way: memcpy innerloop; )
-//	boost::shared_ptr<cv::Mat> outMat( new cv::Mat(33, fpfhs->points.size(), CV_32FC1) );
-//	for (unsigned int p = 0; p < fpfhs->points.size(); p++)
-//	{
-//		for (unsigned int f = 0; f < 33; f++){
-//			outMat->data[outMat->step[0]*f + p] = fpfhs->at(p).histogram[f];
-//		}
-//	}
-//	return outMat;
-//}
+pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud){
+	 //Create the normal estimation class, and pass the input dataset to it
+	std::cout << endl;
+	for(int i = 0; i < cloud->size(); i++){
+		std:: cout << cloud->at(i).x << " " << cloud->at(i).y << " " << cloud->at(i).z << endl;
+	}
+
+	pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+	ne.setInputCloud (cloud);
+
+	 //Create an empty kdtree representation, and pass it to the normal estimation object.
+	 //Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+	ne.setSearchMethod (tree);
+
+	 //Output datasets
+	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+
+	 //Use all neighbors in a sphere of radius 3cm
+	ne.setRadiusSearch (0.03);
+
+	 //Compute the features
+	ne.compute (*cloud_normals);
+	cout << cloud_normals;
+	return cloud_normals;
+}
+
+boost::shared_ptr<cv::Mat> FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals){
+	 //Create the FPFH estimation class, and pass the input dataset+normals to it
+	pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh;
+	fpfh.setInputCloud (cloud);
+	fpfh.setInputNormals (normals);
+	 //alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);
+
+	 //Create an empty kdtree representation, and pass it to the FPFH estimation object.
+	 //Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+	fpfh.setSearchMethod (tree);
+
+	 //Output datasets
+	pcl::PointCloud<pcl::FPFHSignature33>::Ptr fpfhs (new pcl::PointCloud<pcl::FPFHSignature33> ());
+
+	 //Use all neighbors in a sphere of radius 5cm
+	 //IMPORTANT: the radius used here has to be larger than the radius used to estimate the surface normals!!!
+	fpfh.setRadiusSearch (0.05);
+
+	 //Compute the features
+	fpfh.compute (*fpfhs);
+		
+	 //Convert to cv::Mat (there's probably a faster way: memcpy innerloop; )
+	boost::shared_ptr<cv::Mat> outMat( new cv::Mat(fpfhs->points.size(), 33,  CV_32FC1) );
+	for (unsigned int f = 0; f < 33; f++){
+		cout << endl;
+		for (unsigned int p = 0; p < fpfhs->points.size(); p++)
+		{
+			outMat->data[outMat->step[0]*f + p] = fpfhs->at(p).histogram[f];
+			cout << fpfhs->at(p).histogram[f] << " ";
+		}
+	}
+	cout << outMat;
+	return outMat;
+}
