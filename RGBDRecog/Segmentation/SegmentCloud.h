@@ -22,6 +22,9 @@ public:
 	  enum SegmentationMethod { SegBack, SegObj, SegPlane, SegNormHist };
 
 
+	  // Get the points representing the smallest bounding box
+	  pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+
 	  // Mask getting function, uses internally stored background
 	  boost::shared_ptr<cv::Mat>
 		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers);

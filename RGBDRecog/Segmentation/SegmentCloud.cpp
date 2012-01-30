@@ -5,6 +5,60 @@
 // Blobb stuff
 #include "ImageAccess.h"
 
+#include "gdiam.h"
+
+
+	//        1 ----- 2
+	//      / |      /|
+	//     0 ----- 3  |
+	//	   |  5 ---|- 6  
+	//     |/      | /
+	//     4 ------7
+	// 0.x 0.y 0.z 1.x 1.y 1.z 2.x 2.y ...
+pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input){
+	pcl::ModelCoefficients coeffs;
+	
+	gdiam_real  * points;
+	int num=input->size();
+
+	points = (gdiam_point)malloc( sizeof( gdiam_point_t ) * num );
+    assert( points != NULL );
+
+	// Initialize points in vector
+	for  ( int  ind = 0; ind < num; ind++ ) {
+        points[ ind * 3 + 0 ] = input->at(ind).x;
+        points[ ind * 3 + 1 ] = input->at(ind).y;
+        points[ ind * 3 + 2 ] = input->at(ind).z;
+    }
+
+	GPointPair   pair;
+
+    printf( "Computing the diameter for %d points selected "
+            "uniformly from the unit cube\n", num );
+    pair = gdiam_approx_diam_pair( (gdiam_real *)points, num, 0.0 );
+    printf( "Diameter distance: %g\n", pair.distance );
+    printf( "Points realizing the diameter\n"
+            "\t(%g, %g, %g) - (%g, %g, %g)\n",
+            pair.p[ 0 ], pair.p[ 1 ], pair.p[ 2 ],
+            pair.q[ 0 ], pair.q[ 1 ], pair.q[ 2 ] );
+
+    
+    gdiam_point  * pnt_arr;
+    gdiam_bbox   bb;
+
+    pnt_arr = gdiam_convert( (gdiam_real *)points, num );
+
+    printf( "Computing a tight-fitting bounding box of the point-set\n" );
+    bb = gdiam_approx_mvbb_grid_sample( pnt_arr, num, 5, 400 );
+
+    printf( "Resulting bounding box:\n" );
+    bb.dump();
+
+
+	return coeffs;
+
+}
+
 
 boost::shared_ptr<cv::Mat> SegmentCloud::getMask(	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
 	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, boost::shared_ptr<pcl::PointIndices> inliers)
@@ -102,7 +156,7 @@ boost::shared_ptr<cv::Mat>
 	pcl::SACSegmentation<pcl::PointXYZRGB> seg;
 
 	// Optional (increases performance)
-	seg.setOptimizeCoefficients (true);
+	//seg.setOptimizeCoefficients (true);
 
 	// Mandatory
 	seg.setModelType (pcl::SACMODEL_PLANE);
@@ -112,6 +166,9 @@ boost::shared_ptr<cv::Mat>
 
 	seg.setInputCloud (cloud_filtered);
 	seg.segment (*inliers, *coefficients);
+	if(inliers->indices.size()==0){
+		return mask;
+	}
 
 	int nmax = cloud_filtered->size();
 	int i;
@@ -443,7 +500,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		int i = n % input->width;
 		int j = ((n-i) / input->width);
 
-		if( mask->data[j*mask->step[0]+i] )
+		if( mask->data[j*mask->step[0]+i] && input->at(n).x!=input->at(n).x && input->at(n).x!=input->at(n).y && input->at(n).x!=input->at(n).z)
 			segmentCloud->push_back(input->at(n));
 	}
 	return segmentCloud;
