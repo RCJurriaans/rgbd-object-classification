@@ -43,6 +43,12 @@ public:
 	  boost::shared_ptr<cv::Mat>
 		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> objectinliers);
 
+	  boost::shared_ptr<cv::Mat>
+		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
+	  {
+		  boost::shared_ptr<pcl::PointIndices> objectinliers(new pcl::PointIndices);
+		  return getPlaneMask(input, objectinliers);
+	  }
 
 	  // Gets a Region Of Interest. Use mask as input if you have one already.
 	  cv::Rect getROI(boost::shared_ptr<const cv::Mat> mask);

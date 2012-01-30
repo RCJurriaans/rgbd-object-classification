@@ -121,14 +121,18 @@ boost::shared_ptr<cv::Mat>
 		// Recalculate indices in matrix from n
 		i = n % input->width;
 		j = ((n-i) / input->width);
-		if( inliers->indices[inliercount]==n){
-			mask->data[j*mask->step[0]+i*mask->step[1]] = 0;
-			inliercount++;
-		}
-		else{
-			mask->data[j*mask->step[0]+i*mask->step[1]] = 255;
-			objectinliers->indices.push_back(n);
-		}
+		mask->data[j*mask->step[0]+i*mask->step[1]] = 255;
+		objectinliers->indices.push_back(n);
+
+	}
+
+	int in;
+	for(int n=0; n<inliers->indices.size(); n++){
+		in = inliers->indices[n];
+		i = in % input->width;
+		j = ((in-i) / input->width);
+		mask->data[j*mask->step[0]+i*mask->step[1]] = 0;
+
 	}
 
 	return mask;
