@@ -508,7 +508,9 @@ void RFClass::generateRandomForest(){
 	string modestring = settings->settingsString();
 
 	vector<cv::Mat> trainingdata;
-	cv::FileStorage fs("trainingdata" + modestring +"RF" +  ".yml", cv::FileStorage::READ);
+	string trainPath =  getenv("RGBDDATA_DIR");
+	trainPath += "\\trainingdata" + modestring + "RF.yml";
+	cv::FileStorage fs(trainPath, cv::FileStorage::READ);
 	cv::Mat temp;
 	for(int i = 0; i < amountOfClasses; i++){
 		temp.release();
@@ -544,7 +546,9 @@ void RFClass::rfTesting(){
 	//create a string of the modeboolean
 	string modestring = settings->settingsString();
 	//read the data of the random forest
-	rfclassifier->read("randomforestdata" + modestring + ".yml", "randomforestdata" + modestring);
+	string path = getenv("RGBDDATA_DIR");
+	path +=  "randomforestdata" + modestring + ".yml";
+	rfclassifier->read( path, "randomforestdata" + modestring);
 	//now we use the random forest to predict the class of each of the test images
 
 	cv::Mat input;

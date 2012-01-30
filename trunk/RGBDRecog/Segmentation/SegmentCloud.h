@@ -107,6 +107,18 @@ public:
 	  //
 	  boost::shared_ptr<cv::Mat> denoizeMask( boost::shared_ptr<cv::Mat> latestMask );
 
+	  // 
+	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr tijmenLikesHacking(
+		boost::shared_ptr<cv::Mat> maskOut,
+		cv::Rect& ROIOut,
+		pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud) {
+			boost::shared_ptr<cv::Mat> fullMask = getMask(cloud);
+			ROIOut = getROI(fullMask);
+			boost::shared_ptr<cv::Mat> croppedMask(&( (*fullMask)(ROIOut) ));
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr windowCloud = this->getWindowCloud(ROIOut, cloud);
+			return this->getUnorgCloud(croppedMask, windowCloud);
+	  }
+
 	  // Getters and setters
 	  inline SegmentationMethod getSegMethod(){return crtMethod;}
 	  inline void setSegMethod(SegmentationMethod method) {crtMethod = method;}
