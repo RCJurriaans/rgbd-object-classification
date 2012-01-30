@@ -348,7 +348,7 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 	}
 	if(modes[7]){
 		rawfeatures.push_back(*calculateFPFH(cloud,calculateNormals(cloud)));
-		cout << rawfeatures[0];
+		//cout << rawfeatures[0];
 	}
 	grayimg.release();
 	hueimg.release();
@@ -424,10 +424,10 @@ boost::shared_ptr<cv::Mat> FeatureExtractor::cloudToRGB(const pcl::PointCloud<pc
 
 pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud){
 	 //Create the normal estimation class, and pass the input dataset to it
-	std::cout << endl;
-	for(int i = 0; i < cloud->size(); i++){
-		std:: cout << cloud->at(i).x << " " << cloud->at(i).y << " " << cloud->at(i).z << endl;
-	}
+	//std::cout << endl;
+	//for(int i = 0; i < cloud->size(); i++){
+	//	std:: cout << cloud->at(i).x << " " << cloud->at(i).y << " " << cloud->at(i).z << endl;
+	//}
 
 	pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
 	ne.setInputCloud (cloud);
@@ -445,7 +445,7 @@ pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointC
 
 	 //Compute the features
 	ne.compute (*cloud_normals);
-	cout << cloud_normals;
+	//cout << cloud_normals;
 	return cloud_normals;
 }
 
@@ -474,13 +474,12 @@ boost::shared_ptr<cv::Mat> FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::
 	 //Convert to cv::Mat (there's probably a faster way: memcpy innerloop; )
 	boost::shared_ptr<cv::Mat> outMat( new cv::Mat(fpfhs->points.size(), 33,  CV_32FC1) );
 	for (unsigned int f = 0; f < 33; f++){
-		cout << endl;
+		//cout << endl;
 		for (unsigned int p = 0; p < fpfhs->points.size(); p++)
 		{
 			outMat->data[outMat->step[0]*f + p] = fpfhs->at(p).histogram[f];
-			cout << fpfhs->at(p).histogram[f] << " ";
+			//cout << fpfhs->at(p).histogram[f] << " ";
 		}
 	}
-	cout << outMat;
 	return outMat;
 }

@@ -54,7 +54,7 @@ public:
 	// for mask, see extractFeatures description
 	// also comes with ROI version, that accept a cv::Rect
 	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, const cv::Mat mask  = cv::Mat());
-	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background);
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
 	// Input the matrix dimensions (rows, cols), and a rectangle structure
 	// with x and width the row directions, and y and height the column directions
 	// Outputs a boolean mask to be used with all functions
