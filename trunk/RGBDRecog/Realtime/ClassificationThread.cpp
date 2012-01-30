@@ -71,10 +71,8 @@ void ClassificationThread::run()
 
 				//cout << "Predicted class (RF): "<< predictedClass << endl;
 				//cout << "Predicted class (NN): "<< predictedClass2 << endl;
-				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
+				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassNN) );
 				objs.push_back(object);
-
-
 				
 				//break;
 			}

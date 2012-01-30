@@ -269,8 +269,12 @@ void RFClass::createCodebook(int mode){
 	cout << "found " << fv->features->rows << " descriptors."<< endl;
 	cout << "Running kmeans" << endl;
 	cv::Mat* codebook = fv->kmeans(dicsize); //run kmeans on the data for dicsize clusters
-	cout << "writing the result to file: " << "codebook" + boost::lexical_cast<string>(mode) + ".yml" << endl;
-	cv::FileStorage fs("codebook" + boost::lexical_cast<string>(mode) + ".yml", cv::FileStorage::WRITE); //store the codebook to a yaml file
+
+	string savePath = getenv("RGBDDATA_DIR");
+	savePath += "\\codebook" + boost::lexical_cast<string>(mode) + ".yml";
+
+	cout << "writing the result to file: " << savePath << endl;
+	cv::FileStorage fs(savePath, cv::FileStorage::WRITE); //store the codebook to a yaml file
 	fs << "codebook" + boost::lexical_cast<string>(mode) << *codebook;
 	final=clock()-init;
 	
@@ -474,10 +478,14 @@ void RFClass:: trainModel(){
 
 	string modestring = settings->settingsString();
 
-	cout << "Done creating the feature vectors for the training set" << endl
-		 << "Saving the data to " << "trainingdata" + modestring + "RF" + ".yml" << endl;
 
-	cv::FileStorage fs2("trainingdata" + modestring + "RF" ".yml", cv::FileStorage::WRITE); //store the codebook to a yaml file
+	string savePath = getenv("RGBDDATA_DIR");
+	savePath += "\\trainingdata" + modestring + "RF.yml";
+
+	cout << "Done creating the feature vectors for the training set" << endl
+		 << "Saving the data to " << savePath << endl;
+
+	cv::FileStorage fs2(savePath, cv::FileStorage::WRITE); //store the codebook to a yaml file
 	for(int i = 0; i < amountOfClasses;i++){
 		fs2 << "trainingdata" + modestring + boost::lexical_cast<string>(i) << featurevector[i];
 	}
@@ -512,8 +520,10 @@ void RFClass::generateRandomForest(){
 	cout << "Starting training of random forest" << endl;
 	rfclassifier->trainTree(trainingdata);
 
+	string savePath = getenv("RGBDDATA_DIR");
+	savePath += "\\randomforestdata" + modestring + ".yml";
 	cout << "Starting output of random forest data" << endl;
-	rfclassifier->write("randomforestdata" + modestring + ".yml", "randomforestdata" + modestring);
+	rfclassifier->write(savePath, "randomforestdata" + modestring);
 	
 	cout << "Done with the random forest creation and saving" << endl;
 }
