@@ -15,8 +15,66 @@
 //     |/      | /
 //     4 ------7
 // 0.x 0.y 0.z 1.x 1.y 1.z 2.x 2.y ...
-pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input){
+pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, cv::Mat mask, cv::Rect ROI){
 	pcl::ModelCoefficients coeffs;
+
+
+	float minx=0, miny=0, minz=0;
+	float maxx=0, maxy=0, maxz=0;
+	float avgx=0, avgy=0, avgz=0;
+	float avg2x=0,avg2y=0,avg2z=0;
+	int imin = ROI.x;
+	int imax = imin+ROI.width;
+	int jmin = ROI.y;
+	int jmax = jmin+ROI.height;
+
+	int pointcount=0;
+
+
+	pcl::PointXYZRGB crtPoint;
+	for(int i=imin; i<imax; i++)
+	{
+		for(int j=jmin; j<jmax; j++)
+		{
+			if( mask.data[j*mask.step[0]+i] != 0 ) {
+				crtPoint = input->at(i,j);
+				if(crtPoint.x<minx){minx=crtPoint.x;}
+				if(crtPoint.y<miny){miny=crtPoint.y;}
+				if(crtPoint.z<minz){minz=crtPoint.z;}
+
+				if(crtPoint.x>maxx){maxx=crtPoint.x;}
+				if(crtPoint.y>maxy){maxy=crtPoint.y;}
+				if(crtPoint.z>maxz){maxz=crtPoint.z;}
+
+				if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
+					avgx+=crtPoint.x;
+					avgy+=crtPoint.y;
+					avgz+=crtPoint.z;
+					avg2x+= crtPoint.x*crtPoint.x;
+					avg2y+= crtPoint.y*crtPoint.y;
+					avg2z+= crtPoint.z*crtPoint.z;
+					pointcount++;
+				}
+			}
+		}
+	}
+	avgx /= pointcount;
+	avgy /= pointcount;
+	avgz /= pointcount;
+	avg2x /= pointcount;
+	avg2y /= pointcount;
+	avg2z /= pointcount;
+
+	/*float varx = sqrt(std::max(avg2x - avgx*avgx, 0.001))*4
+	float vary = sqrt(std::max(avg2x - avgx*avgx, 0.001))*4
+	float varz = sqrt(std::max(avg2x - avgx*avgx, 0.001))*4
+	float minx = avgx - varx;
+	float maxx = avgx + varx;
+	float miny = avgy - vary;
+	float maxy = avgy + vary;
+	float minz = avgz - varz;
+	float maxz = avgz + varz;*/
+
 
 	gdiam_real  * points;
 	int num=input->size();
@@ -26,9 +84,10 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 
 	// Initialize points in vector
 	for  ( int  ind = 0; ind < num; ind++ ) {
+		
 		points[ ind * 3 + 0 ] = (double) input->at(ind).x;
 		points[ ind * 3 + 1 ] = (double) input->at(ind).y;
-		points[ ind * 3 + 2 ] = (double) input->at(ind).z + (((double) rand() / (RAND_MAX+1))*0.1);
+		points[ ind * 3 + 2 ] = (double) input->at(ind).z;// + (((double) rand() / (RAND_MAX+1))*0.01);
 		//points[ ind * 3 + 0 ] = ((double) rand() / (RAND_MAX+1));
         //points[ ind * 3 + 1 ] = ((double) rand() / (RAND_MAX+1));
         //points[ ind * 3 + 2 ] = ((double) rand() / (RAND_MAX+1));
@@ -41,7 +100,7 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 
 	pnt_arr = gdiam_convert( (gdiam_real *)points, num );
 
-	/*printf( "Computing a tight-fitting bounding box of the point-set\n" );*/
+	printf( "Computing a tight-fitting bounding box of the point-set\n" );
 	bb = gdiam_approx_mvbb_grid_sample( pnt_arr, num, 5, 400 );
 
 	//printf( "Resulting bounding box:\n" );
@@ -54,13 +113,13 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 	coeffs.values.push_back(bb.getPoint(0,0,1,1));
 	coeffs.values.push_back(bb.getPoint(0,0,1,2));
 
-	coeffs.values.push_back(bb.getPoint(0,1,0,0));
-	coeffs.values.push_back(bb.getPoint(0,1,0,1));
-	coeffs.values.push_back(bb.getPoint(0,1,0,2));
-
 	coeffs.values.push_back(bb.getPoint(0,1,1,0));
 	coeffs.values.push_back(bb.getPoint(0,1,1,1));
 	coeffs.values.push_back(bb.getPoint(0,1,1,2));
+
+	coeffs.values.push_back(bb.getPoint(0,1,0,0));
+	coeffs.values.push_back(bb.getPoint(0,1,0,1));
+	coeffs.values.push_back(bb.getPoint(0,1,0,2));
 	
 	coeffs.values.push_back(bb.getPoint(1,0,0,0));
 	coeffs.values.push_back(bb.getPoint(1,0,0,1));
@@ -70,16 +129,16 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 	coeffs.values.push_back(bb.getPoint(1,0,1,1));
 	coeffs.values.push_back(bb.getPoint(1,0,1,2));
 
-	coeffs.values.push_back(bb.getPoint(1,1,0,0));
-	coeffs.values.push_back(bb.getPoint(1,1,0,1));
-	coeffs.values.push_back(bb.getPoint(1,1,0,2));
-
 	coeffs.values.push_back(bb.getPoint(1,1,1,0));
 	coeffs.values.push_back(bb.getPoint(1,1,1,1));
 	coeffs.values.push_back(bb.getPoint(1,1,1,2));
 
+	coeffs.values.push_back(bb.getPoint(1,1,0,0));
+	coeffs.values.push_back(bb.getPoint(1,1,0,1));
+	coeffs.values.push_back(bb.getPoint(1,1,0,2));
+
 	std::cout << coeffs << std::endl;
-	bb.dump();
+	//bb.dump();
 
 	return coeffs;
 

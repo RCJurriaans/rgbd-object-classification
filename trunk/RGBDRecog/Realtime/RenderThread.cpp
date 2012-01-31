@@ -60,6 +60,39 @@ inline void addLine( const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, float 
 	}
 }
 
+void addBox2( const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, const pcl::ModelCoefficients& m, int r = 255, int g = 255, int b = 255)
+{
+	//        1 ----- 2
+	//      / |      /|
+	//     0 ----- 3  |
+	//	   |  5 ---|- 6  
+	//     |/      | /
+	//     4 ------7
+	addLine( cloud, m.values[0*3 + 0], m.values[0*3 + 1], m.values[0*3 + 2],
+					m.values[1*3 + 0], m.values[1*3 + 1], m.values[1*3 + 2], r,g,b);//0-1
+	addLine( cloud, m.values[1*3 + 0], m.values[1*3 + 1], m.values[1*3 + 2],
+					m.values[2*3 + 0], m.values[2*3 + 1], m.values[2*3 + 2], r,g,b);//1-2
+	addLine( cloud, m.values[2*3 + 0], m.values[2*3 + 1], m.values[2*3 + 2],
+					m.values[3*3 + 0], m.values[3*3 + 1], m.values[3*3 + 2], r,g,b);//2-3
+	addLine( cloud, m.values[3*3 + 0], m.values[3*3 + 1], m.values[3*3 + 2],
+					m.values[0*3 + 0], m.values[0*3 + 1], m.values[0*3 + 2], r,g,b);//3-0
+	addLine( cloud, m.values[0*3 + 0], m.values[0*3 + 1], m.values[0*3 + 2],
+					m.values[4*3 + 0], m.values[4*3 + 1], m.values[4*3 + 2], r,g,b);//0-4
+	addLine( cloud, m.values[1*3 + 0], m.values[1*3 + 1], m.values[1*3 + 2],
+					m.values[5*3 + 0], m.values[5*3 + 1], m.values[5*3 + 2], r,g,b);//1-5
+	addLine( cloud, m.values[2*3 + 0], m.values[2*3 + 1], m.values[2*3 + 2],
+					m.values[6*3 + 0], m.values[6*3 + 1], m.values[6*3 + 2], r,g,b);//2-6
+	addLine( cloud, m.values[3*3 + 0], m.values[3*3 + 1], m.values[3*3 + 2],
+					m.values[7*3 + 0], m.values[7*3 + 1], m.values[7*3 + 2], r,g,b);//3-7
+	addLine( cloud, m.values[4*3 + 0], m.values[4*3 + 1], m.values[4*3 + 2],
+					m.values[5*3 + 0], m.values[5*3 + 1], m.values[5*3 + 2], r,g,b);//4-5
+	addLine( cloud, m.values[5*3 + 0], m.values[5*3 + 1], m.values[5*3 + 2],
+					m.values[6*3 + 0], m.values[6*3 + 1], m.values[6*3 + 2], r,g,b);//5-6
+	addLine( cloud, m.values[6*3 + 0], m.values[6*3 + 1], m.values[6*3 + 2],
+					m.values[7*3 + 0], m.values[7*3 + 1], m.values[7*3 + 2], r,g,b);//6-7
+	addLine( cloud, m.values[7*3 + 0], m.values[7*3 + 1], m.values[7*3 + 2],
+					m.values[4*3 + 0], m.values[4*3 + 1], m.values[4*3 + 2], r,g,b);//7-4
+}
 void addBox( const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud, const pcl::ModelCoefficients& m, int r = 255, int g = 255, int b = 255)
 {
 	// Corners (center plus and minus width)
@@ -114,18 +147,40 @@ void RenderThread::run()
 	while (!v.wasStopped ())
 	{
 		bool renderResult = false;
+		bool changeColors = false;
 		results->mtx.lock();
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudCopy( new pcl::PointCloud<pcl::PointXYZRGB>());
 			if (results->getScene() ) {
 				cloudCopy = results->getScene();
 				renderResult = true;
 			}
-
+			boost::shared_ptr<pcl::PointIndices> inliers = results->getInliers();
 			boost::shared_ptr< std::vector< boost::shared_ptr<FoundObject> > > objects = results->getObjects();
-		
+			if( results->hasNew ) {
+				results->hasNew = false;
+				changeColors = true;
+			}
 		results->mtx.unlock();
 
 		if(renderResult) {
+
+			// Render inliers
+			if( changeColors ) {
+				for(int i=0; i < inliers->indices.size(); i++) {
+				
+					pcl::PointXYZRGB& pt = cloudCopy->at(inliers->indices.at(i));
+					uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
+					uint8_t r = (rgbin >> 16) & 0x0000ff;
+					uint8_t g = (rgbin >> 8)  & 0x0000ff;
+					uint8_t b = (rgbin)       & 0x0000ff;
+
+					uint32_t rgb = (static_cast<uint32_t>(r + 30) << 16 |
+									static_cast<uint32_t>(g + 30) << 8 |
+									static_cast<uint32_t>(b + 30));
+					cloudCopy->at(inliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
+				}
+			}
+
 			if(!v.updatePointCloud(cloudCopy, "scene")) {
 				v.addPointCloud(cloudCopy, "scene");
 				v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "scene");
@@ -148,36 +203,28 @@ void RenderThread::run()
 
 				// Get bounding box coeffs
 				coefficients = objects->at(i)->getBoundingBox3D();
-				//pcl::ModelCoefficients* m = new pcl::ModelCoefficients(coefficients);
 
 				// Add bounding box
 				std::string objName = "box" + boost::lexical_cast<std::string>(i);
-				//float w = std::max(coefficients.values.at(7), std::max( coefficients.values.at(8), coefficients.values.at(9)));
-				//pcl::PointXYZ center(coefficients.values.at(0),coefficients.values.at(1),coefficients.values.at(2));
-				//v.addSphere(center, w,.2,.2,.2, objName);
-				//v.addCube(coefficients, objName, 0);
-
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr box( new pcl::PointCloud<pcl::PointXYZRGB>());
-				addBox(box, coefficients);
+				addBox(box, coefficients, 255, 100, 0);
 				v.addPointCloud(box, objName);
-				v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, objName);
+				v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, objName);
 
 				// Add class text
 				std::string textName = "text" + boost::lexical_cast<std::string>(i);
 				std::string className = classNames.at( objects->at(i)->getClassification() );
 				pcl::PointXYZ textLoc( coefficients.values[0] - className.length() * 0.02, coefficients.values[1] - coefficients.values[8] * 0.5 - 0.15, coefficients.values[2]);
-				v.addText3D(className, textLoc, 0.05,  1,1,1,  textName);
-
-				//cout << "Adding " << textName << endl;
+				v.addText3D(className, textLoc, 0.04,  1,1,1,  textName);
 			}
+
+			
 		}
-		
-		
 		
 		prevNumObj = objects->size();
 
 		v.spinOnce (100);
-		boost::this_thread::sleep (boost::posix_time::microseconds (1000));
+		boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 //		boost::thread::yield();
 	}
 }

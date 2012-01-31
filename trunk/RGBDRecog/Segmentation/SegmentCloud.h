@@ -23,7 +23,7 @@ public:
 
 
 	  // Get the points representing the smallest bounding box
-	  pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+	  pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, cv::Mat mask, cv::Rect ROI);
 
 	  // Mask getting function, uses internally stored background
 	  boost::shared_ptr<cv::Mat>
