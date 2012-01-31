@@ -26,11 +26,12 @@ void ClassificationThread::run()
 
 
 		// Segment pointcloud
-		if(cloud && bgCloud) {
+		if(cloud){// && bgCloud) {
 
-			segmenter.setBackground(bgCloud);
-			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud);
-			mask = segmenter.denoizeMask( mask );
+			//segmenter.setBackground(bgCloud);
+			boost::shared_ptr<pcl::PointIndices> inliers(new pcl::PointIndices);
+			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud, inliers);
+			//mask = segmenter.denoizeMask( mask );
 			boost::shared_ptr<std::vector<cv::Rect> > ROIs = segmenter.getROIS(mask);
 			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 
@@ -40,41 +41,56 @@ void ClassificationThread::run()
 
 			vector<boost::shared_ptr<FoundObject> > objs;
 
+			
+
 			for(vector<cv::Rect>::iterator ROI = ROIs->begin(); ROI != ROIs->end(); ROI++)
 			{
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentedCloud = segmenter.getWindowCloud(*ROI, cloud);
-			
-				pcl::ModelCoefficients coeffs( segmenter.getCoefficients(*ROI, cloud, mask) );
 
+/*
+				boost::shared_ptr<cv::Mat> maskOut;
+				cv::Rect ROIOut;
+				pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_new  (new pcl::PointCloud<pcl::PointXYZRGB>);
+				cloud_new = segmenter.tijmenLikesHacking(maskOut, ROIOut, segmentedCloud);
+
+				std::cout << cloud_new->size() << std::endl;
+				pcl::ModelCoefficients coeffs;
+				if(cloud_new->size()!=0){
+					coeffs = segmenter.getSmallestBoundingBox(cloud_new);
+				}*/
+				
+				pcl::ModelCoefficients coeffs( segmenter.getCoefficients(*ROI, cloud, mask) );
+				
 				int predictedClassRF = -1;
 				int predictedClassNN = -1;
 
 				// Extract features
-				if( !(ROI->x == 0 && ROI->y == 0 && ROI->width == 0 && ROI->height == 0)) {
+				/*if( !(ROI->x == 0 && ROI->y == 0 && ROI->width == 0 && ROI->height == 0)) {
 					//cout << "valid ROI"<<endl;
 
 					// Classify using RF classifier
-					cv::Mat features = extractor->extractFeatures( modes, *img, *ROI );
+					cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), cloud, *mask );
 					if (features.rows != 0 && features.cols != 0)
 						predictedClassRF = rf->predict(features);
 
 					// Classify using NBNN:
-					vector<cv::Mat> rawFeatures = extractor->extractRawFeatures(modes, *img, *ROI);
-					if( rawFeatures.size() > 0 ) {
-						predictedClassNN = nn->classify(features);
-					}
+					//vector<cv::Mat> rawFeatures = extractor->extractRawFeatures(modes, (*img)(*ROI), cloud, *mask);
+					//if( rawFeatures.size() > 0 ) {
+					//	predictedClassNN = nn->classify(features);
+					//}
 					//cout << "num raw features " << rawFeatures.size() <<endl;
 
 				}
-
+				*/
 			
 
-				//cout << "Predicted class (RF): "<< predictedClass << endl;
-				//cout << "Predicted class (NN): "<< predictedClass2 << endl;
-				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassNN) );
+				//cout << "Predicted class (RF): "<< predictedClassRF << endl;
+				//cout << "Predicted class (NN): "<< predictedClassNN << endl;
+				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
 				objs.push_back(object);
 				
-				//break;
+
+				break;
 			}
 
 			// Return output to main thread
@@ -83,7 +99,9 @@ void ClassificationThread::run()
 				for(int i=0; i < objs.size();i++)
 					results->addObject(objs.at(i));
 				results->setMask(mask);
+				results->setInliers(inliers);
 				results->setScene(cloud);
+				results->hasNew=true;
 			results->mtx.unlock();
 
 		}

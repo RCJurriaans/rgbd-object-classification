@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual C++ Express 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RGBDRecog", "RGBDRecog\RGBDRecog.vcxproj", "{EF316420-0177-46E6-BB45-98AA8C4BA99B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1} = {F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}
@@ -18,8 +18,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Realtime", "Realtime\OpenNI
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Segmentation", "Segmentation\Segmentation.vcxproj", "{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NBNNTester", "NBNNTester\NBNNTester.vcxproj", "{E99E8487-F393-4D19-A4A4-0291847AE491}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,12 +57,6 @@ Global
 		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|Win32.ActiveCfg = Release|Win32
 		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|Win32.Build.0 = Release|Win32
 		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|x64.ActiveCfg = Release|Win32
-		{E99E8487-F393-4D19-A4A4-0291847AE491}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E99E8487-F393-4D19-A4A4-0291847AE491}.Debug|Win32.Build.0 = Debug|Win32
-		{E99E8487-F393-4D19-A4A4-0291847AE491}.Debug|x64.ActiveCfg = Debug|Win32
-		{E99E8487-F393-4D19-A4A4-0291847AE491}.Release|Win32.ActiveCfg = Release|Win32
-		{E99E8487-F393-4D19-A4A4-0291847AE491}.Release|Win32.Build.0 = Release|Win32
-		{E99E8487-F393-4D19-A4A4-0291847AE491}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -44,10 +44,11 @@ public:
 		numSaves(0),
 		timeToSave(false)
 		,currentCloud(new pcl::PointCloud<pcl::PointXYZRGB>())
-		,results(new ClassificationResults())//,
-		//renderer(new Renderer(boost::bind(&DataDistributor::processInput, this, _1), results))
+		,results(new ClassificationResults())
 	{
 		renderer = new Renderer(boost::bind(&DataDistributor::processInput, this, _1), results);
+		lastSave = time(NULL);
+		automode = false;
 
 		// make callback function from member function
 		boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> I_CB =
@@ -74,19 +75,12 @@ public:
 		//toggleConnection(renderCloudConnection, renderCloud);
 		//toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 
-		// Initialize classifier
-		//std::vector<std::string> paths;
-		//paths.push_back(".\\dataset\\.....");
-		//NBNNClassifier->loadTrainingData(paths);
-
 		// Callback for sending frame to classification thread
 		boost::function<void (const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &)> inpCB
 			= boost::bind(&DataDistributor::distributeCloudRGB, this, _1);
 		boost::function<void (const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &)> inpCB2
 			= boost::bind(&DataDistributor::distributeCloud, this, _1);
 		grabber->registerCallback(inpCB);
-
-		//cloudRenderer =  new CloudRenderer();
 	}
 	
 	~DataDistributor()
@@ -158,9 +152,16 @@ public:
 
 	void saveFrameCB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
 	{
+		if( automode ) {
+ 			time_t currTime = time( NULL );
+			if( difftime(currTime, lastSave) > 2.0 ) {
+				timeToSave = true;
+			}
+		}
+
 		if (timeToSave)
 		{
-			if ( saveCloud(cloud) && saveCloud(backgroundCloud, "bg") && saveRGB(*FeatureExtractor::cloudToRGB(cloud))) {
+			if ( saveCloud(cloud) /*&& saveCloud(backgroundCloud, "bg") */&& saveRGB(*FeatureExtractor::cloudToRGB(cloud))) {
 				cout << "Saved " << numSaves << endl;
 				numSaves++;
 			}
@@ -173,6 +174,8 @@ public:
 
 	void processInput( int key )
 	{
+		int onlineLearnNum = -1;
+		string onlineLearnName;
 		switch(key)
 		{
 		case -1:
@@ -221,6 +224,19 @@ public:
 		case 'n':
 			cout << "Enter save number" << endl;
 			cin >> numSaves;
+			break;
+		case 'c':
+			cout << "Enter name of class" << endl;
+			cin >> onlineLearnName;
+			classificationInputMutex.lock();
+			s_newDataPoint = currentCloud;
+			s_newClassName = onlineLearnName;
+			classificationInputMutex.unlock();
+			break;
+		case 'a':
+			automode = automode == false;
+			cout << "Toggling auto-save-mode to: "<< automode <<endl;
+			break;
 		default:
 			return;
 		}
@@ -230,11 +246,12 @@ public:
 	{
 		// Start classification thread
 		ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
-												    results);
+												    results,
+													s_newDataPoint, s_newClassName);
 		boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
-		RenderThread renderObject( results );
-		boost::thread renderThread( &RenderThread::run, &renderObject );
+		//RenderThread renderObject( results );
+		//boost::thread renderThread( &RenderThread::run, &renderObject );
 
 		// start receiving point clouds
 		grabber->start();
@@ -254,7 +271,9 @@ protected:
 	std::string saveFolder;
 	int numSaves;
 	bool timeToSave;
-	
+	time_t lastSave;
+	bool automode;
+
 	// System components
 	pcl::Grabber* grabber;
 	Renderer* renderer;
@@ -266,6 +285,8 @@ protected:
 	boost::mutex classificationInputMutex; // Locks all following:
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_cloud;
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_backgroundCloud;
+	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_newDataPoint;
+	  string s_newClassName;
 
 	//boost::mutex classificationOutputMutex;
 	//  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_segmentedCloud;
