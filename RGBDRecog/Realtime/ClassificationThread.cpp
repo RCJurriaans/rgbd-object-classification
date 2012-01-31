@@ -35,9 +35,6 @@ void ClassificationThread::run()
 			boost::shared_ptr<std::vector<cv::Rect> > ROIs = segmenter.getROIS(mask);
 			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 
-			
-
-			//for (int obj = 0; obj < ROIs->size(); obj++)
 
 			vector<boost::shared_ptr<FoundObject> > objs;
 
@@ -65,7 +62,7 @@ void ClassificationThread::run()
 				int predictedClassNN = -1;
 
 				// Extract features
-				/*if( !(ROI->x == 0 && ROI->y == 0 && ROI->width == 0 && ROI->height == 0)) {
+				if( !(ROI->x == 0 && ROI->y == 0 && ROI->width == 0 && ROI->height == 0)) {
 					//cout << "valid ROI"<<endl;
 
 					// Classify using RF classifier
@@ -81,7 +78,7 @@ void ClassificationThread::run()
 					//cout << "num raw features " << rawFeatures.size() <<endl;
 
 				}
-				*/
+				
 			
 
 				//cout << "Predicted class (RF): "<< predictedClassRF << endl;
@@ -89,8 +86,6 @@ void ClassificationThread::run()
 				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
 				objs.push_back(object);
 				
-
-				break;
 			}
 
 			// Return output to main thread

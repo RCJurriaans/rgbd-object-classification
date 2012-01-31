@@ -250,8 +250,8 @@ public:
 													s_newDataPoint, s_newClassName);
 		boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
-		//RenderThread renderObject( results );
-		//boost::thread renderThread( &RenderThread::run, &renderObject );
+		RenderThread renderObject( results );
+		boost::thread renderThread( &RenderThread::run, &renderObject );
 
 		// start receiving point clouds
 		grabber->start();
