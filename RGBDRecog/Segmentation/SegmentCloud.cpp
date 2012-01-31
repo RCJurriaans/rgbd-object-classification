@@ -28,31 +28,12 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 	for  ( int  ind = 0; ind < num; ind++ ) {
 		points[ ind * 3 + 0 ] = (double) input->at(ind).x;
 		points[ ind * 3 + 1 ] = (double) input->at(ind).y;
-		points[ ind * 3 + 2 ] = (double) input->at(ind).z;
+		points[ ind * 3 + 2 ] = (double) input->at(ind).z + (((double) rand() / (RAND_MAX+1))*0.1);
 		//points[ ind * 3 + 0 ] = ((double) rand() / (RAND_MAX+1));
         //points[ ind * 3 + 1 ] = ((double) rand() / (RAND_MAX+1));
         //points[ ind * 3 + 2 ] = ((double) rand() / (RAND_MAX+1));
 	}
 
-	/*
-	GPointPair   pair;
-
-	pair = gdiam_approx_diam_pair( (gdiam_real *)points, num, 0.0 );
-	printf( "Points realizing the diameter\n"
-		"\t(%g, %g, %g) - (%g, %g, %g)\n",
-		pair.p[ 0 ], pair.p[ 1 ], pair.p[ 2 ],
-		pair.q[ 0 ], pair.q[ 1 ], pair.q[ 2 ] );
-
-		*/
-
-		/*
-	    printf( "Axis parallel bounding box\n" );
-    GBBox   bbx;
-    bbx.init();
-    for  ( int  ind = 0; ind < num; ind++ )
-        bbx.bound( points + (ind * 3) );
-    bbx.dump();
-	*/
 
 
 	gdiam_point  * pnt_arr;
@@ -60,10 +41,44 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 
 	pnt_arr = gdiam_convert( (gdiam_real *)points, num );
 
-	printf( "Computing a tight-fitting bounding box of the point-set\n" );
+	/*printf( "Computing a tight-fitting bounding box of the point-set\n" );*/
 	bb = gdiam_approx_mvbb_grid_sample( pnt_arr, num, 5, 400 );
 
-	printf( "Resulting bounding box:\n" );
+	//printf( "Resulting bounding box:\n" );
+	
+	coeffs.values.push_back(bb.getPoint(0,0,0,0));
+	coeffs.values.push_back(bb.getPoint(0,0,0,1));
+	coeffs.values.push_back(bb.getPoint(0,0,0,2));
+	
+	coeffs.values.push_back(bb.getPoint(0,0,1,0));
+	coeffs.values.push_back(bb.getPoint(0,0,1,1));
+	coeffs.values.push_back(bb.getPoint(0,0,1,2));
+
+	coeffs.values.push_back(bb.getPoint(0,1,0,0));
+	coeffs.values.push_back(bb.getPoint(0,1,0,1));
+	coeffs.values.push_back(bb.getPoint(0,1,0,2));
+
+	coeffs.values.push_back(bb.getPoint(0,1,1,0));
+	coeffs.values.push_back(bb.getPoint(0,1,1,1));
+	coeffs.values.push_back(bb.getPoint(0,1,1,2));
+	
+	coeffs.values.push_back(bb.getPoint(1,0,0,0));
+	coeffs.values.push_back(bb.getPoint(1,0,0,1));
+	coeffs.values.push_back(bb.getPoint(1,0,0,2));
+
+	coeffs.values.push_back(bb.getPoint(1,0,1,0));
+	coeffs.values.push_back(bb.getPoint(1,0,1,1));
+	coeffs.values.push_back(bb.getPoint(1,0,1,2));
+
+	coeffs.values.push_back(bb.getPoint(1,1,0,0));
+	coeffs.values.push_back(bb.getPoint(1,1,0,1));
+	coeffs.values.push_back(bb.getPoint(1,1,0,2));
+
+	coeffs.values.push_back(bb.getPoint(1,1,1,0));
+	coeffs.values.push_back(bb.getPoint(1,1,1,1));
+	coeffs.values.push_back(bb.getPoint(1,1,1,2));
+
+	std::cout << coeffs << std::endl;
 	bb.dump();
 
 	return coeffs;
@@ -511,7 +526,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		int i = n % input->width;
 		int j = ((n-i) / input->width);
 
-		if( mask->data[j*mask->step[0]+i] && input->at(n).x==input->at(n).x && input->at(n).x==input->at(n).y && input->at(n).x==input->at(n).z)
+		if( mask->data[j*mask->step[0]+i] && input->at(n).x==input->at(n).x && input->at(n).y==input->at(n).y && input->at(n).z==input->at(n).z)
 			segmentCloud->push_back(input->at(n));
 	}
 
