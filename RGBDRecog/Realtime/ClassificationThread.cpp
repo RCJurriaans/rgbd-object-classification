@@ -29,8 +29,10 @@ void ClassificationThread::run()
 		if(cloud){// && bgCloud) {
 
 			//segmenter.setBackground(bgCloud);
-			boost::shared_ptr<pcl::PointIndices> inliers(new pcl::PointIndices);
-			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud, inliers);
+			boost::shared_ptr<pcl::PointIndices> objectInliers(new pcl::PointIndices);
+			boost::shared_ptr<pcl::PointIndices> planeInliers(new pcl::PointIndices);
+			boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs(new pcl::ModelCoefficients);
+			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud, objectInliers, planeInliers, planeCoeffs);
 			boost::shared_ptr<std::vector<cv::Rect> > ROIs = segmenter.getROIS(mask);
 			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 
@@ -42,13 +44,18 @@ void ClassificationThread::run()
 				//boost::shared_ptr<cv::Mat> croppedMask( new cv::Mat((*mask)(*ROI)) );
 				//pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud =
 				//	segmenter.getUnorgCloud(croppedMask, segmentedCloud);
+				
+				
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud =
 					segmenter.getUnorgCloud(*mask, cloud, *ROI);
-
-				cout << "Window cloud size: "<< segmentedCloud->width << " " << segmentedCloud->height << endl;
-				cout << "ROI size: " << ROI->width << " " << ROI->height << endl;
+				//pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud( new pcl::PointCloud<pcl::PointXYZRGB>() );
+				//std::vector<int> a;
+				//pcl::removeNaNFromPointCloud(*segmentedCloud,*unorgSegCloud,a);
+				
+				//cout << "Window cloud size: "<< segmentedCloud->width << " " << segmentedCloud->height << endl;
+				//cout << "ROI size: " << ROI->width << " " << ROI->height << endl;
 				//cout << "Cropped mask size" << croppedMask->cols << " " << croppedMask->rows << endl;
-				cout << "Unorg seg cloud size: " << unorgSegCloud->size() << endl;
+				//cout << "Unorg seg cloud size: " << unorgSegCloud->size() << endl;
 				pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( unorgSegCloud ));//cloud, *mask, *ROI));
 				//pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( cloud, *mask, *ROI));
 
@@ -103,7 +110,9 @@ void ClassificationThread::run()
 				for(int i=0; i < objs.size();i++)
 					results->addObject(objs.at(i));
 				results->setMask(mask);
-				results->setInliers(inliers);
+				results->setObjectInliers(objectInliers);
+				results->setPlaneInliers(planeInliers);
+				results->setPlaneCoeffs(planeCoeffs);
 				results->setScene(cloud);
 				results->hasNew=true;
 			results->mtx.unlock();

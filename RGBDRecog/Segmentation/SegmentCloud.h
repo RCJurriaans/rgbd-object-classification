@@ -18,6 +18,10 @@ public:
 		  minDistanceFilter(0.1)
 	  {}
 
+
+	  static void tester();
+
+
 	  // Method of Segmentation
 	  enum SegmentationMethod { SegBack, SegObj, SegPlane, SegNormHist };
 
@@ -28,7 +32,10 @@ public:
 
 	  // Mask getting function, uses internally stored background
 	  boost::shared_ptr<cv::Mat>
-		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> inliers);
+		  getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
+		  boost::shared_ptr<pcl::PointIndices> objectInliers,
+		  pcl::PointIndices::Ptr planeInliers,
+		  boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs);
 
 	  // Overloaded functions
 	  boost::shared_ptr<cv::Mat>
@@ -45,13 +52,16 @@ public:
 
 	  // Main implementation of plane-subtraction mask calculation
 	  boost::shared_ptr<cv::Mat>
-		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> objectinliers);
+		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<pcl::PointIndices> objectinliers,
+			pcl::PointIndices::Ptr planeInliers, boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs);
 
 	  boost::shared_ptr<cv::Mat>
 		  getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
 	  {
 		  boost::shared_ptr<pcl::PointIndices> objectinliers(new pcl::PointIndices);
-		  return getPlaneMask(input, objectinliers);
+		  pcl::PointIndices::Ptr planeInliers(new pcl::PointIndices);
+		  boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs(new pcl::ModelCoefficients);
+		  return getPlaneMask(input, objectinliers, planeInliers, planeCoeffs);
 	  }
 
 	  // Gets a Region Of Interest. Use mask as input if you have one already.
