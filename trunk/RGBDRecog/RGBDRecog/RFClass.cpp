@@ -522,7 +522,6 @@ void RFClass:: trainModel(){
 	fs2.release();
 
 	cout << "Saved trainingdata" << endl;
-
 }
 
 void RFClass::trainModelMenu(){

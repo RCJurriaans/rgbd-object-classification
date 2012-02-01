@@ -5,6 +5,8 @@
 #include <string>
 #include "FeatureVector.h"
 #include "FeatureData.h"
+#include <pcl/features/fpfh_omp.h>
+#include <pcl/features/normal_3d_omp.h>
 using namespace std;
 
 
@@ -94,6 +96,6 @@ private:
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector,cv::Mat & descriptors, int mode);
 
 	cv::Mat calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals);
-	pcl::PointCloud<pcl::Normal>::Ptr calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
+	pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
 };
 

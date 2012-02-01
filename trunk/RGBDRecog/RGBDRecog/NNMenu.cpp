@@ -58,6 +58,52 @@ NNMenu::NNMenu(Settings * set){
 	infile.close();
 
 	featureExtractor = new FeatureExtractor();
+
+	for(int i = 0; i < amountOfClasses; i++){
+		int picNumSum = testPicNum[i] + trainigPicNum[i];
+		testdataID.push_back(DrawWithReplacementNN(picNumSum,testPicNum[i]));
+		vector<int> temptrainingIDs;
+		for(int j = 1; j <= picNumSum; j++){
+			bool found = false;
+			for(unsigned int k = 0; k < testdataID[i].size(); k++){
+				if(testdataID[i][k] == j){
+					found = true;
+				}
+			}
+			if(!found){
+				temptrainingIDs.push_back(j);
+			}
+		}
+		for (int j=1; j<(trainigPicNum[i]); j++) { //randomly shuffle
+            int r = j + (rand() % (trainigPicNum[i]-j)); // Random remaining position.
+            int temp = temptrainingIDs[j]; temptrainingIDs[j] = temptrainingIDs[r]; temptrainingIDs[r] = temp;
+        }
+		trainingdataID.push_back(temptrainingIDs);
+	}
+}
+
+vector<int> NNMenu:: DrawWithReplacementNN(int maxrange, int amount){
+	vector<int> returnvalues;
+	if(maxrange <= amount){
+		return returnvalues; //makes certain that the function stops
+	}
+
+	while(returnvalues.size() < amount){
+		int drawnValue = rng->operator()(maxrange);
+		bool found = false;
+		for(unsigned int j = 0; j < returnvalues.size(); j++){
+			if(returnvalues[j] == drawnValue){
+				found = true;
+			}
+		}
+		if(!found){
+			returnvalues.push_back(drawnValue);
+		}
+	}
+	for(unsigned int i = 0; i < returnvalues.size(); i++){
+		returnvalues[i] ++;
+	}
+	return returnvalues;
 }
 
 void NNMenu::menu(){
@@ -80,8 +126,14 @@ void NNMenu::menu(){
 			case 't': case 'T':{
 				cin.clear();
 				cin.sync();
-				cout << "Loading training menu" << endl;
+				cout << "Loading training" << endl;
 				trainData();
+			} break;
+			case 'a': case 'A':{
+				cin.clear();
+				cin.sync();
+				cout << "Running testing" << endl;
+				NNTesting();
 			} break;
 			default:{
 				cin.clear();
@@ -129,6 +181,9 @@ void NNMenu::trainData()
 
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
+	string pcdPath; //for the pcd data
+	string maskOutPath;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	cv::Mat input; //stores the image data
 
 	for(int i = 0; i < amountOfClasses; i++){
@@ -136,27 +191,35 @@ void NNMenu::trainData()
 		vector<cv::Mat> featurevectors; // Contains a mat for each image
 
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
-		filePath += "\\" + classNames[i] + "_train\\"; //go to the classname folder
+		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "starting processing class: " << classNames[i] << endl;
-		for(int j = 1; j <= trainigPicNum[i]; j++){ //for each image
+		for(int j = 0; j < trainigPicNum[i]; j++){ //for each image
+			int chosenImgID = trainingdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
-				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" +RFClass:: convertNumberToFLString(3,chosenImgID) + ".pcd";
+				maskOutPath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}else{
-				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "seg" + ".pcd";
+				maskOutPath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}
-			cout << "processing on image: " << classNames[i] << "_" << j;
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
+
+			cout << "processing on image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath); //Load as grayscale image
-			
+			cv::Mat mask = cv::imread(maskOutPath);
 			bool found = false;
+
 			vector<cv::Mat> tempfeaturevector;
 			if(settings->segmentation){
 				//tempfeaturevector.clear();
-				cv::Rect roi = getDatasetROINN(filePath,j);
+				cv::Rect roi = getDatasetROINN(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
-					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
+					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input,cloud,mask);
 					found = true;
 				}else{
 					found = false;
@@ -164,7 +227,7 @@ void NNMenu::trainData()
 			}else{
 				if(input.cols > 0){
 					//tempfeaturevector.clear();
-					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
+					tempfeaturevector = featureExtractor->extractRawFeatures(settings->modes,input,cloud,mask);
 					found = true;
 				}else{
 					found = false;
@@ -196,6 +259,7 @@ void NNMenu::trainData()
 	cout << "Writing NN data to: " << savePath << endl;
 	cv::FileStorage f(savePath, cv::FileStorage::WRITE);
 	nbnn->write(f);
+	f.release();
 	cout << "Done writing NN." << endl;
 }
 
@@ -217,6 +281,9 @@ void NNMenu::NNTesting(){
 	cv::Mat input;
 	string imagePath; //path where the images are
 	string filePath; //filepath for each image
+	string pcdPath; //for the pcd data
+	string maskOutPath;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 	vector<cv::Mat> result;
 	int** predictions = new int*[amountOfClasses];
 	for(int i = 0; i < amountOfClasses; i++){
@@ -224,34 +291,49 @@ void NNMenu::NNTesting(){
 	}
 
 
+	string savePath = getenv("RGBDDATA_DIR");
+	savePath += "\\NBNN" + settings->settingsString() + ".yml";
+	cout << "Reading NN data from: " << savePath << endl;
+	cv::FileStorage f(savePath, cv::FileStorage::READ);
+	nbnn->read(f);
+	f.release();
+
 	for(int i = 0; i < amountOfClasses; i++){
 		filePath = getenv("RGBDDATA_DIR"); //get the proper environment variable path for the data
-		filePath += "\\" + classNames[i] + "_test\\"; //go to the classname folder
+		filePath += "\\" + classNames[i] + "\\"; //go to the classname folder
 		cout << "procesing class: " << classNames[i] << endl;
-		for(int j = 1; j <= testPicNum[i]; j++){ //for each image
+		for(int j = 0; j < testPicNum[i]; j++){ //for each image
+			int chosenImgID = testdataID[i][j];
 			imagePath.clear();
 			if(!settings->segmentation){
-				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,j) + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + ".pcd";
+				maskOutPath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
+
 			}else{
-				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,j) + "seg" + fileExtension; //get the proper filename
+				imagePath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "seg" + fileExtension; //get the proper filename
+				pcdPath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "seg" + ".pcd";
+				maskOutPath = filePath + "img" + RFClass::convertNumberToFLString(3,chosenImgID) + "mask" + fileExtension;
 			}
-			cout << "processing image: " << classNames[i] << "_" << j;
+			pcl::io::loadPCDFile<pcl::PointXYZRGB> (pcdPath, *cloud);
+			cout << "processing image: " << classNames[i] << "_" << chosenImgID;
 			input.release();
 			input = cv::imread(imagePath); //Load rgb image
 			result.clear();
+			cv::Mat mask = cv::imread(maskOutPath);
 			bool found = false;
 			if(settings->segmentation){
-				cv::Rect roi = getDatasetROINN(filePath,j);
+				cv::Rect roi = getDatasetROINN(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//result = featureExtractor->extractFeatures(settings->modes,input,roi);
-					result = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
+					result = featureExtractor->extractRawFeatures(settings->modes,input,cloud,mask);
 					found = true;
 				}else{
 					found = false;
 				}
 			}else{
 				if(input.cols > 0){
-					result = featureExtractor->extractRawFeatures(settings->modes,input,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr());
+					result = featureExtractor->extractRawFeatures(settings->modes,input,cloud,mask);
 					found = true;
 				}
 				else{
@@ -260,7 +342,7 @@ void NNMenu::NNTesting(){
 			}
 			if(found && result[0].cols > 0){
 				//predictions[i][j] = rfclassifier->predict(result);
-				nbnn->classify(result[0]);
+				predictions[i][j] = nbnn->classify(result[0]);
 				cout << " classified as: " << classNames[predictions[i][j]] << endl;
 			}else{
 				predictions[i][j] = rng->operator()(featureExtractor->getAmountOfFeatures());
