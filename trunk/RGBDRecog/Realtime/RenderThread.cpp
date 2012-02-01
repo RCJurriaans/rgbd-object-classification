@@ -174,9 +174,9 @@ void RenderThread::run()
 					uint8_t g = (rgbin >> 8)  & 0x0000ff;
 					uint8_t b = (rgbin)       & 0x0000ff;
 
-					uint32_t rgb = (static_cast<uint32_t>(r + 30) << 16 |
-									static_cast<uint32_t>(g + 30) << 8 |
-									static_cast<uint32_t>(b + 30));
+					uint32_t rgb = (static_cast<uint32_t>(255) << 16 |
+									static_cast<uint32_t>(0) << 8 |
+									static_cast<uint32_t>(0));
 					cloudCopy->at(inliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
 				}
 			}
@@ -207,7 +207,7 @@ void RenderThread::run()
 				// Add bounding box
 				std::string objName = "box" + boost::lexical_cast<std::string>(i);
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr box( new pcl::PointCloud<pcl::PointXYZRGB>());
-				addBox(box, coefficients, 255, 100, 0);
+				addBox2(box, coefficients, 255, 100, 0);
 				v.addPointCloud(box, objName);
 				v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, objName);
 

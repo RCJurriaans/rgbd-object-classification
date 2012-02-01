@@ -156,6 +156,7 @@ public:
  			time_t currTime = time( NULL );
 			if( difftime(currTime, lastSave) > 2.0 ) {
 				timeToSave = true;
+				lastSave = time(NULL);
 			}
 		}
 

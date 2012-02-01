@@ -31,21 +31,28 @@ void ClassificationThread::run()
 			//segmenter.setBackground(bgCloud);
 			boost::shared_ptr<pcl::PointIndices> inliers(new pcl::PointIndices);
 			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud, inliers);
-			//mask = segmenter.denoizeMask( mask );
 			boost::shared_ptr<std::vector<cv::Rect> > ROIs = segmenter.getROIS(mask);
 			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 
-
+			// Process each found object
 			vector<boost::shared_ptr<FoundObject> > objs;
-
-			
-
 			for(vector<cv::Rect>::iterator ROI = ROIs->begin(); ROI != ROIs->end(); ROI++)
 			{
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentedCloud = segmenter.getWindowCloud(*ROI, cloud);
+				//boost::shared_ptr<cv::Mat> croppedMask( new cv::Mat((*mask)(*ROI)) );
+				//pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud =
+				//	segmenter.getUnorgCloud(croppedMask, segmentedCloud);
+				pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud =
+					segmenter.getUnorgCloud(*mask, cloud, *ROI);
 
-/*
-				boost::shared_ptr<cv::Mat> maskOut;
+				cout << "Window cloud size: "<< segmentedCloud->width << " " << segmentedCloud->height << endl;
+				cout << "ROI size: " << ROI->width << " " << ROI->height << endl;
+				//cout << "Cropped mask size" << croppedMask->cols << " " << croppedMask->rows << endl;
+				cout << "Unorg seg cloud size: " << unorgSegCloud->size() << endl;
+				pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( unorgSegCloud ));//cloud, *mask, *ROI));
+				//pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( cloud, *mask, *ROI));
+
+				/*boost::shared_ptr<cv::Mat> maskOut;
 				cv::Rect ROIOut;
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_new  (new pcl::PointCloud<pcl::PointXYZRGB>);
 				cloud_new = segmenter.tijmenLikesHacking(maskOut, ROIOut, segmentedCloud);
@@ -55,8 +62,9 @@ void ClassificationThread::run()
 				if(cloud_new->size()!=0){
 					coeffs = segmenter.getSmallestBoundingBox(cloud_new);
 				}*/
+
 				
-				pcl::ModelCoefficients coeffs( segmenter.getCoefficients(*ROI, cloud, mask) );
+				//pcl::ModelCoefficients coeffs( segmenter.getCoefficients(*ROI, cloud, mask) ); // Axis aligned bb
 				
 				int predictedClassRF = -1;
 				int predictedClassNN = -1;
@@ -86,6 +94,7 @@ void ClassificationThread::run()
 				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
 				objs.push_back(object);
 				
+			//	break;
 			}
 
 			// Return output to main thread

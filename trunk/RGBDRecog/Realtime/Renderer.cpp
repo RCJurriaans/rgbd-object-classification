@@ -21,13 +21,18 @@ void Renderer::renderRGB(const boost::shared_ptr<openni_wrapper::Image>& oniBGR)
 		boost::shared_ptr< std::vector< boost::shared_ptr<FoundObject> > > objects = results->getObjects();
 		
 		boost::shared_ptr<cv::Mat> mask = results->getMask();
-		if (objects->size() > 0) {
-			ROI = objects->at(0)->getBoundingBox2D();
-			c = objects->at(0)->getCloud();
-		}
+		//if (objects->size() > 0) {
+		//	ROI = objects->at(0)->getBoundingBox2D();
+		//	c = objects->at(0)->getCloud();
+		//}
+
 	results->mtx.unlock();
 
-	cv::rectangle(RGBImage, ROI, cv::Scalar(255,0,0));
+	for( int i = 0; i < objects->size(); i++) {
+		ROI = objects->at(i)->getBoundingBox2D();
+		cv::rectangle(RGBImage, ROI, cv::Scalar(255,0,0));
+	}
+	
 	cv::imshow( "RGB Display", RGBImage);
 
 	if( mask ) {
