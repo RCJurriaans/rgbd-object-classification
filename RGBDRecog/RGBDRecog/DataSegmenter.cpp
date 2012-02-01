@@ -152,7 +152,7 @@ void DataSegmenter::generateBoundingBoxes(){
 
 			//get region of interest from the cloud data
 			cv::Rect rect; // = segmentation->getROI(cloud, background);
-			cv::Rect expectedROI = segmentation->getROI(cloud, background);
+			//cv::Rect expectedROI = segmentation->getROI(cloud, background);
 			boost::shared_ptr<cv::Mat> mask;
 			segmentation->setBackground(background);
 			segmentedCloud = segmentation->tijmenLikesHacking(mask, rect,cloud);

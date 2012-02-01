@@ -349,7 +349,11 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 		rawfeatures.push_back(colorHistogramCreator(planes,mask));
 	}
 	if(modes[7]){
+		clock_t init, final; //for timing
+		init=clock();
 		rawfeatures.push_back(calculateFPFH(cloud,calculateNormals(cloud)));
+		final=clock()-init;
+		cout << endl <<  (double)final / ((double)CLOCKS_PER_SEC) << endl;
 		//cout << rawfeatures[0];
 	}
 	grayimg.release();
@@ -431,7 +435,7 @@ pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointC
 	//	std:: cout << cloud->at(i).x << " " << cloud->at(i).y << " " << cloud->at(i).z << endl;
 	//}
 
-	pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+	pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne;
 	ne.setInputCloud (cloud);
 
 	 //Create an empty kdtree representation, and pass it to the normal estimation object.
@@ -456,7 +460,7 @@ pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointC
 
 cv::Mat FeatureExtractor::calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals){
 	 //Create the FPFH estimation class, and pass the input dataset+normals to it
-	pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh;
+	pcl::FPFHEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh;
 	fpfh.setInputCloud (cloud);
 	fpfh.setInputNormals (normals);
 	 //alternatively, if cloud is of tpe PointNormal, do fpfh.setInputNormals (cloud);

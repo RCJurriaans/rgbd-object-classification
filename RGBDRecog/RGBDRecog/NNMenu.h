@@ -15,13 +15,16 @@ public:
 	
 	cv::Rect getDatasetROINN(string folderPath, int j);
 	cv::Rect readRectNN(const string filePath);
-
+	vector<int> DrawWithReplacementNN(int maxrange, int amount);
 
 	int amountOfClasses;
 	string fileExtension;
 	vector<string> classNames;
 	vector<int> trainigPicNum;
 	vector<int> testPicNum;
+
+	vector<vector<int>> trainingdataID;
+	vector<vector<int>> testdataID;
 
 	FeatureExtractor* featureExtractor;
 	Settings * settings;
