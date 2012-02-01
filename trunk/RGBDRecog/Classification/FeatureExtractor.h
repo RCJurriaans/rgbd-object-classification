@@ -96,6 +96,6 @@ private:
 	void addDescriptor(bool & firstadded, cv::Mat & tempfeaturevector,cv::Mat & descriptors, int mode);
 
 	cv::Mat calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals);
-	pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
+	pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
 };
 

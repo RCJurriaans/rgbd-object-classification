@@ -154,7 +154,8 @@ void RenderThread::run()
 				cloudCopy = results->getScene();
 				renderResult = true;
 			}
-			boost::shared_ptr<pcl::PointIndices> inliers = results->getInliers();
+			boost::shared_ptr<pcl::PointIndices> objectInliers = results->getObjectInliers();
+			boost::shared_ptr<pcl::PointIndices> planeInliers = results->getPlaneInliers();
 			boost::shared_ptr< std::vector< boost::shared_ptr<FoundObject> > > objects = results->getObjects();
 			if( results->hasNew ) {
 				results->hasNew = false;
@@ -166,19 +167,34 @@ void RenderThread::run()
 
 			// Render inliers
 			if( changeColors ) {
-				for(int i=0; i < inliers->indices.size(); i++) {
+				for(int i=0; i < objectInliers->indices.size(); i++) {
 				
-					pcl::PointXYZRGB& pt = cloudCopy->at(inliers->indices.at(i));
+					pcl::PointXYZRGB& pt = cloudCopy->at(objectInliers->indices.at(i));
 					uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
 					uint8_t r = (rgbin >> 16) & 0x0000ff;
 					uint8_t g = (rgbin >> 8)  & 0x0000ff;
 					uint8_t b = (rgbin)       & 0x0000ff;
 
-					uint32_t rgb = (static_cast<uint32_t>(255) << 16 |
-									static_cast<uint32_t>(0) << 8 |
-									static_cast<uint32_t>(0));
-					cloudCopy->at(inliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
+					uint32_t rgb = (static_cast<uint32_t>(r + 50) << 16 |
+									static_cast<uint32_t>(g + 50) << 8 |
+									static_cast<uint32_t>(b + 50));
+					cloudCopy->at(objectInliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
 				}
+
+				for(int i=0; i < planeInliers->indices.size(); i++) {
+				
+					pcl::PointXYZRGB& pt = cloudCopy->at(planeInliers->indices.at(i));
+					uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
+					uint8_t r = (rgbin >> 16) & 0x0000ff;
+					uint8_t g = (rgbin >> 8)  & 0x0000ff;
+					uint8_t b = (rgbin)       & 0x0000ff;
+
+					uint32_t rgb = (static_cast<uint32_t>(200) << 16 |
+									static_cast<uint32_t>(200) << 8 |
+									static_cast<uint32_t>(200));
+					cloudCopy->at(planeInliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
+				}
+
 			}
 
 			if(!v.updatePointCloud(cloudCopy, "scene")) {

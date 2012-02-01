@@ -311,66 +311,22 @@ protected:
 	boost::signals2::connection renderCloudRGBConnection;
 };
 
+//#define SEG
 
+#ifndef SEG
 int main ()
 {
 	DataDistributor d;
 	d.run();
 	return 0;
 }
-
-
-/*
-
+#else
 int	main (int argc, char** argv)
 {
-	SegmentCloud SC;
-
-	std::string path_back;
-	//std::cout << "Enter background pcd file path" << std::endl;
-	//std::cin >> path_back;
-	 path_back = "img001.pcd";
-
-	std::string path_img;
-	//std::cout << "Enter image pcd file path" << std::endl;
-	//std::cin >> path_img;
-	 path_img = "img022.pcd";
-
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_back (new pcl::PointCloud<pcl::PointXYZRGB>);
-	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_back, *cloud_back);
-//	SC.setBackgroundImage(cloud_back);
-	std::cout << "Background loaded" << std::endl;
-
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_img (new pcl::PointCloud<pcl::PointXYZRGB>);
-	pcl::io::loadPCDFile<pcl::PointXYZRGB> (path_img, *cloud_img);
-	//SC.setInputCloud(cloud_img);
-	std::cout << "Input loaded" << std::endl;
-
-
-	std::cout << "Starting " << cloud_img->width << " " << cloud_img->height <<  std::endl;
-
-	time_t start = time(NULL);
-	
-	//SC.getNaNCloud();
-	//SC.getUnorgCloud();
-	//SC.getROI();
-	//cloud_img = SC.getWindowCloud(cloud_img, cloud_back);
-	cv::imshow("Mask", *SC.getMask(cloud_img, cloud_back));
-	SC.getCoefficients(SC.getROI(cloud_img, cloud_back), cloud_img);
-	
-	cvWaitKey();
-	cv::destroyWindow("Mask");
-	time_t end = time(NULL);
-
-	std::cout << "Ending " << cloud_img->width << " " << cloud_img->height <<  std::endl;
-
-
-	pcl::io::savePCDFileASCII ("test_pcd.pcd", *cloud_img);
-	std::cerr << "Saved " << cloud_img->points.size () << " data points to test_pcd.pcd." << std::endl;
-	
+	SegmentCloud::tester();
 
 	return (0);
 
 
 }
-*/
+#endif
