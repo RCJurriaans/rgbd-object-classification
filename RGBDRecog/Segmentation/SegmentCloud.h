@@ -23,7 +23,8 @@ public:
 
 
 	  // Get the points representing the smallest bounding box
-	  pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, cv::Mat mask, cv::Rect ROI);
+	  pcl::ModelCoefficients getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, cv::Mat mask, cv::Rect ROI);
+	  pcl::ModelCoefficients getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr unorgCloud);
 
 	  // Mask getting function, uses internally stored background
 	  boost::shared_ptr<cv::Mat>
@@ -106,6 +107,12 @@ public:
 	  // Gets an unorganised cloud, by copying only nonzero mask-points.
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 		  getUnorgCloud(boost::shared_ptr<const cv::Mat> mask, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
+
+	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+			SegmentCloud::getUnorgCloud(
+				const cv::Mat mask,
+				pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
+				cv::Rect ROI);
 
 	  //
 	  boost::shared_ptr<cv::Mat> denoizeMask( boost::shared_ptr<cv::Mat> latestMask );

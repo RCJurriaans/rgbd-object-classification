@@ -11,6 +11,7 @@
 #include <limits>
 #include <ctime>
 #include <math.h>
+#include <algorithm>
 
 // PCL stuff
 #include <pcl/point_cloud.h>

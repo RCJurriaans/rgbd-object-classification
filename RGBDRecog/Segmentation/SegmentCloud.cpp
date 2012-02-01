@@ -15,14 +15,137 @@
 //     |/      | /
 //     4 ------7
 // 0.x 0.y 0.z 1.x 1.y 1.z 2.x 2.y ...
-pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, cv::Mat mask, cv::Rect ROI){
+pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr unorgCloud){
+
+	gdiam_real* points;
+	int stride = 1;
+	points = (gdiam_point)malloc( sizeof( gdiam_point_t ) * ((unorgCloud->size()+stride-1) / stride) );
+	assert( points != NULL );
+
+	pcl::PointXYZRGB pt;
+
+	// Get maxpts
+/*	float minxx=10000, minxy=10000, minxz=10000;
+	float maxxx=-10000, maxxy=-10000, maxxz=-10000;
+	float minyx=10000, minyy=10000, minyz=10000;
+	float maxyx=-10000, maxyy=-10000, maxyz=-10000;
+	float minzx=10000, minzy=10000, minzz=10000;
+	float maxzx=-10000, maxzy=-10000, maxzz=-10000;*/
+/*	float minx = 10000, maxx = -10000, miny = 10000, maxy = -10000, minz = 10000, maxz= -10000;
+
+	for(int i=0; i < unorgCloud->size(); i++) {
+
+		pt = unorgCloud->at(i);
+		if( pt.x < minx ) {
+			points[ 0 * 3 + 0 ] = (double) pt.x;
+			points[ 0 * 3 + 1 ] = (double) pt.y;
+			points[ 0 * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
+		}
+		if( pt.x > maxx ) {
+			points[ 1 * 3 + 0 ] = (double) pt.x;
+			points[ 1 * 3 + 1 ] = (double) pt.y;
+			points[ 1 * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
+		}
+		if( pt.y < miny ) {
+			points[ 2 * 3 + 0 ] = (double) pt.x;
+			points[ 2 * 3 + 1 ] = (double) pt.y;
+			points[ 2 * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
+		}
+		if( pt.y > maxy ) {
+			points[ 3 * 3 + 0 ] = (double) pt.x;
+			points[ 3 * 3 + 1 ] = (double) pt.y;
+			points[ 3 * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
+		}
+		if( pt.z < minz ) {
+			points[ 4 * 3 + 0 ] = (double) pt.x;
+			points[ 4 * 3 + 1 ] = (double) pt.y;
+			points[ 4 * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
+		}
+		if( pt.z > maxz ) {
+			points[ 5 * 3 + 0 ] = (double) pt.x;
+			points[ 5 * 3 + 1 ] = (double) pt.y;
+			points[ 5 * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
+		}
+	}
+	
+	std::cout << "points: " << std::endl;
+	for(int i = 0; i<6;i++) {
+		std::cout << points[i * 3 + 0] << " " << points[i * 3 + 1] << " " << points[i * 3 + 2] << std::endl;
+	}*/
+	int ind = 0;
+	for( int i = 0; i < unorgCloud->size(); i+=stride) {
+		pt = unorgCloud->at(i);
+		points[ ind * 3 + 0 ] = (double) pt.x;
+		points[ ind * 3 + 1 ] = (double) pt.y;
+		points[ ind * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
+		ind++;
+	}
+	std::cout << "Points used: " << ind << std::endl;
+	
+
+	gdiam_point* pnt_arr;
+	gdiam_bbox bb;
+
+	pnt_arr = gdiam_convert( (gdiam_real *)points, ((unorgCloud->size()+stride-1) / stride) );
+
+	printf( "Computing a tight-fitting bounding box of the point-set\n" );
+	time_t begin = time(NULL);
+	bb = gdiam_approx_mvbb_grid_sample( pnt_arr, ((unorgCloud->size()+stride-1) / stride), 5, 400 );//num, 5, 400 );
+	time_t end = time(NULL);
+	std::cout << "time:  " << difftime(end, begin) << std::endl;
+	std::cout<< "Done. "<<std::endl;
+	
 	pcl::ModelCoefficients coeffs;
+	coeffs.values.push_back(bb.getPoint(0,0,0,0));
+	coeffs.values.push_back(bb.getPoint(0,0,0,1));
+	coeffs.values.push_back(bb.getPoint(0,0,0,2));
+	
+	coeffs.values.push_back(bb.getPoint(0,0,1,0));
+	coeffs.values.push_back(bb.getPoint(0,0,1,1));
+	coeffs.values.push_back(bb.getPoint(0,0,1,2));
 
+	coeffs.values.push_back(bb.getPoint(0,1,1,0));
+	coeffs.values.push_back(bb.getPoint(0,1,1,1));
+	coeffs.values.push_back(bb.getPoint(0,1,1,2));
 
-	float minx=0, miny=0, minz=0;
-	float maxx=0, maxy=0, maxz=0;
-	float avgx=0, avgy=0, avgz=0;
-	float avg2x=0,avg2y=0,avg2z=0;
+	coeffs.values.push_back(bb.getPoint(0,1,0,0));
+	coeffs.values.push_back(bb.getPoint(0,1,0,1));
+	coeffs.values.push_back(bb.getPoint(0,1,0,2));
+	
+	coeffs.values.push_back(bb.getPoint(1,0,0,0));
+	coeffs.values.push_back(bb.getPoint(1,0,0,1));
+	coeffs.values.push_back(bb.getPoint(1,0,0,2));
+
+	coeffs.values.push_back(bb.getPoint(1,0,1,0));
+	coeffs.values.push_back(bb.getPoint(1,0,1,1));
+	coeffs.values.push_back(bb.getPoint(1,0,1,2));
+
+	coeffs.values.push_back(bb.getPoint(1,1,1,0));
+	coeffs.values.push_back(bb.getPoint(1,1,1,1));
+	coeffs.values.push_back(bb.getPoint(1,1,1,2));
+
+	coeffs.values.push_back(bb.getPoint(1,1,0,0));
+	coeffs.values.push_back(bb.getPoint(1,1,0,1));
+	coeffs.values.push_back(bb.getPoint(1,1,0,2));
+
+	//std::cout << coeffs << std::endl;
+	//bb.dump();
+
+	free(points);
+
+	return coeffs;
+
+}
+	
+
+pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, cv::Mat mask, cv::Rect ROI){
+	
+	pcl::ModelCoefficients coeffs;
+	float minz =1000000000, maxz=-1000000000000;
+	//float minx=100000000000, miny=100000000000, minz=100000000000;
+	//float maxx=-100000000000, maxy=-10000000000, maxz=-10000000000;
+	//float avgx=0, avgy=0, avgz=0;
+	//float avg2x=0,avg2y=0,avg2z=0;
 	int imin = ROI.x;
 	int imax = imin+ROI.width;
 	int jmin = ROI.y;
@@ -30,80 +153,55 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 
 	int pointcount=0;
 
-
 	pcl::PointXYZRGB crtPoint;
-	for(int i=imin; i<imax; i++)
+	for(int i=imin; i<imax; i+=1)//i++)
 	{
-		for(int j=jmin; j<jmax; j++)
+		for(int j=jmin; j<jmax; j+=1)//j++)
 		{
 			if( mask.data[j*mask.step[0]+i] != 0 ) {
 				crtPoint = input->at(i,j);
-				if(crtPoint.x<minx){minx=crtPoint.x;}
-				if(crtPoint.y<miny){miny=crtPoint.y;}
-				if(crtPoint.z<minz){minz=crtPoint.z;}
-
-				if(crtPoint.x>maxx){maxx=crtPoint.x;}
-				if(crtPoint.y>maxy){maxy=crtPoint.y;}
-				if(crtPoint.z>maxz){maxz=crtPoint.z;}
 
 				if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
-					avgx+=crtPoint.x;
-					avgy+=crtPoint.y;
-					avgz+=crtPoint.z;
-					avg2x+= crtPoint.x*crtPoint.x;
-					avg2y+= crtPoint.y*crtPoint.y;
-					avg2z+= crtPoint.z*crtPoint.z;
 					pointcount++;
 				}
 			}
 		}
 	}
-	avgx /= pointcount;
-	avgy /= pointcount;
-	avgz /= pointcount;
-	avg2x /= pointcount;
-	avg2y /= pointcount;
-	avg2z /= pointcount;
+	std::cout << "Points found: " << pointcount << std::endl;
 
-	/*float varx = sqrt(std::max(avg2x - avgx*avgx, 0.001))*4
-	float vary = sqrt(std::max(avg2x - avgx*avgx, 0.001))*4
-	float varz = sqrt(std::max(avg2x - avgx*avgx, 0.001))*4
-	float minx = avgx - varx;
-	float maxx = avgx + varx;
-	float miny = avgy - vary;
-	float maxy = avgy + vary;
-	float minz = avgz - varz;
-	float maxz = avgz + varz;*/
-
-
-	gdiam_real  * points;
-	int num=input->size();
-
-	points = (gdiam_point)malloc( sizeof( gdiam_point_t ) * num );
+	gdiam_real* points;
+	points = (gdiam_point)malloc( sizeof( gdiam_point_t ) * pointcount );
 	assert( points != NULL );
 
-	// Initialize points in vector
-	for  ( int  ind = 0; ind < num; ind++ ) {
-		
-		points[ ind * 3 + 0 ] = (double) input->at(ind).x;
-		points[ ind * 3 + 1 ] = (double) input->at(ind).y;
-		points[ ind * 3 + 2 ] = (double) input->at(ind).z;// + (((double) rand() / (RAND_MAX+1))*0.01);
-		//points[ ind * 3 + 0 ] = ((double) rand() / (RAND_MAX+1));
-        //points[ ind * 3 + 1 ] = ((double) rand() / (RAND_MAX+1));
-        //points[ ind * 3 + 2 ] = ((double) rand() / (RAND_MAX+1));
+	int sind = 0;
+	for(int i=imin; i<imax; i+=1)//i++)
+	{
+		for(int j=jmin; j<jmax; j+=1)//j++)
+		{
+			if( mask.data[j*mask.step[0]+i] != 0 ) {
+				
+				crtPoint = input->at(i,j);
+				if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
+					points[ sind * 3 + 0 ] = (double) crtPoint.x;
+					points[ sind * 3 + 1 ] = (double) crtPoint.y;
+					points[ sind * 3 + 2 ] = (double) crtPoint.z + (((double) rand() / (RAND_MAX+1))*0.01);
+					sind++;
+				}
+			}
+		}
 	}
 
+	std::cout << "sind " << sind << std::endl; 
 
+	gdiam_point* pnt_arr;
+	gdiam_bbox bb;
 
-	gdiam_point  * pnt_arr;
-	gdiam_bbox   bb;
-
-	pnt_arr = gdiam_convert( (gdiam_real *)points, num );
+	pnt_arr = gdiam_convert( (gdiam_real *)points, pointcount );//sind );//num );
 
 	printf( "Computing a tight-fitting bounding box of the point-set\n" );
-	bb = gdiam_approx_mvbb_grid_sample( pnt_arr, num, 5, 400 );
+	bb = gdiam_approx_mvbb_grid_sample( pnt_arr, sind, 5, 400 );//num, 5, 400 );
 
-	//printf( "Resulting bounding box:\n" );
+	std::cout<< "Done. "<<std::endl;
 	
 	coeffs.values.push_back(bb.getPoint(0,0,0,0));
 	coeffs.values.push_back(bb.getPoint(0,0,0,1));
@@ -137,8 +235,10 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 	coeffs.values.push_back(bb.getPoint(1,1,0,1));
 	coeffs.values.push_back(bb.getPoint(1,1,0,2));
 
-	std::cout << coeffs << std::endl;
+	//std::cout << coeffs << std::endl;
 	//bb.dump();
+
+	free(points);
 
 	return coeffs;
 
@@ -276,10 +376,16 @@ boost::shared_ptr<cv::Mat>
 			if(inliercount<inliers->indices.size() && inliers->indices.at(inliercount)==n){inliercount++;}
 		}
 	}
+
+	
+	std::cout << "eroding mask"<<std::endl;
+
+	//cv::Mat* maskEroded = new cv::Mat();
+	cv::Mat el = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5), cv::Point(2,2));
+	cv::erode(*mask, *mask, el);//*maskEroded, el);
+	//mask.reset(maskEroded);
+	
 	return mask;
-	//return cloud_p;
-
-
 }
 
 
@@ -311,8 +417,8 @@ boost::shared_ptr<std::vector<cv::Rect> > SegmentCloud::getROIS(boost::shared_pt
 		boxWidth  = imcalc.getRegions(rc,0);
 		boxHeight = imcalc.getRegions(rc,1);
 
-		boxWidth = static_cast<int>(boxWidth*1.5);
-		boxHeight = static_cast<int>(boxHeight*1.5);
+		boxWidth = static_cast<int>(boxWidth);//*1.5);
+		boxHeight = static_cast<int>(boxHeight);//*1.5);
 
 		minx = mean_x-(boxWidth/2);
 		miny = mean_y-(boxHeight/2); 
@@ -572,6 +678,40 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr SegmentCloud::getWindowCloud(const cv::Re
 	return windowCloud;
 }
 
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+	SegmentCloud::getUnorgCloud(
+		const cv::Mat mask,
+		pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
+		cv::Rect ROI)
+{
+
+	int imin = ROI.x;
+	int imax = imin+ROI.width;
+	int jmin = ROI.y;
+	int jmax = jmin+ROI.height;
+
+	int pointcount=0;
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+
+	pcl::PointXYZRGB crtPoint;
+	for(int i=imin; i<imax; i+=1)//i++)
+	{
+		for(int j=jmin; j<jmax; j+=1)//j++)
+		{
+			if( mask.data[j*mask.step[0]+i] != 0 ) {
+				crtPoint = input->at(i,j);
+
+				if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
+					segmentCloud->push_back(input->at(i,j));
+					pointcount++;
+				}
+			}
+		}
+	}
+	return segmentCloud;
+}
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 	SegmentCloud::getUnorgCloud(boost::shared_ptr<const cv::Mat> mask,
 	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
@@ -581,62 +721,39 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 	//BooleanMask = cv::Mat::ones( inputCloud->height, inputCloud->width, CV_8UC1);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-	for(int n=0; n < nmax ; n++ ){
+	/*for(int n=0; n < nmax ; n++ ){
 		int i = n % input->width;
 		int j = ((n-i) / input->width);
 
-		if( mask->data[j*mask->step[0]+i] && input->at(n).x==input->at(n).x && input->at(n).y==input->at(n).y && input->at(n).z==input->at(n).z)
+		if( mask->data[j*mask->step[0]+i] != 0 && input->at(n).x==input->at(n).x && input->at(n).y==input->at(n).y && input->at(n).z==input->at(n).z)
 			segmentCloud->push_back(input->at(n));
+	}*/
+	pcl::PointXYZRGB crtPoint;
+	int pointcount = 0;
+	for( int i = 0; i < input->width; i++ ) {
+		for( int j = 0; j < input->height; j++ ) {
+			//if( mask->data[j*mask->step[0]+i] != 0 && input->at(i,j).x==input->at(i,j).x && input->at(i,j).y==input->at(i,j).y && input->at(i,j).z==input->at(i,j).z)
+			//	segmentCloud->push_back(input->at(i,j));
+
+			if( mask->data[j*mask->step[0]+i] != 0 ) {
+				crtPoint = input->at(i,j);
+
+				if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
+					segmentCloud->push_back(input->at(i,j));
+					pointcount++;
+				}
+			}
+		}
 	}
+	std::cout << "unorg pt count " << pointcount << " " << segmentCloud->size() << std::endl;
+
+
 
 
 	//std::vector<int> a;
 	//pcl::removeNaNFromPointCloud(*segmentCloud,*segmentCloud,a);
 
 	return segmentCloud;
-	/* doesn't depend on seg method.
-	switch( getSegMethod() ){
-	case SegBack:
-
-	float point_backz;
-	float point_imgz;
-
-	nmax = inputCloud->width * inputCloud->height;
-	std::cout << "Created segment object" << std::endl;
-	for(int n=0; n < nmax ; n++ ){
-	// Extract z value from both clouds
-	point_backz = backgroundCloud->at(n).z;
-	point_imgz  = inputCloud->at(n).z;
-
-	// Recalculate indices in matrix from n
-	int i = n % inputCloud->width;
-	int j = ((n-i) / inputCloud->width);
-
-	// Check whether the distance is smaller than a threshold
-	// Check whether the distance is within the range of the RGB-D camera
-	// Check for QNaN
-	if(abs(point_backz-point_imgz)<threshold || point_imgz>maxDistanceFilter || point_imgz<minDistanceFilter || point_imgz != point_imgz){
-	BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 0;
-	}
-	else {
-	segmentCloud->push_back(inputCloud->at(n));
-	//BooleanMask.data[j*BooleanMask.step[0]+i*BooleanMask.step[1]] = 1;
-	}
-	}
-	inputCloud->swap(*segmentCloud);
-
-	break;
-	case SegObj:
-	std::cout << "No such method yet" << std::endl;
-	break;
-	case SegPlane:
-	std::cout << "No such method yet" << std::endl;
-	break;
-	case SegNormHist:
-	std::cout << "No such method yet" << std::endl;
-	break;
-	}
-	*/
 }
 
 boost::shared_ptr<cv::Mat> SegmentCloud::denoizeMask( boost::shared_ptr<cv::Mat> latestMask )
