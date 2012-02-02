@@ -104,6 +104,9 @@ public:
 		//renderer->renderCloudRGB(cloud);
 		currentCloud = cloud;
 
+		//pcl::PointCloud<pcl::PointXYZRGB>::Ptr c(new pcl::PointCloud<pcl::PointXYZRGB>());
+		//pcl::io::loadPCDFile<pcl::PointXYZRGB> ("img001.pcd", *c);
+
 		//cout << "Sending cloud to classification thread"<<endl;
 		classificationInputMutex.lock();
 		s_cloud = cloud;

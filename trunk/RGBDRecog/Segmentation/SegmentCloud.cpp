@@ -558,8 +558,8 @@ cv::Rect SegmentCloud::getROI(boost::shared_ptr<const cv::Mat> mask)
 	int boxWidth  = imcalc.getRegions(0,0);
 	int boxHeight = imcalc.getRegions(0,1);
 
-	boxWidth = static_cast<int>(boxWidth*1.5);
-	boxHeight = static_cast<int>(boxHeight*1.5);
+	boxWidth = static_cast<int>(boxWidth);//*1.5);
+	boxHeight = static_cast<int>(boxHeight);//*1.5);
 
 	int minx;
 	int miny;

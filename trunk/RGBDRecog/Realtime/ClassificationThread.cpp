@@ -82,22 +82,23 @@ void ClassificationThread::run()
 				pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( unorgSegCloud ));//cloud, *mask, *ROI));
 				//pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( cloud, *mask, *ROI));
 
-				/*boost::shared_ptr<cv::Mat> maskOut;
+
+				////////
+				boost::shared_ptr<cv::Mat> maskOut;
 				cv::Rect ROIOut;
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_new  (new pcl::PointCloud<pcl::PointXYZRGB>);
-				cloud_new = segmenter.tijmenLikesHacking(maskOut, ROIOut, segmentedCloud);
+				cloud_new = segmenter.tijmenLikesHacking(maskOut, ROIOut, cloud);
 
 				std::cout << cloud_new->size() << std::endl;
-				pcl::ModelCoefficients coeffs;
+				//pcl::ModelCoefficients coeffs;
 				if(cloud_new->size()!=0){
 					coeffs = segmenter.getSmallestBoundingBox(cloud_new);
-				}*/
-
+				}
+				///////
 				
 				//pcl::ModelCoefficients coeffs( segmenter.getCoefficients(*ROI, cloud, mask) ); // Axis aligned bb
 				
 				int predictedClassRF = -1;
-				int predictedClassNN = -1;
 
 				//if (classify) {
 					// Extract features
@@ -105,7 +106,8 @@ void ClassificationThread::run()
 						//cout << "valid ROI"<<endl;
 
 						// Classify using RF classifier
-						cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), unorgSegCloud, coeffs, (*mask)(*ROI) );
+						//cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), unorgSegCloud, coeffs, (*mask)(*ROI) );
+						cv::Mat features = extractor->extractFeatures( modes, (*img)(ROIOut), cloud_new, coeffs, *maskOut );
 						if (features.rows != 0 && features.cols != 0)
 							predictedClassRF = rf->predict(features);
 
@@ -130,6 +132,7 @@ void ClassificationThread::run()
 				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
 				objs.push_back(object);	
 				i++;
+				break;
 			}
 
 			
