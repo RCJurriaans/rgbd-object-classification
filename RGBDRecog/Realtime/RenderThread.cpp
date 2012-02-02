@@ -181,19 +181,19 @@ void RenderThread::run()
 					cloudCopy->at(objectInliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
 				}
 
-				for(int i=0; i < planeInliers->indices.size(); i++) {
-				
-					pcl::PointXYZRGB& pt = cloudCopy->at(planeInliers->indices.at(i));
-					uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
-					uint8_t r = (rgbin >> 16) & 0x0000ff;
-					uint8_t g = (rgbin >> 8)  & 0x0000ff;
-					uint8_t b = (rgbin)       & 0x0000ff;
+				//for(int i=0; i < planeInliers->indices.size(); i++) {
+				//
+				//	pcl::PointXYZRGB& pt = cloudCopy->at(planeInliers->indices.at(i));
+				//	uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
+				//	uint8_t r = (rgbin >> 16) & 0x0000ff;
+				//	uint8_t g = (rgbin >> 8)  & 0x0000ff;
+				//	uint8_t b = (rgbin)       & 0x0000ff;
 
-					uint32_t rgb = (static_cast<uint32_t>(200) << 16 |
-									static_cast<uint32_t>(200) << 8 |
-									static_cast<uint32_t>(200));
-					cloudCopy->at(planeInliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
-				}
+				//	uint32_t rgb = (static_cast<uint32_t>(200) << 16 |
+				//					static_cast<uint32_t>(200) << 8 |
+				//					static_cast<uint32_t>(200));
+				//	cloudCopy->at(planeInliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
+				//}
 
 			}
 

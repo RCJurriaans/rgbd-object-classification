@@ -14,6 +14,7 @@ using namespace std;
 
 RFClass::RFClass(Settings * set,int classmethod){
 	settings = set;
+	segmentCloud = new SegmentCloud();
 
 	classificationmethod = classmethod;
 
@@ -86,28 +87,70 @@ RFClass::RFClass(Settings * set,int classmethod){
 	rfclassifier = new RFClassifier();
 	svmclassifier = new SVMClassifier();
 
+	ifstream in;
+	string randomname = getenv("RGBDDATA_DIR");
+	in.open(randomname + "\\randomized" + ".txt");
 
-	for(int i = 0; i < amountOfClasses; i++){
-		int picNumSum = testPicNum[i] + trainigPicNum[i];
-		testdataID.push_back(DrawWithReplacement(picNumSum,testPicNum[i]));
-		vector<int> temptrainingIDs;
-		for(int j = 1; j <= picNumSum; j++){
-			bool found = false;
-			for(unsigned int k = 0; k < testdataID[i].size(); k++){
-				if(testdataID[i][k] == j){
-					found = true;
+	if(!in.good()){
+		for(int i = 0; i < amountOfClasses; i++){
+			int picNumSum = testPicNum[i] + trainigPicNum[i];
+			testdataID.push_back(DrawWithReplacement(picNumSum,testPicNum[i]));
+			vector<int> temptrainingIDs;
+			for(int j = 1; j <= picNumSum; j++){
+				bool found = false;
+				for(unsigned int k = 0; k < testdataID[i].size(); k++){
+					if(testdataID[i][k] == j){
+						found = true;
+					}
+				}
+				if(!found){
+					temptrainingIDs.push_back(j);
 				}
 			}
-			if(!found){
-				temptrainingIDs.push_back(j);
+			for (int j=1; j<(trainigPicNum[i]); j++) { //randomly shuffle
+				int r = j + (rand() % (trainigPicNum[i]-j)); // Random remaining position.
+				int temp = temptrainingIDs[j]; temptrainingIDs[j] = temptrainingIDs[r]; temptrainingIDs[r] = temp;
+			}
+			trainingdataID.push_back(temptrainingIDs);
+		}
+		ofstream out;
+		out.open(randomname + "\\randomized" + ".txt");
+		for(int i = 0; i < amountOfClasses; i++){
+			for(int j = 0; j < testPicNum[i]; j++){
+				out << testdataID[i][j] <<endl;
 			}
 		}
-		for (int j=1; j<(trainigPicNum[i]); j++) { //randomly shuffle
-            int r = j + (rand() % (trainigPicNum[i]-j)); // Random remaining position.
-            int temp = temptrainingIDs[j]; temptrainingIDs[j] = temptrainingIDs[r]; temptrainingIDs[r] = temp;
-        }
-		trainingdataID.push_back(temptrainingIDs);
+		out.close();
+	}else{
+		for(int i = 0; i < amountOfClasses; i++){
+			int picNumSum = testPicNum[i] + trainigPicNum[i];
+			vector<int> temptestingIDs;
+			int temp;
+			for(int j = 0; j < testPicNum[i]; j++){
+				in >> temp;
+				temptestingIDs.push_back(temp);
+			}
+			testdataID.push_back(temptestingIDs);	//now the testdataID is formed, proceed as normal
+			vector<int> temptrainingIDs;
+			for(int j = 1; j <= picNumSum; j++){
+				bool found = false;
+				for(unsigned int k = 0; k < testdataID[i].size(); k++){
+					if(testdataID[i][k] == j){
+						found = true;
+					}
+				}
+				if(!found){
+					temptrainingIDs.push_back(j);
+				}
+			}
+			for (int j=1; j<(trainigPicNum[i]); j++) { //randomly shuffle
+				int r = j + (rand() % (trainigPicNum[i]-j)); // Random remaining position.
+				int temp = temptrainingIDs[j]; temptrainingIDs[j] = temptrainingIDs[r]; temptrainingIDs[r] = temp;
+			}
+			trainingdataID.push_back(temptrainingIDs);
+		}
 	}
+	in.close();
 }
 
 //works for range [1,maxrange]
@@ -140,6 +183,7 @@ RFClass::~RFClass(void){
 	delete featureExtractor;
 	delete rfclassifier;
 	delete svmclassifier;
+	delete segmentCloud;
 }
 
 //converts a number to a fixed length string, adding zeros in front
@@ -470,7 +514,7 @@ void RFClass:: trainModel(){
 				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input,roi);
-					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input, cloud,mask);
+					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input, cloud, segmentCloud->getSmallestBoundingBox(cloud) ,mask);
 
 					found = true;
 				}else{
@@ -479,7 +523,7 @@ void RFClass:: trainModel(){
 			}else{
 				if(input.cols > 0){
 					tempfeaturevector.release();
-					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input, cloud,mask);
+					tempfeaturevector = featureExtractor->extractFeatures(settings->modes,input, cloud,segmentCloud->getSmallestBoundingBox(cloud),mask);
 
 
 					found = true;
@@ -574,6 +618,17 @@ void RFClass::rfTrainigmenu(){
 	generateRandomForest();
 }
 
+
+string fillWithSpace(string in, int length){
+	int difference = length - in.length();
+	if(difference > 0){
+		for(int i = 0; i < difference; i++){
+			in += ' ';
+		}
+	}
+	return in;
+}
+
 void RFClass::rfTesting(){
 
 	if(!featureExtractor->codeBooksLoaded()){
@@ -611,7 +666,7 @@ void RFClass::rfTesting(){
 	cv::Mat result;
 	int** predictions = new int*[amountOfClasses];
 	for(int i = 0; i < amountOfClasses; i++){
-		predictions[i] = new int [testPicNum[i]+1];
+		predictions[i] = new int [testPicNum[i]];
 	}
 
 
@@ -643,14 +698,14 @@ void RFClass::rfTesting(){
 				cv::Rect roi = getDatasetROI(filePath,chosenImgID);
 				if(roi.width*roi.height > 0){
 					//result = featureExtractor->extractFeatures(settings->modes,input,roi);
-					result = featureExtractor->extractFeatures(settings->modes,input, cloud, mask);
+					result = featureExtractor->extractFeatures(settings->modes,input, cloud,segmentCloud->getSmallestBoundingBox(cloud) , mask);
 					found = true;
 				}else{
 					found = false;
 				}
 			}else{
 				if(input.cols > 0){
-					result = featureExtractor->extractFeatures(settings->modes,input, cloud, mask);
+					result = featureExtractor->extractFeatures(settings->modes,input, cloud,segmentCloud->getSmallestBoundingBox(cloud) , mask);
 					found = true;
 				}
 				else{
@@ -676,7 +731,7 @@ void RFClass::rfTesting(){
 	vector<float> accuracy;
 	for(int i = 0; i < amountOfClasses; i++){
 		float sum = 0;
-		for(int j = 1; j <= testPicNum[i]; j++){
+		for(int j = 0; j < testPicNum[i]; j++){
 			if(predictions[i][j] == i){
 				sum++;
 			}
@@ -684,6 +739,57 @@ void RFClass::rfTesting(){
 		sum = sum/testPicNum[i];
 		accuracy.push_back(sum);
 	}
+	for(int i = 0; i < amountOfClasses; i++){
+		cout << endl;
+		for(int j = 0; j < testPicNum[i]; j++){
+			cout << predictions[i][j] << " ";
+		}
+	}
+
+	//-------------------output confusion matrix
+	ofstream out;
+	string savePath = getenv("RGBDDATA_DIR");
+	if(classificationmethod == 0){
+		savePath += "\\confusionmatrixRF" + modestring + ".txt";
+	}else{
+		savePath += "\\confusionmatrixSVM" + modestring + ".txt";
+	}
+	out.open(savePath);
+	
+	int **confusionmatrix = new int*[amountOfClasses];
+	for(int i = 0; i < amountOfClasses; i++){
+		confusionmatrix[i] = new int[amountOfClasses];
+	}
+	for(int i = 0; i < amountOfClasses; i++){
+		for(int j = 0; j < amountOfClasses; j++){
+			confusionmatrix[i][j] = 0;
+		}
+	}
+
+	for(int i = 0; i < amountOfClasses; i++){
+		for(int j = 0; j < testPicNum[i]; j++){
+			confusionmatrix[i][predictions[i][j]]++;
+		}
+	}
+	for(int i = 0; i < amountOfClasses; i++){
+		out << fillWithSpace(classNames[i],15);
+		for(int j = 0; j < amountOfClasses; j++){
+			out << " ";
+			if(confusionmatrix[i][j] /10 == 0){
+				out << " ";
+			}
+			out << confusionmatrix[i][j];
+		}
+		out << endl;
+	}
+	out.close();
+
+	for(int i = 0; i < amountOfClasses; i++){
+		delete [] confusionmatrix[i];
+	}
+	delete [] confusionmatrix;
+	//----------------output confusion matrix
+			
 
 	cout << "Displaying accuracy results:" << endl;
 	for(int i = 0; i < amountOfClasses; i++){

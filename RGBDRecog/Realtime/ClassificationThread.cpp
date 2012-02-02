@@ -81,7 +81,7 @@ void ClassificationThread::run()
 					//cout << "valid ROI"<<endl;
 
 					// Classify using RF classifier
-					cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), cloud, *mask );
+					cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), unorgSegCloud, (*mask)(*ROI) );
 					if (features.rows != 0 && features.cols != 0)
 						predictedClassRF = rf->predict(features);
 

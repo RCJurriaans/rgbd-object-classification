@@ -68,7 +68,7 @@ DataSegmenter::DataSegmenter(void)
 	}
 	infile.close();
 
-	segmentation = new SegmentCloud();
+	segmentation = new SegmentCloud(0.05,2,0.1);
 }
 
 
@@ -122,7 +122,7 @@ void DataSegmenter::generateBoundingBoxes(){
 
 
 	//set the proper segmentation method to background subtraction
-	segmentation->setSegMethod(segmentation->SegBack); //set to back projection
+	segmentation->setSegMethod(segmentation->SegPlane); //set to back projection
 	
 
 	for(int i = 0; i < amountOfClasses; i++){
@@ -141,7 +141,7 @@ void DataSegmenter::generateBoundingBoxes(){
 			maskOutPath = filePath + "img" + convertNumberToFLString(3,j) + "mask" + fileExtension;
 
 			//load the background data
-			pcl::io::loadPCDFile<pcl::PointXYZRGB> (backgroundPath, *background);
+			//pcl::io::loadPCDFile<pcl::PointXYZRGB> (backgroundPath, *background);
 
 			input.release();
 			input = cv::imread(imagePath);
@@ -154,14 +154,19 @@ void DataSegmenter::generateBoundingBoxes(){
 			cv::Rect rect; // = segmentation->getROI(cloud, background);
 			//cv::Rect expectedROI = segmentation->getROI(cloud, background);
 			boost::shared_ptr<cv::Mat> mask;
-			segmentation->setBackground(background);
+			//segmentation->setBackground(background);
 			segmentedCloud = segmentation->tijmenLikesHacking(mask, rect,cloud);
+
+
 
 			//write the rectangle to a file
 			writeRect(outputPath,rect);
 			if(rect.width > 0 && rect.height > 0){
 				cv::imwrite(outputImg, input(rect));
 			}
+			//erode mask
+			cv::Mat el = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3), cv::Point(1,1));
+			cv::erode(*mask, *mask, el);
 			//write the mask away
 			imwrite(maskOutPath,*mask);
 

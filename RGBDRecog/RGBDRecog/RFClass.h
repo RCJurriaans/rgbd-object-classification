@@ -6,6 +6,7 @@
 #include "Settings.h"
 #include "SVMClassifier.h"
 #include <NBNN.h>
+#include <SegmentCloud.h>
 
 using namespace std;
 //using namespace cv;
@@ -59,6 +60,7 @@ private:
 	FeatureExtractor* featureExtractor;
 	RFClassifier * rfclassifier;
 	SVMClassifier * svmclassifier;
+	SegmentCloud * segmentCloud;
 	Settings * settings;
 	cv::RNG * rng;
 };

@@ -66,25 +66,25 @@ void FeatureExtractor::loadCodebooks(){
 	codebooksloaded = true;
 }
 
-void FeatureExtractor::loadCodebooks(string filepath){
-	cout << "Loading the codebooks from location " << filepath << endl;
-	codebooks = new FeatureVector[featureData->amountOfFeatures]; 
-		for(int i = 0; i < featureData->amountOfFeatures; i++){
-			
-			cv::FileStorage fs(filepath + "codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
-			if(fs.isOpened()){
-				cout << "- Loaded " << featureData->featureNames[i] <<  " codebook" << endl;
-				cv::Mat M; fs[filepath + "codebook" + boost::lexical_cast<string>(i)] >> M;
-				fs.release();
-				codebooks[i].AddFeatures(M);
-				codebooks[i].TrainkNN();
-			}else{
-				cout << "- " << featureData->featureNames[i]  << " codebook does not exist" << endl;
-			}
-	}
-	cout << "Loaded the available codebooks" << endl;
-	codebooksloaded = true;
-}
+//void FeatureExtractor::loadCodebooks(string filepath){
+//	cout << "Loading the codebooks from location " << filepath << endl;
+//	codebooks = new FeatureVector[featureData->amountOfFeatures]; 
+//		for(int i = 0; i < featureData->amountOfFeatures; i++){
+//			
+//			cv::FileStorage fs(filepath + "codebook" + boost::lexical_cast<string>(i) + ".yml", cv::FileStorage::READ);
+//			if(fs.isOpened()){
+//				cout << "- Loaded " << featureData->featureNames[i] <<  " codebook" << endl;
+//				cv::Mat M; fs[filepath + "codebook" + boost::lexical_cast<string>(i)] >> M;
+//				fs.release();
+//				codebooks[i].AddFeatures(M);
+//				codebooks[i].TrainkNN();
+//			}else{
+//				cout << "- " << featureData->featureNames[i]  << " codebook does not exist" << endl;
+//			}
+//	}
+//	cout << "Loaded the available codebooks" << endl;
+//	codebooksloaded = true;
+//}
 
 // add descriptor descriptors to tempfeaturevector
 // function also runs the descriptors throught he codebooks, making a histogram out of them
@@ -101,14 +101,14 @@ void FeatureExtractor::addDescriptor(bool & firstadded, cv::Mat & tempfeaturevec
 		tempfeaturevector.release();
 		if(mode >= 0 && mode <=5 || mode == 7){ //descriptors + depth features
 			tempfeaturevector = codebooks[mode].GenHistogram(descriptors);
-		}else if (mode ==  6){ //color histogram
+		}else if (mode ==  6 || mode == 8){ //color histogram
 			tempfeaturevector = descriptors;
 		}
 		firstadded = true;
 	}else{
 		if(mode >= 0 && mode <=5 || mode == 7){
 			vconcat(tempfeaturevector,codebooks[mode].GenHistogram(descriptors),tempfeaturevector);
-		}else if (mode == 6) {
+		}else if (mode == 6 || mode == 8) {
 			vconcat(tempfeaturevector,descriptors,tempfeaturevector);
 		}
 	}
@@ -273,7 +273,47 @@ cv::Mat FeatureExtractor::colorHistogramCreator(vector<cv::Mat> hsvPlanes, cv::M
 	return hist;
 }
 
-vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud ,const cv::Mat mask){
+#define X_COORD 0
+#define Y_COORD 1
+#define Z_COORD 2
+#define coef modelcoef.values
+
+double FeatureExtractor::squareD(double in){
+	return in * in;
+}
+
+cv::Mat FeatureExtractor::extractBoundingBoxFeatures(pcl::ModelCoefficients modelcoef){
+	cv::Mat lwh = cv::Mat(3,1,CV_32FC1);
+	lwh.at<float>(0,0) = sqrt(
+							   squareD(coef[0*3 + X_COORD] - coef[1*3 + X_COORD]) + 
+							   squareD(coef[0*3 + Y_COORD] - coef[1*3 + Y_COORD]) +
+							   squareD(coef[0*3 + Z_COORD] - coef[1*3 + Z_COORD]) 
+					           );
+	lwh.at<float>(1,0) = sqrt(
+							   squareD(coef[0*3 + X_COORD] - coef[3*3 + X_COORD]) + 
+							   squareD(coef[0*3 + Y_COORD] - coef[3*3 + Y_COORD]) +
+							   squareD(coef[0*3 + Z_COORD] - coef[3*3 + Z_COORD]) 
+					           );
+	lwh.at<float>(2,0) = sqrt(
+							   squareD(coef[0*3 + X_COORD] - coef[4*3 + X_COORD]) + 
+							   squareD(coef[0*3 + Y_COORD] - coef[4*3 + Y_COORD]) +
+							   squareD(coef[0*3 + Z_COORD] - coef[4*3 + Z_COORD]) 
+				               );
+	
+	cv::Mat features = cv::Mat(7,1,CV_32FC1);
+	cv::sort(lwh,lwh,cv::SORT_EVERY_COLUMN+ cv::SORT_DESCENDING );
+	features.at<float>(0) = lwh.at<float>(0);
+	features.at<float>(1) = lwh.at<float>(1);
+	features.at<float>(2) = lwh.at<float>(2);
+	features.at<float>(3) = lwh.at<float>(1) / lwh.at<float>(0);
+	features.at<float>(4) = lwh.at<float>(2) / lwh.at<float>(0);
+	features.at<float>(5) = lwh.at<float>(2) / lwh.at<float>(1);
+	features.at<float>(6) = lwh.at<float>(0) * lwh.at<float>(1) * lwh.at<float>(2);
+
+	return features;
+}
+
+vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,const cv::Mat mask, pcl::ModelCoefficients modelcoef){
 	vector<cv::Mat> rawfeatures;
 	cv::Mat grayimg;
 	cv::Mat hueimg;
@@ -351,10 +391,20 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 	if(modes[7]){
 		clock_t init, final; //for timing
 		init=clock();
-		rawfeatures.push_back(calculateFPFH(cloud,calculateNormals(cloud)));
+
+		pcl::RandomSample<pcl::PointXYZRGB> randomSample;
+		randomSample.setSample(2500);
+		randomSample.setInputCloud(cloud);
+		boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> outCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+		randomSample.filter(*outCloud);
+
+		rawfeatures.push_back(calculateFPFH(outCloud,calculateNormals(outCloud)));
 		final=clock()-init;
 		cout << endl <<  (double)final / ((double)CLOCKS_PER_SEC) << endl;
 		//cout << rawfeatures[0];
+	}
+	if(modes[8]){
+		rawfeatures.push_back(extractBoundingBoxFeatures(modelcoef));
 	}
 	grayimg.release();
 	hueimg.release();
@@ -362,18 +412,20 @@ vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat
 
 	return rawfeatures;
 }
-vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud){
+
+
+vector<cv::Mat> FeatureExtractor::extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::ModelCoefficients modelcoef ){
 	cv::Mat roiimg = rgbimg(roi);
-	return extractRawFeatures(modes, roiimg, cloud);
+	return extractRawFeatures(modes, roiimg, cloud, cv::Mat(), modelcoef);
 }
 
-cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, cv::Mat mask){
+cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::ModelCoefficients modelcoef, cv::Mat mask){
 	if(!codebooksloaded){
 		cout << "ERROR: codebooks not loaded" << endl;
 		return cv::Mat();
 	}
 
-	vector<cv::Mat> rawfeatures = extractRawFeatures(modes,rgbimg,cloud,mask);
+	vector<cv::Mat> rawfeatures = extractRawFeatures(modes,rgbimg,cloud,mask,modelcoef);
 	cv::Mat featurevector;
 	bool firstadded = false;
 	
@@ -392,13 +444,13 @@ cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, pc
 }
 
 
-cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud){
+cv::Mat FeatureExtractor::extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi,pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::ModelCoefficients modelcoef){
 	if(roi.width == 0 && roi.height == 0){
 		cout << "Error: invalid ROI" << endl;
 		return cv::Mat();
 	}
 	cv::Mat roiimg = rgbimg(roi);
-	return extractFeatures(modes, roiimg, cloud);
+	return extractFeatures(modes, roiimg, cloud, modelcoef);
 }
 
 

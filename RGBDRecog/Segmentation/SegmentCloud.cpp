@@ -474,8 +474,8 @@ boost::shared_ptr<cv::Mat>
 
 	// Erode the mask
 	std::cout << "eroding mask"<<std::endl;
-	cv::Mat el = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5), cv::Point(2,2));
-	cv::erode(*mask, *mask, el);
+	//cv::Mat el = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5), cv::Point(3,3));
+	//cv::erode(*mask, *mask, el);
 	
 	return mask;
 }
