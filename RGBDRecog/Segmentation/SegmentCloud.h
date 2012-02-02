@@ -137,12 +137,28 @@ public:
 		boost::shared_ptr<cv::Mat> &maskOut,
 		cv::Rect& ROIOut,
 		pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud) {
+			
+			boost::shared_ptr<pcl::PointIndices> objectInliers(new pcl::PointIndices);
+			boost::shared_ptr<pcl::PointIndices> planeInliers(new pcl::PointIndices);
+			boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs(new pcl::ModelCoefficients);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
+			boost::shared_ptr<cv::Mat> fullMask = getMask(cloud, objectInliers, planeInliers, planeCoeffs, cloud_filtered);
+
+			//boost::shared_ptr<std::vector<cv::Rect> > ROIs = getROIS(fullMask);
+			//ROIOut = ROIs->at(0);
+			ROIOut = getROI(fullMask);
+			cv::Mat * masky = new cv::Mat((*fullMask)(ROIOut));
+			maskOut.reset(masky);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr windowCloud = getWindowCloud(ROIOut, cloud);
+			return this->getUnorgCloud(*maskOut, windowCloud, ROIOut);
+
+			/*
 			boost::shared_ptr<cv::Mat> fullMask = getMask(cloud);
 			ROIOut = getROI(fullMask);
 			cv::Mat * masky = new cv::Mat((*fullMask)(ROIOut));
 			maskOut.reset(masky);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr windowCloud = this->getWindowCloud(ROIOut, cloud);
-			return this->getUnorgCloud(maskOut, windowCloud);
+			return this->getUnorgCloud(maskOut, windowCloud);*/
 	  }
 
 	  // Getters and setters

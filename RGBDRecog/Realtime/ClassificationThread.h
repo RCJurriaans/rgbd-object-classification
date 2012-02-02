@@ -32,12 +32,9 @@ public:
 		std::string datadir = getenv("RGBDDATA_DIR");
 
 		extractor->loadCodebooks();
-		rf->read(datadir + "\\randomforestdata_1000000100.yml", "randomforestdata_1000000100");
-		rf->readTrainingData("_1000000100");
+		rf->read(datadir + "\\randomforestdata_1000000101.yml", "randomforestdata_1000000101");
+		//rf->readTrainingData("_1000000100");
 		//segmenter.setSegMethod(SegmentCloud::SegPlane);
-
-		//cv::FileStorage f("NBNN_10000001.yml", cv::FileStorage::READ);
-		//nn->read(f);
 
 
 		modes.push_back(false);
@@ -48,7 +45,7 @@ public:
 		modes.push_back(false);
 		modes.push_back(true);
 		modes.push_back(false);
-		modes.push_back(false);
+		modes.push_back(true);
 
 		segmenter.setSegMethod(SegmentCloud::SegPlane);
 	}
