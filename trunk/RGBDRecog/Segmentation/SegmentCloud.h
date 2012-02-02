@@ -14,9 +14,16 @@ public:
 	SegmentCloud() :
 	  crtMethod(SegBack),
 		  threshold(0.05),
-		  maxDistanceFilter(3),
+		  maxDistanceFilter(2),
 		  minDistanceFilter(0.1)
 	  {}
+
+	  SegmentCloud(double thresholdin, double maxDistanceFilterin, double minDistanceFilterin){
+		  setSegMethod(SegPlane);
+		  threshold = thresholdin;
+		  maxDistanceFilter = maxDistanceFilterin;
+		  minDistanceFilter = minDistanceFilterin;
+	  }
 
 
 	  static void tester();

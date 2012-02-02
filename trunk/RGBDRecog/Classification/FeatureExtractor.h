@@ -36,7 +36,7 @@ public:
 	// call this if you want to use the codebooks (for extractFeatures)
 	// check if this is loaded with the above function
 	void loadCodebooks();
-	void loadCodebooks(string filepath);
+	//void loadCodebooks(string filepath);
 
 	// gets all specified descriptors from an image, and cv::Matches them with the available codebooks
 	// the modes bool vector should be 'amountOfFeatures' long, with true for using the feature,
@@ -45,8 +45,8 @@ public:
 	// mask is an optional parameter (initialized as an empty mat otherwise), that specifies
 	// the region to extract the features from. 1 in the matrix means the pixel is used,
 	// 0 if it isn't
-	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, const cv::Mat mask  = cv::Mat());
-	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background);
+	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::ModelCoefficients modelcoef, const cv::Mat mask  = cv::Mat());
+	cv::Mat extractFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr background, pcl::ModelCoefficients modelcoef);
 
 	// extract a vector of opencv cv::Matrixes with all raw descriptors
 	// each cv::Mat in the vector contains in order the descriptors for SIFT/SURF or
@@ -55,8 +55,8 @@ public:
 	// call only after loadCodebooks()
 	// for mask, see extractFeatures description
 	// also comes with ROI version, that accept a cv::Rect
-	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, const cv::Mat mask  = cv::Mat());
-	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, const cv::Mat mask  = cv::Mat(), pcl::ModelCoefficients modelcoef = pcl::ModelCoefficients());
+	vector<cv::Mat> extractRawFeatures(vector<bool> modes, cv::Mat rgbimg, cv::Rect roi, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::ModelCoefficients modelcoef);
 	// Input the matrix dimensions (rows, cols), and a rectangle structure
 	// with x and width the row directions, and y and height the column directions
 	// Outputs a boolean mask to be used with all functions
@@ -89,6 +89,7 @@ private:
 	cv::Mat hueSurf(const cv::Mat grayimg, const cv::Mat hueimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
 	cv::Mat opSurf(const cv::Mat grayimg, const cv::Mat rgbimg, const cv::Mat mask, vector<cv::KeyPoint> keypoints =  vector<cv::KeyPoint>());
 	cv::Mat colorHistogramCreator(vector<cv::Mat> hsvPlanes, cv::Mat inputmask);
+	cv::Mat FeatureExtractor::extractBoundingBoxFeatures(pcl::ModelCoefficients modelcoefs);
 
 	bool codebooksloaded; //are the codebooks loaded or not?
 
@@ -97,5 +98,7 @@ private:
 
 	cv::Mat calculateFPFH(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals);
 	pcl::PointCloud<pcl::Normal>::Ptr FeatureExtractor::calculateNormals(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
+
+	double squareD(double in);
 };
 
