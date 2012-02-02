@@ -45,6 +45,10 @@ public:
 		timeToSave(false)
 		,currentCloud(new pcl::PointCloud<pcl::PointXYZRGB>())
 		,results(new ClassificationResults())
+		,s_newClassName("NewClassName")
+		,s_makeNewClass(false)
+		,s_trainNow(false)
+		,s_addDataPointNow(false)
 	{
 		renderer = new Renderer(boost::bind(&DataDistributor::processInput, this, _1), results);
 		lastSave = time(NULL);
@@ -199,16 +203,19 @@ public:
 		case '4':
 			toggleConnection(renderCloudRGBConnection, renderCloudRGB);
 			break;
-		case 's':
-			cout << "Save mode on." << endl;
-			grabber->registerCallback( saveCB );
-			break;
-		case 'b':
+		
+		
+			/*
+			case 'b':
 			cout << "Setting background" << endl;
 			classificationInputMutex.lock();
 			s_backgroundCloud = currentCloud;
 			backgroundCloud = currentCloud;
 			classificationInputMutex.unlock();
+			break;
+		case 's':
+			cout << "Save mode on." << endl;
+			grabber->registerCallback( saveCB );
 			break;
 		case 'f':
 			cout << "Enter save folder" << endl;
@@ -226,17 +233,55 @@ public:
 			cout << "Enter save number" << endl;
 			cin >> numSaves;
 			break;
-		case 'c':
-			cout << "Enter name of class" << endl;
-			cin >> onlineLearnName;
-			classificationInputMutex.lock();
-			s_newDataPoint = currentCloud;
-			s_newClassName = onlineLearnName;
-			classificationInputMutex.unlock();
-			break;
 		case 'a':
 			automode = automode == false;
 			cout << "Toggling auto-save-mode to: "<< automode <<endl;
+			break;*/
+
+		// Online learning
+		case 'n':
+			cout << "Enter name of class" << endl;
+			cin >> onlineLearnName;
+			classificationInputMutex.lock();
+			//s_newClassName = onlineLearnName;
+			s_makeNewClass = true;
+			classificationInputMutex.unlock();
+			
+			results->mtx.lock();
+				results->newClassName = onlineLearnName;
+			results->mtx.unlock();
+			break;
+		case 'a':
+			classificationInputMutex.lock();
+			cout << "Adding new datapoint to class " << s_newClassName << endl;
+			s_addDataPointNow = true;
+			classificationInputMutex.unlock();
+			break;
+		case 't':
+			cout << "Training on new data" << endl;
+			classificationInputMutex.lock();
+			s_trainNow = true;
+			classificationInputMutex.unlock();
+			break;
+
+		// What to render
+		case 'p':
+			results->mtx.lock();
+				results->renderPlane = results->renderPlane == false;
+			results->mtx.unlock();
+			cout << "Plane mode: " << results->renderPlane << endl;
+			break;
+		case 'b':
+			results->mtx.lock();
+				results->renderBox = results->renderBox == false;
+			results->mtx.unlock();
+			cout << "Bounding box mode: " << results->renderBox << endl;
+			break;
+		case 'c':
+			results->mtx.lock();
+				results->classify = results->classify == false;
+			results->mtx.unlock();
+			cout << "Classification mode: " << results->classify << endl;
 			break;
 		default:
 			return;
@@ -248,7 +293,10 @@ public:
 		// Start classification thread
 		ClassificationThread classificationThread( classificationInputMutex, s_cloud, s_backgroundCloud,
 												    results,
-													s_newDataPoint, s_newClassName);
+													//s_newClassName,
+													s_makeNewClass,
+													s_trainNow,
+													s_addDataPointNow );
 		boost::thread classify( &ClassificationThread::run, &classificationThread  );
 		
 		RenderThread renderObject( results );
@@ -286,12 +334,10 @@ protected:
 	boost::mutex classificationInputMutex; // Locks all following:
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_cloud;
 	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_backgroundCloud;
-	  pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr s_newDataPoint;
+	  bool s_addDataPointNow;
 	  string s_newClassName;
-
-	//boost::mutex classificationOutputMutex;
-	//  pcl::PointCloud<pcl::PointXYZRGB>::Ptr s_segmentedCloud;
-	 // cv::Rect s_ROI;
+	  bool s_trainNow;
+	  bool s_makeNewClass;
 
 	//boost::mutex visualizationInputMutex;
 	boost::shared_ptr<ClassificationResults> results;

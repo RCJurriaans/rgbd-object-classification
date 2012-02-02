@@ -29,10 +29,21 @@ private:
 
 struct ClassificationResults
 {
+	ClassificationResults() :
+		renderPlane(false), renderBox(false), classify(false), hasNew(false), newClassName("")
+	{}
+
+
 	boost::mutex mtx;	// Always lock first
 
+	bool renderPlane;
+	bool renderBox;
+	
+	bool classify;
 
 	bool hasNew;
+
+	std::string newClassName;//for renderthread
 
 	// Setters
 	void clearObjects() { objects.clear(); }
@@ -40,6 +51,7 @@ struct ClassificationResults
 	//void addObjects( 
 	void setMask( boost::shared_ptr<cv::Mat> m ) { mask = m; }
 	void setScene( pcl::PointCloud<pcl::PointXYZRGB>::Ptr s ) {scene = s;}
+	void setSceneFiltered( pcl::PointCloud<pcl::PointXYZRGB>::Ptr s ) {sceneFiltered = s;}
 	void setObjectInliers( boost::shared_ptr<pcl::PointIndices> inl ) {objectInliers = inl;}
 	void setPlaneInliers( boost::shared_ptr<pcl::PointIndices> inl ) {planeInliers = inl;}
 	void setPlaneCoeffs( boost::shared_ptr<pcl::ModelCoefficients> c ) {planeCoeffs = c;}
@@ -53,13 +65,16 @@ struct ClassificationResults
 	boost::shared_ptr<pcl::ModelCoefficients> getPlaneCoeffs() { return planeCoeffs;}
 	boost::shared_ptr<cv::Mat> getMask() { return mask; }
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr getScene() {return scene;}
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr getSceneFiltered() {return sceneFiltered;}
 	boost::shared_ptr<pcl::PointIndices> getObjectInliers() {return objectInliers;}
 	boost::shared_ptr<pcl::PointIndices> getPlaneInliers() {return planeInliers;}
+
 
 protected:
 	std::vector< boost::shared_ptr<FoundObject> > objects;
 	boost::shared_ptr<cv::Mat> mask;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr scene;
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr sceneFiltered;
 	boost::shared_ptr<pcl::PointIndices> objectInliers;
 	boost::shared_ptr<pcl::PointIndices> planeInliers;
 	boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs;

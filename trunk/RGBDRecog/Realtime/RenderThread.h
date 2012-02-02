@@ -42,19 +42,6 @@ public:
 			infile >> temps;
 			classNames.push_back(temps);
 		}
-		/*
-		classNames.push_back("BrownBanana");
-		classNames.push_back("Coconut");
-		classNames.push_back("DoraPasta");
-		classNames.push_back("Lemon");
-		classNames.push_back("MoldyRice");
-		classNames.push_back("Mustard");
-		classNames.push_back("Pepper");
-		classNames.push_back("RottenCheese");
-		classNames.push_back("RottenChicory");
-		classNames.push_back("SourMilk");
-		classNames.push_back("Spaghetti");
-		classNames.push_back("Taco");*/
 	}
 
 	void visCallback(pcl::visualization::PCLVisualizer& vis);

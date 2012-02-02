@@ -41,8 +41,8 @@ pcl::ModelCoefficients SegmentCloud::getSmallestBoundingBox(pcl::PointCloud<pcl:
 	int ind = 0;
 	for( int i = 0; i < unorgCloud->size(); i+=stride) {
 		pt = unorgCloud->at(i);
-		points[ ind * 3 + 0 ] = (double) pt.x;
-		points[ ind * 3 + 1 ] = (double) pt.y;
+		points[ ind * 3 + 0 ] = (double) pt.x;// + (((double) rand() / (RAND_MAX+1))*0.02);;
+		points[ ind * 3 + 1 ] = (double) pt.y;// + (((double) rand() / (RAND_MAX+1))*0.02);;
 		points[ ind * 3 + 2 ] = (double) pt.z + (((double) rand() / (RAND_MAX+1))*0.01);
 		ind++;
 	}
@@ -379,7 +379,8 @@ boost::shared_ptr<cv::Mat>
 	SegmentCloud::getMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,
 		boost::shared_ptr<pcl::PointIndices> objectInliers,
 		pcl::PointIndices::Ptr planeInliers,
-		boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs)
+		boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs,
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered)
 {
 	switch( crtMethod ) {
 	case SegBack:
@@ -388,7 +389,7 @@ boost::shared_ptr<cv::Mat>
 	case SegObj:
 		break;
 	case SegPlane:
-		return getPlaneMask(input, objectInliers, planeInliers, planeCoeffs);
+		return getPlaneMask(input, objectInliers, planeInliers, planeCoeffs, cloud_filtered);
 		break;
 	case SegNormHist:
 		break;
@@ -405,16 +406,19 @@ boost::shared_ptr<cv::Mat>
 	boost::shared_ptr<pcl::PointIndices> objectInliers(new pcl::PointIndices);
 	pcl::PointIndices::Ptr planeInliers( new pcl::PointIndices);
 	boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs(new pcl::ModelCoefficients);
-	return getMask(input, objectInliers, planeInliers, planeCoeffs);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered( new pcl::PointCloud<pcl::PointXYZRGB> );
+	return getMask(input, objectInliers, planeInliers, planeCoeffs, cloud_filtered);
 }
 
 boost::shared_ptr<cv::Mat>
 	SegmentCloud::getPlaneMask(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input,  boost::shared_ptr<pcl::PointIndices> objectinliers,
 		pcl::PointIndices::Ptr planeInliers,
-		boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs)
+		boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs,
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered
+		)
 {
 
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
+	//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
 
 	// Use pass through filter to extract too far points.
 	pcl::PassThrough<pcl::PointXYZRGB> pass;
@@ -473,9 +477,10 @@ boost::shared_ptr<cv::Mat>
 	}
 
 	// Erode the mask
-	std::cout << "eroding mask"<<std::endl;
-	//cv::Mat el = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5), cv::Point(3,3));
-	//cv::erode(*mask, *mask, el);
+	//std::cout << "eroding mask"<<std::endl;
+	cv::Mat el = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3), cv::Point(1,1));
+	//cv::Mat el = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5), cv::Point(1,1));
+	cv::erode(*mask, *mask, el);
 	
 	return mask;
 }
@@ -488,7 +493,7 @@ boost::shared_ptr<std::vector<cv::Rect> > SegmentCloud::getROIS(boost::shared_pt
 	//std::cout << "Created ipl version of mask " <<  std::endl;
 	cvSetImageROI(&ipl_bmask, cvRect(0,0,ipl_bmask.width, ipl_bmask.height));
 	//BwImage enter(ipl_bmask);
-	imcalc.Calculate(&ipl_bmask, 25);
+	imcalc.Calculate(&ipl_bmask, 5);
 
 	int minx;
 	int miny;
@@ -498,7 +503,7 @@ boost::shared_ptr<std::vector<cv::Rect> > SegmentCloud::getROIS(boost::shared_pt
 	int boxHeight;
 	int rc;
 
-	for(rc = 0; rc<25 ; rc++){
+	for(rc = 0; rc<5 ; rc++){
 
 
 		mean_x = imcalc.getmean(rc,0);

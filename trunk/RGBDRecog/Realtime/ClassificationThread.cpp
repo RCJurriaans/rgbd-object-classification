@@ -5,6 +5,14 @@
 void ClassificationThread::run()
 {
 	cout << "Classification Thread active" << endl;
+	bool classify = false;
+
+	string newClassName;
+	bool trainNow = false;
+	bool addDataPointNow = false;
+	bool makeNewClass = false;
+	int currentLearnClass = 0;
+
 	while(true)
 	{
 		// Get input from main thread
@@ -22,6 +30,19 @@ void ClassificationThread::run()
 		else {
 			boost::thread::yield();
 		}
+
+		if (s_trainNow) {
+			trainNow = true;
+			s_trainNow = false;
+		} else { trainNow = false; }
+		if (s_addDataPointNow) {
+			addDataPointNow = s_addDataPointNow;
+			s_addDataPointNow = false;
+		} else {addDataPointNow = false; }
+		if (s_makeNewClass) {
+			makeNewClass = s_makeNewClass;
+			s_makeNewClass = false;
+		} else {makeNewClass = false;}
 		inputMutex.unlock();
 
 
@@ -32,12 +53,14 @@ void ClassificationThread::run()
 			boost::shared_ptr<pcl::PointIndices> objectInliers(new pcl::PointIndices);
 			boost::shared_ptr<pcl::PointIndices> planeInliers(new pcl::PointIndices);
 			boost::shared_ptr<pcl::ModelCoefficients> planeCoeffs(new pcl::ModelCoefficients);
-			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud, objectInliers, planeInliers, planeCoeffs);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZRGB>);
+			boost::shared_ptr<cv::Mat> mask = segmenter.getMask(cloud, objectInliers, planeInliers, planeCoeffs, cloud_filtered);
 			boost::shared_ptr<std::vector<cv::Rect> > ROIs = segmenter.getROIS(mask);
 			boost::shared_ptr<cv::Mat> img = FeatureExtractor::cloudToRGB(cloud);
 
 			// Process each found object
 			vector<boost::shared_ptr<FoundObject> > objs;
+			int i = 0;
 			for(vector<cv::Rect>::iterator ROI = ROIs->begin(); ROI != ROIs->end(); ROI++)
 			{
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentedCloud = segmenter.getWindowCloud(*ROI, cloud);
@@ -76,33 +99,41 @@ void ClassificationThread::run()
 				int predictedClassRF = -1;
 				int predictedClassNN = -1;
 
-				// Extract features
-				if( !(ROI->x == 0 && ROI->y == 0 && ROI->width == 0 && ROI->height == 0)) {
-					//cout << "valid ROI"<<endl;
+				//if (classify) {
+					// Extract features
+					if( !(ROI->x == 0 && ROI->y == 0 && ROI->width == 0 && ROI->height == 0)) {
+						//cout << "valid ROI"<<endl;
 
-					// Classify using RF classifier
-					cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), unorgSegCloud, (*mask)(*ROI) );
-					if (features.rows != 0 && features.cols != 0)
-						predictedClassRF = rf->predict(features);
+						// Classify using RF classifier
+						cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), unorgSegCloud, coeffs, (*mask)(*ROI) );
+						if (features.rows != 0 && features.cols != 0)
+							predictedClassRF = rf->predict(features);
 
-					// Classify using NBNN:
-					//vector<cv::Mat> rawFeatures = extractor->extractRawFeatures(modes, (*img)(*ROI), cloud, *mask);
-					//if( rawFeatures.size() > 0 ) {
-					//	predictedClassNN = nn->classify(features);
-					//}
-					//cout << "num raw features " << rawFeatures.size() <<endl;
-
-				}
+						// Online Learning
+						if( i ==0 ) {
+							if( addDataPointNow ) {
+								cout << "Classification thread: adding data point to training set" << endl;
+								if( makeNewClass ) {
+									currentLearnClass = rf->addTrainingPoint(features, -1);				
+								} else {
+									rf->addTrainingPoint(features, currentLearnClass);
+								}
+							}
+							if( trainNow ) {
+								rf->trainTree();
+							}
+						}
+					}
 				
+					
+				//}
+				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
+				objs.push_back(object);	
+				i++;
+			}
+
 			
 
-				//cout << "Predicted class (RF): "<< predictedClassRF << endl;
-				//cout << "Predicted class (NN): "<< predictedClassNN << endl;
-				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
-				objs.push_back(object);
-				
-			//	break;
-			}
 
 			// Return output to main thread
 			results->mtx.lock();
@@ -113,8 +144,12 @@ void ClassificationThread::run()
 				results->setObjectInliers(objectInliers);
 				results->setPlaneInliers(planeInliers);
 				results->setPlaneCoeffs(planeCoeffs);
+				results->setSceneFiltered(cloud_filtered);
 				results->setScene(cloud);
 				results->hasNew=true;
+
+				// Get
+				classify = results->classify;
 			results->mtx.unlock();
 
 		}

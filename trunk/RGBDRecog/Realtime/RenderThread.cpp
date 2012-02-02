@@ -44,19 +44,21 @@ inline void addLine( const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, float 
 	float dx = x2 - x1;
 	float dy = y2 - y1;
 	float dz = z2 - z1;
-	int numpts = sqrt(dx*dx+dy*dy+dz*dz) * 100;
+	int numpts = sqrt(dx*dx+dy*dy+dz*dz) * 400;
 	for( int i = 0; i < numpts; i++ ) {
 
-		pcl::PointXYZRGB pt;
-		pt.x = x1 + dx * ((float)i / (numpts-1));
-		pt.y = y1 + dy * ((float)i / (numpts-1));
-		pt.z = z1 + dz * ((float)i / (numpts-1));
+		if( (i / 10) % 2 == 0 ) {
+			pcl::PointXYZRGB pt;
+			pt.x = x1 + dx * ((float)i / (numpts-1));
+			pt.y = y1 + dy * ((float)i / (numpts-1));
+			pt.z = z1 + dz * ((float)i / (numpts-1));
 
-		uint32_t rgb = (static_cast<uint32_t>(r) << 16 |
-              static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
-		pt.rgb = *reinterpret_cast<float*>(&rgb);
+			uint32_t rgb = (static_cast<uint32_t>(r) << 16 |
+				  static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
+			pt.rgb = *reinterpret_cast<float*>(&rgb);
 
-		cloud->push_back(pt);
+			cloud->push_back(pt);
+		}
 	}
 }
 
@@ -123,7 +125,7 @@ void RenderThread::run()
 	cout << "Render thread running" << endl;
 
 	pcl::visualization::PCLVisualizer v;
-	v.setBackgroundColor (0, 0, 0);
+	v.setBackgroundColor (0, 0.08, 0.15);
 	//v.addPointCloud<pcl::PointXYZ> (cloud, "sample cloud");
 	//v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
 	v.addCoordinateSystem (0.1);
@@ -132,42 +134,46 @@ void RenderThread::run()
 	int prevNumObj = 0;
 
 	pcl::ModelCoefficients coefficients;
-	coefficients.values.push_back(1); // Tx
-	coefficients.values.push_back(.5); // Ty
-	coefficients.values.push_back(0); // Tz
-	coefficients.values.push_back(0); // Qx
-	coefficients.values.push_back(0); // Qy
-	coefficients.values.push_back(0); // Qz
-	coefficients.values.push_back(0); // Qw
-	coefficients.values.push_back(1); // width
-	coefficients.values.push_back(.0001); // height
-	coefficients.values.push_back(1.5); // depth
-	//v.addCube(coefficients, "box", 0);
 
 	while (!v.wasStopped ())
 	{
 		bool renderResult = false;
+		bool renderBox = false;
 		bool changeColors = false;
+		bool classify = false;
+
+		// Get the input from classifier
 		results->mtx.lock();
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudCopy( new pcl::PointCloud<pcl::PointXYZRGB>());
 			if (results->getScene() ) {
-				cloudCopy = results->getScene();
+				cloudCopy = results->getSceneFiltered();
 				renderResult = true;
 			}
 			boost::shared_ptr<pcl::PointIndices> objectInliers = results->getObjectInliers();
 			boost::shared_ptr<pcl::PointIndices> planeInliers = results->getPlaneInliers();
 			boost::shared_ptr< std::vector< boost::shared_ptr<FoundObject> > > objects = results->getObjects();
-			if( results->hasNew ) {
+			if( results->hasNew && results->renderPlane) {
 				results->hasNew = false;
 				changeColors = true;
 			}
+			renderBox = results->renderBox;
+			classify = results->classify;
+
+			if(results->newClassName != "") {
+				cout << "RenderThread: adding classname " << results->newClassName << endl;
+				classNames.push_back(results->newClassName);
+				results->newClassName = "";
+			}
 		results->mtx.unlock();
+
+
 
 		if(renderResult) {
 
-			// Render inliers
+			
 			if( changeColors ) {
-				for(int i=0; i < objectInliers->indices.size(); i++) {
+
+				/*for(int i=0; i < objectInliers->indices.size(); i++) {
 				
 					pcl::PointXYZRGB& pt = cloudCopy->at(objectInliers->indices.at(i));
 					uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
@@ -175,26 +181,50 @@ void RenderThread::run()
 					uint8_t g = (rgbin >> 8)  & 0x0000ff;
 					uint8_t b = (rgbin)       & 0x0000ff;
 
-					uint32_t rgb = (static_cast<uint32_t>(r + 50) << 16 |
-									static_cast<uint32_t>(g + 50) << 8 |
-									static_cast<uint32_t>(b + 50));
+					uint32_t rgb = (static_cast<uint32_t>(r) << 16 |
+									static_cast<uint32_t>(g) << 8 |
+									static_cast<uint32_t>(b));
 					cloudCopy->at(objectInliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
+				}*/
+
+				// Render plane inliers
+				for(int i=0; i < planeInliers->indices.size(); i++) {
+				
+					pcl::PointXYZRGB& pt = cloudCopy->at(planeInliers->indices.at(i));
+					//uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
+					//uint8_t r = (rgbin >> 16) & 0x0000ff;
+					//uint8_t g = (rgbin >> 8)  & 0x0000ff;
+					//uint8_t b = (rgbin)       & 0x0000ff;
+
+					uint32_t rgb;
+					if( (int)(pt.x * 100) % 10 == 0 || (int)(pt.z * 100) % 10 == 0 ) {
+						uint8_t r = 0;
+						uint8_t g = 190;
+						uint8_t b = 200;
+						rgb = (static_cast<uint32_t>(r) << 16 |
+							   static_cast<uint32_t>(g) << 8 |
+							   static_cast<uint32_t>(b));
+						pt.rgb = *reinterpret_cast<float*>(&rgb);
+					} else {
+						if( (int)(pt.x * 100) % 5 == 0 || (int)(pt.z * 100) % 5 == 0 ) {
+							uint8_t r = 0;
+							uint8_t g = 30;
+							uint8_t b = 60;
+							rgb =  (static_cast<uint32_t>(r) << 16 |
+									static_cast<uint32_t>(g) << 8 |
+									static_cast<uint32_t>(b));
+							pt.rgb = *reinterpret_cast<float*>(&rgb);
+						} else {
+							uint8_t r = 0;
+							uint8_t g = 51;
+							uint8_t b = 86;
+							rgb =  (static_cast<uint32_t>(r) << 16 |
+									static_cast<uint32_t>(g) << 8 |
+									static_cast<uint32_t>(b));
+							pt.rgb = *reinterpret_cast<float*>(&rgb);
+						}
+					}
 				}
-
-				//for(int i=0; i < planeInliers->indices.size(); i++) {
-				//
-				//	pcl::PointXYZRGB& pt = cloudCopy->at(planeInliers->indices.at(i));
-				//	uint32_t rgbin = *reinterpret_cast<int*>(&pt.rgb);
-				//	uint8_t r = (rgbin >> 16) & 0x0000ff;
-				//	uint8_t g = (rgbin >> 8)  & 0x0000ff;
-				//	uint8_t b = (rgbin)       & 0x0000ff;
-
-				//	uint32_t rgb = (static_cast<uint32_t>(200) << 16 |
-				//					static_cast<uint32_t>(200) << 8 |
-				//					static_cast<uint32_t>(200));
-				//	cloudCopy->at(planeInliers->indices.at(i)).rgb = *reinterpret_cast<float*>(&rgb);
-				//}
-
 			}
 
 			if(!v.updatePointCloud(cloudCopy, "scene")) {
@@ -220,21 +250,32 @@ void RenderThread::run()
 				// Get bounding box coeffs
 				coefficients = objects->at(i)->getBoundingBox3D();
 
-				// Add bounding box
-				std::string objName = "box" + boost::lexical_cast<std::string>(i);
-				pcl::PointCloud<pcl::PointXYZRGB>::Ptr box( new pcl::PointCloud<pcl::PointXYZRGB>());
-				addBox2(box, coefficients, 255, 100, 0);
-				v.addPointCloud(box, objName);
-				v.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, objName);
+				if( renderBox) {
+					// Add bounding box
+					std::string objName = "box" + boost::lexical_cast<std::string>(i);
+					pcl::PointCloud<pcl::PointXYZRGB>::Ptr box( new pcl::PointCloud<pcl::PointXYZRGB>());
+					addBox2(box, coefficients, 0, 255, 0);
+					v.addPointCloud(box, objName);
+					v.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, objName);
+				}
 
-				// Add class text
-				std::string textName = "text" + boost::lexical_cast<std::string>(i);
-				std::string className = classNames.at( objects->at(i)->getClassification() );
-				pcl::PointXYZ textLoc( coefficients.values[0] - className.length() * 0.02, coefficients.values[1] - coefficients.values[8] * 0.5 - 0.15, coefficients.values[2]);
-				v.addText3D(className, textLoc, 0.04,  1,1,1,  textName);
+				if( classify) {
+					// Add class text
+					std::string className;
+					if( objects->at(i)->getClassification() != -1 ) {
+						className = classNames.at( objects->at(i)->getClassification() );
+					} else {
+						className = "omgwtfbbq";
+					}
+					std::string textName = "text" + boost::lexical_cast<std::string>(i);
+					float centerx = (coefficients.values[0*3+0] + coefficients.values[1*3+0] + coefficients.values[2*3+0] + coefficients.values[3*3+0] + coefficients.values[4*3+0] + coefficients.values[5*3+0] + coefficients.values[6*3+0] + coefficients.values[7*3+0]) / 8;
+					float centery = (coefficients.values[0*3+1] + coefficients.values[1*3+1] + coefficients.values[2*3+1] + coefficients.values[3*3+1] + coefficients.values[4*3+1] + coefficients.values[5*3+1] + coefficients.values[6*3+1] + coefficients.values[7*3+1]) / 8;
+					float centerz = (coefficients.values[0*3+2] + coefficients.values[1*3+2] + coefficients.values[2*3+2] + coefficients.values[3*3+2] + coefficients.values[4*3+2] + coefficients.values[5*3+2] + coefficients.values[6*3+2] + coefficients.values[7*3+2]) / 8;
+					float miny = min(coefficients.values[0*3+1], min(coefficients.values[1*3+1], min(coefficients.values[2*3+1], min(coefficients.values[3*3+1], min(coefficients.values[4*3+1],min(coefficients.values[5*3+1],min(coefficients.values[6*3+1],coefficients.values[7*3+1])))))));
+					pcl::PointXYZ textLoc(centerx, miny - 0.1, centerz);
+					v.addText3D(className, textLoc, 0.04,  .8,1,.9,  textName);
+				}
 			}
-
-			
 		}
 		
 		prevNumObj = objects->size();

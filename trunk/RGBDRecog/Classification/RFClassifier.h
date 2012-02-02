@@ -22,12 +22,22 @@ public:
 	// ordering of the classes in the trainingData
 	// the amount of columns is the amount of datapoints
 	void trainTree(vector<cv::Mat> trainingData);
-	
+	void trainTree(); // Uses trainingdata member
+
 	//writing data to a file named randomforest + modestring + .yml
 	void write(string filename, string dataname);
 
 	//read a tree with this modestring specifier
 	void read(string filename, string dataname);
+
+	//
+	void readTrainingData( string filename );
+	int addTrainingPoint( cv::Mat featureVector, int classNum );
+
+protected:
+	vector<cv::Mat> trainingdata;
+	int amountOfClasses;
+
 private:
 	CvRTrees* treestructure; // the tree that is used :)
 };
