@@ -101,11 +101,7 @@ public:
 
 	void distributeCloudRGB(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud)
 	{
-		//renderer->renderCloudRGB(cloud);
 		currentCloud = cloud;
-
-		//pcl::PointCloud<pcl::PointXYZRGB>::Ptr c(new pcl::PointCloud<pcl::PointXYZRGB>());
-		//pcl::io::loadPCDFile<pcl::PointXYZRGB> ("img001.pcd", *c);
 
 		//cout << "Sending cloud to classification thread"<<endl;
 		classificationInputMutex.lock();
@@ -256,7 +252,7 @@ public:
 			break;
 		case 'a':
 			classificationInputMutex.lock();
-			cout << "Adding new datapoint to class " << s_newClassName << endl;
+			cout << "Adding new datapoint to class (signal from main)" << endl;
 			s_addDataPointNow = true;
 			classificationInputMutex.unlock();
 			break;

@@ -57,7 +57,7 @@ int RFClassifier::addTrainingPoint( cv::Mat featureVector, int classNum )
 	cout << "Adding training point" << endl; 
 	if (classNum == -1) {
 		trainingdata.push_back(featureVector);
-		classNum = trainingdata.size();
+		classNum = trainingdata.size() - 1;
 		amountOfClasses++;
 	} else {
 		for(int i = 0; i < 30; i++ )

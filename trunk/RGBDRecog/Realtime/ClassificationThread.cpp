@@ -40,9 +40,10 @@ void ClassificationThread::run()
 			s_addDataPointNow = false;
 		} else {addDataPointNow = false; }
 		if (s_makeNewClass) {
+			cout << "ClassificationThread: make new class (received)" << endl; 
 			makeNewClass = s_makeNewClass;
 			s_makeNewClass = false;
-		} else {makeNewClass = false;}
+		}// else {makeNewClass = false;}
 		inputMutex.unlock();
 
 
@@ -64,27 +65,20 @@ void ClassificationThread::run()
 			for(vector<cv::Rect>::iterator ROI = ROIs->begin(); ROI != ROIs->end(); ROI++)
 			{
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentedCloud = segmenter.getWindowCloud(*ROI, cloud);
-				//boost::shared_ptr<cv::Mat> croppedMask( new cv::Mat((*mask)(*ROI)) );
-				//pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud =
-				//	segmenter.getUnorgCloud(croppedMask, segmentedCloud);
-				
 				
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud =
 					segmenter.getUnorgCloud(*mask, cloud, *ROI);
-				//pcl::PointCloud<pcl::PointXYZRGB>::Ptr unorgSegCloud( new pcl::PointCloud<pcl::PointXYZRGB>() );
-				//std::vector<int> a;
-				//pcl::removeNaNFromPointCloud(*segmentedCloud,*unorgSegCloud,a);
 				
 				//cout << "Window cloud size: "<< segmentedCloud->width << " " << segmentedCloud->height << endl;
 				//cout << "ROI size: " << ROI->width << " " << ROI->height << endl;
 				//cout << "Cropped mask size" << croppedMask->cols << " " << croppedMask->rows << endl;
 				//cout << "Unorg seg cloud size: " << unorgSegCloud->size() << endl;
-				pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( unorgSegCloud ));//cloud, *mask, *ROI));
+				pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( unorgSegCloud ));
 				//pcl::ModelCoefficients coeffs( segmenter.getSmallestBoundingBox( cloud, *mask, *ROI));
 
 
 				////////
-				boost::shared_ptr<cv::Mat> maskOut;
+			/*	boost::shared_ptr<cv::Mat> maskOut;
 				cv::Rect ROIOut;
 				pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_new  (new pcl::PointCloud<pcl::PointXYZRGB>);
 				cloud_new = segmenter.tijmenLikesHacking(maskOut, ROIOut, cloud);
@@ -93,7 +87,7 @@ void ClassificationThread::run()
 				//pcl::ModelCoefficients coeffs;
 				if(cloud_new->size()!=0){
 					coeffs = segmenter.getSmallestBoundingBox(cloud_new);
-				}
+				}*/
 				///////
 				
 				//pcl::ModelCoefficients coeffs( segmenter.getCoefficients(*ROI, cloud, mask) ); // Axis aligned bb
@@ -103,20 +97,21 @@ void ClassificationThread::run()
 				//if (classify) {
 					// Extract features
 					if( !(ROI->x == 0 && ROI->y == 0 && ROI->width == 0 && ROI->height == 0)) {
-						//cout << "valid ROI"<<endl;
 
 						// Classify using RF classifier
-						//cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), unorgSegCloud, coeffs, (*mask)(*ROI) );
-						cv::Mat features = extractor->extractFeatures( modes, (*img)(ROIOut), cloud_new, coeffs, *maskOut );
+						cv::Mat features = extractor->extractFeatures( modes, (*img)(*ROI), unorgSegCloud, coeffs, (*mask)(*ROI) );
+						//cv::Mat features = extractor->extractFeatures( modes, (*img)(ROIOut), cloud_new, coeffs, *maskOut );
 						if (features.rows != 0 && features.cols != 0)
 							predictedClassRF = rf->predict(features);
 
 						// Online Learning
 						if( i ==0 ) {
 							if( addDataPointNow ) {
+
 								cout << "Classification thread: adding data point to training set" << endl;
 								if( makeNewClass ) {
-									currentLearnClass = rf->addTrainingPoint(features, -1);				
+									currentLearnClass = rf->addTrainingPoint(features, -1);	
+									makeNewClass=false;
 								} else {
 									rf->addTrainingPoint(features, currentLearnClass);
 								}
@@ -127,12 +122,13 @@ void ClassificationThread::run()
 						}
 					}
 				
+
 					
 				//}
 				boost::shared_ptr<FoundObject> object( new FoundObject(segmentedCloud, *ROI, coeffs, predictedClassRF) );
 				objs.push_back(object);	
 				i++;
-				break;
+				//break;
 			}
 
 			

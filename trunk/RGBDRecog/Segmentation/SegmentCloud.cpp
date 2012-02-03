@@ -809,49 +809,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 	}
 	return segmentCloud;
 }
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr
-	SegmentCloud::getUnorgCloud(boost::shared_ptr<const cv::Mat> mask,
-	pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input)
-{
-	int nmax = input->width * input->height;
-	//mask.release();
-	//BooleanMask = cv::Mat::ones( inputCloud->height, inputCloud->width, CV_8UC1);
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-	/*for(int n=0; n < nmax ; n++ ){
-		int i = n % input->width;
-		int j = ((n-i) / input->width);
-
-		if( mask->data[j*mask->step[0]+i] != 0 && input->at(n).x==input->at(n).x && input->at(n).y==input->at(n).y && input->at(n).z==input->at(n).z)
-			segmentCloud->push_back(input->at(n));
-	}*/
-	pcl::PointXYZRGB crtPoint;
-	int pointcount = 0;
-	for( int i = 0; i < input->width; i++ ) {
-		for( int j = 0; j < input->height; j++ ) {
-			//if( mask->data[j*mask->step[0]+i] != 0 && input->at(i,j).x==input->at(i,j).x && input->at(i,j).y==input->at(i,j).y && input->at(i,j).z==input->at(i,j).z)
-			//	segmentCloud->push_back(input->at(i,j));
-
-			if( mask->data[j*mask->step[0]+i] != 0 ) {
-				crtPoint = input->at(i,j);
-
-				if(crtPoint.x==crtPoint.x && crtPoint.y==crtPoint.y && crtPoint.z==crtPoint.z){
-					segmentCloud->push_back(input->at(i,j));
-					pointcount++;
-				}
-			}
-		}
-	}
-	std::cout << "unorg pt count " << pointcount << " " << segmentCloud->size() << std::endl;
-
-
-
-
-	//std::vector<int> a;
-	//pcl::removeNaNFromPointCloud(*segmentCloud,*segmentCloud,a);
-
-	return segmentCloud;
-}
 
 boost::shared_ptr<cv::Mat> SegmentCloud::denoizeMask( boost::shared_ptr<cv::Mat> latestMask )
 {

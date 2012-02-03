@@ -116,13 +116,10 @@ public:
 	  boost::shared_ptr<std::vector<pcl::ModelCoefficients> >
 		  getCoefficients(boost::shared_ptr<std::vector<cv::Rect> > ROIS, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
 
-		pcl::ModelCoefficients
+	  pcl::ModelCoefficients
 			getCoefficients(cv::Rect ROI, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input, boost::shared_ptr<const cv::Mat> mask);
 
-	  // Gets an unorganised cloud, by copying only nonzero mask-points.
-	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
-		  getUnorgCloud(boost::shared_ptr<const cv::Mat> mask, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr input);
-
+	  // Gets an unorganised cloud, by copying only nonzero mask-points within the ROI
 	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 			SegmentCloud::getUnorgCloud(
 				const cv::Mat mask,
@@ -151,7 +148,7 @@ public:
 			maskOut.reset(masky);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr windowCloud = getWindowCloud(ROIOut, cloud);
 			return this->getUnorgCloud(*maskOut, windowCloud, ROIOut);
-
+			
 			/*
 			boost::shared_ptr<cv::Mat> fullMask = getMask(cloud);
 			ROIOut = getROI(fullMask);

@@ -11,5 +11,5 @@
 #define _YMEAN 1
 #define _CLUSTERSPERCOLOR 2
 #define _SMOOTHRANGE 5
-#define _PIXEL_LIMIT 20
+#define _PIXEL_LIMIT 100
 #define _BOXFACTOR 40
