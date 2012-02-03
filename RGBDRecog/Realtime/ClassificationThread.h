@@ -33,7 +33,7 @@ public:
 
 		extractor->loadCodebooks();
 		rf->read(datadir + "\\randomforestdata_1000000101.yml", "randomforestdata_1000000101");
-		//rf->readTrainingData("_1000000100");
+		rf->readTrainingData("_1000000101");
 		//segmenter.setSegMethod(SegmentCloud::SegPlane);
 
 
