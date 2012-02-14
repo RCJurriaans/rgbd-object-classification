@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Realtime", "Realtime\OpenNI
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Segmentation", "Segmentation\Segmentation.vcxproj", "{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BBTest", "BBTest\BBTest.vcxproj", "{596E99D5-2766-4FAF-8993-180C27BBC502}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -57,6 +59,12 @@ Global
 		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|Win32.ActiveCfg = Release|Win32
 		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|Win32.Build.0 = Release|Win32
 		{F87A4834-8DB3-4F6A-AC74-E95ABC2F39C1}.Release|x64.ActiveCfg = Release|Win32
+		{596E99D5-2766-4FAF-8993-180C27BBC502}.Debug|Win32.ActiveCfg = Debug|Win32
+		{596E99D5-2766-4FAF-8993-180C27BBC502}.Debug|Win32.Build.0 = Debug|Win32
+		{596E99D5-2766-4FAF-8993-180C27BBC502}.Debug|x64.ActiveCfg = Debug|Win32
+		{596E99D5-2766-4FAF-8993-180C27BBC502}.Release|Win32.ActiveCfg = Release|Win32
+		{596E99D5-2766-4FAF-8993-180C27BBC502}.Release|Win32.Build.0 = Release|Win32
+		{596E99D5-2766-4FAF-8993-180C27BBC502}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

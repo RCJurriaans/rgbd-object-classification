@@ -425,11 +425,28 @@ boost::shared_ptr<cv::Mat>
 	pass.setInputCloud (input);
 	pass.setFilterFieldName ("z");
 	pass.setFilterLimits (minDistanceFilter, maxDistanceFilter);
-	pass.setKeepOrganized(true);
-	//pass.setFilterLimitsNegative (true);
-	pass.filter (*cloud_filtered);
+	// pass.setKeepOrganized(true);
+	// pass.setFilterLimitsNegative (true);
 
-	boost::shared_ptr<cv::Mat> mask(new cv::Mat( cloud_filtered->height, cloud_filtered->width, CV_8UC1 ) );
+	boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> outCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+
+	pass.filter (*outCloud);
+
+
+	// Downsample cloud for speed-up
+	// 
+	//clock_t init, final; //for timing
+	//init=clock();
+
+	pcl::RandomSample<pcl::PointXYZRGB> randomSample;
+	randomSample.setSample(2000);
+	randomSample.setInputCloud(outCloud);
+	
+	randomSample.filter(*cloud_filtered);
+
+	
+	// Find plane
+	boost::shared_ptr<cv::Mat> mask(new cv::Mat( input->height, input->width, CV_8UC1 ) );
 
 	// Fit plane and extract points
 	//pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
@@ -449,32 +466,57 @@ boost::shared_ptr<cv::Mat>
 
 	seg.setInputCloud (cloud_filtered);
 	seg.segment (*planeInliers, *planeCoeffs);//*coefficients);
-	if(planeInliers->indices.size()==0){
-		return mask;
-	}
 
-	int nmax = cloud_filtered->size();
+	//final=clock()-init;
+	//std::cout << std::endl <<  (double)final / ((double)CLOCKS_PER_SEC) << std::endl;
+	
+	int nmax = input->size();
 	int i;
 	int j;
 	int inliercount=0;
+
+	float a = planeCoeffs->values.at(0);
+	float b = planeCoeffs->values.at(1);
+	float c = planeCoeffs->values.at(2);
+	float d = planeCoeffs->values.at(3);
+
+	// std::cout << "Plane" << a << " " << b << " " << c << " " << d << std::endl;
+
+	planeInliers->indices.clear();
+
 	for(int n= 0; n<nmax; n++)
 	{
-		float imgz = cloud_filtered->at(n).z;
+
+		float imgx = input->at(n).x;
+		float imgy = input->at(n).y;
+		float imgz = input->at(n).z;
 		// Recalculate indices in matrix from n
 		i = n % input->width;
 		j = ((n-i) / input->width);
-		mask->data[j*mask->step[0]+i*mask->step[1]] = 0;
 
-		if(!(inliercount>=planeInliers->indices.size() || planeInliers->indices.at(inliercount)==n || (imgz!=imgz))){
-			//mask->data[j*mask->step[0]+i*mask->step[1]] = 255;
-			mask->data[j*mask->step[0]+i] = 255;// no step 1!!
-			objectinliers->indices.push_back(n);
-		}
-		else{
 
-			if(inliercount<planeInliers->indices.size() && planeInliers->indices.at(inliercount)==n){inliercount++;}
+		mask->data[j*mask->step[0]+i] = 0;
+
+
+
+		// std::cout << n << " " <<  i << " " << j << std::endl;
+		if( (imgx==imgx) && (imgy==imgy) && (imgz==imgz)){
+			if(std::abs(a*input->at(n).x + b*input->at(n).y + c*imgz + d)>0.03) {
+				if(imgz<maxDistanceFilter){
+					mask->data[j*mask->step[0]+i] = 255;// no step 1!!
+					objectinliers->indices.push_back(n);
+				}
+			} else {
+				planeInliers->indices.push_back(n);
+
+			}
 		}
+
+		
 	}
+	
+	pcl::copyPointCloud(*input, *cloud_filtered);
+
 
 	// Erode the mask
 	//std::cout << "eroding mask"<<std::endl;
