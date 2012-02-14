@@ -25,7 +25,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/range_image/range_image.h>
-
+#include <pcl/filters/random_sample.h>
 
 // Opencv stuff
 #include <opencv2\opencv.hpp>

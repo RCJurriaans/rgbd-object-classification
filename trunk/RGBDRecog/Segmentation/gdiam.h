@@ -522,8 +522,10 @@ public:
 		case 2:
 			return pnt[2];
 			break;
-
-
+		default:
+			return 0;
+			break;
+		
 		}
 	}
 
